@@ -1,0 +1,26 @@
+{
+  "name": "@shengji/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "pnpm --filter @shengji/engine build && pnpm --filter @shengji/protocol build && tsx watch src/index.ts",
+    "simulate": "pnpm --filter @shengji/engine build && tsx src/simulate.ts",
+    "start": "node dist/index.js",
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "pnpm --filter @shengji/engine build && pnpm --filter @shengji/protocol build && tsc --noEmit"
+  },
+  "dependencies": {
+    "@shengji/engine": "workspace:*",
+    "@shengji/protocol": "workspace:*",
+    "fastify": "5.8.5",
+    "ws": "8.21.0",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "25.9.3",
+    "@types/ws": "8.18.1",
+    "tsx": "4.22.4"
+  }
+}
