@@ -1,0 +1,24 @@
+{
+  "name": "@shengji/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "next build",
+    "dev": "pnpm --filter @shengji/protocol build && next dev",
+    "start": "next start -p 3000",
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "pnpm --filter @shengji/protocol build && tsc --noEmit"
+  },
+  "dependencies": {
+    "@shengji/protocol": "workspace:*",
+    "motion": "12.40.0",
+    "next": "16.2.9",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
+  },
+  "devDependencies": {
+    "@types/node": "25.9.3",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3"
+  }
+}
