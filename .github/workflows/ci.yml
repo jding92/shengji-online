@@ -18,5 +18,9 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm check
-      - run: pnpm --filter @shengji/e2e exec playwright install --with-deps chromium
+      - name: Use runner Chromium
+        run: |
+          browser="$(command -v chromium || command -v google-chrome)"
+          test -n "$browser"
+          echo "PLAYWRIGHT_CHROMIUM_EXECUTABLE=$browser" >> "$GITHUB_ENV"
       - run: pnpm test:e2e
