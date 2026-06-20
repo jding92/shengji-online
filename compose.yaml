@@ -1,0 +1,12 @@
+services:
+  shengji:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+    volumes:
+      - shengji-data:/app/data
+
+volumes:
+  shengji-data:

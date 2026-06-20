@@ -1,0 +1,11 @@
+node_modules
+.pnpm-store
+**/dist
+**/.next
+**/coverage
+test-results
+playwright-report
+.git
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
