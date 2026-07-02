@@ -3,6 +3,7 @@
 import type { PrivateGameView } from "@shengji/protocol";
 import { motion } from "motion/react";
 import type { TablePosition } from "../lib/cards";
+import { teamLabelForSeat } from "../lib/strings";
 import { CardBack } from "./card";
 
 export function TableSeat({
@@ -43,7 +44,7 @@ export function TableSeat({
           <small>
             {seat.rank === null
               ? "Waiting"
-              : `Level ${seat.rank} · ${seat.seat % 2 === 0 ? "Gold" : "Ember"}`}
+              : `Level ${seat.rank} · ${teamLabelForSeat(seat.seat)}`}
           </small>
         </span>
         {!seat.connected && seat.playerId !== null && <i className="offline-dot" />}

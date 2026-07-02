@@ -7,6 +7,7 @@ import {
   type WireClientCommand,
 } from "@shengji/protocol";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { RECONNECT_BASE_MS, RECONNECT_MAX_MS } from "../lib/constants";
 import { safeStorage } from "../lib/safe-storage";
 
 export type ConnectionStatus =
@@ -88,7 +89,10 @@ export function useGameRoom(roomId: string) {
         if (socketRef.current === socket) socketRef.current = null;
         if (intentionalCloseRef.current) return;
         attemptsRef.current += 1;
-        const delay = Math.min(8_000, 500 * 2 ** attemptsRef.current);
+        const delay = Math.min(
+          RECONNECT_MAX_MS,
+          RECONNECT_BASE_MS * 2 ** attemptsRef.current,
+        );
         setStatus(navigator.onLine ? "reconnecting" : "offline");
         retryRef.current = setTimeout(() => connect(token, true), delay);
       });

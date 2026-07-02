@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { COUNTDOWN_TICK_MS } from "../lib/constants";
 
 export function Countdown({
   deadline,
@@ -19,7 +20,7 @@ export function Countdown({
     const target = Date.parse(deadline);
     const update = () => setRemaining(Math.max(0, Math.ceil((target - now()) / 1_000)));
     update();
-    const timer = setInterval(update, 250);
+    const timer = setInterval(update, COUNTDOWN_TICK_MS);
     return () => clearInterval(timer);
   }, [deadline, now]);
   if (remaining === null) return null;

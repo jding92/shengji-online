@@ -105,6 +105,20 @@
   --card-back-ink: rgba(244, 217, 140, 0.85);
   --card-back-line: rgba(244, 217, 140, 0.5);
 
+  /* Layer stack */
+  --z-seats: 5;
+  --z-dock: 12;
+  --z-card-selected: 15;
+  --z-card-hover: 20;
+  --z-topbar: 20;
+  --z-banner: 45;
+  --z-connection: 50;
+  --z-toast: 70;
+  --z-modal: 80;
+
+  /* Motion */
+  --dur-fast: 160ms;
+
   --radius: 22px;
 }
 
@@ -166,7 +180,7 @@ button:disabled {
   font-size: 0.83rem;
   font-weight: 750;
   letter-spacing: 0.02em;
-  transition: 160ms ease;
+  transition: var(--dur-fast) ease;
 }
 
 .button:not(:disabled):hover {
@@ -722,7 +736,7 @@ button:disabled {
 }
 .table-topbar {
   position: relative;
-  z-index: 20;
+  z-index: var(--z-topbar);
   display: flex;
   height: 70px;
   align-items: center;
@@ -771,7 +785,7 @@ button:disabled {
 }
 .throw-banner {
   position: fixed;
-  z-index: 45;
+  z-index: var(--z-banner);
   top: 82px;
   left: 50%;
   display: flex;
@@ -831,7 +845,7 @@ button:disabled {
 }
 .table-seat {
   position: absolute;
-  z-index: 5;
+  z-index: var(--z-seats);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1036,7 +1050,7 @@ button:disabled {
 }
 .hand-dock {
   position: relative;
-  z-index: 12;
+  z-index: var(--z-dock);
   height: 217px;
   border-top: 1px solid var(--line);
   background: linear-gradient(180deg, var(--dock-hi), var(--dock-lo));
@@ -1076,7 +1090,7 @@ button:disabled {
   margin-left: 0;
 }
 .hand-scroll .playing-card:hover {
-  z-index: 20;
+  z-index: var(--z-card-hover);
   transform: translateY(-10px);
 }
 .action-dock {
@@ -1114,7 +1128,7 @@ button:disabled {
   opacity: 1;
 }
 .playing-card.is-selected {
-  z-index: 15;
+  z-index: var(--z-card-selected);
   box-shadow:
     0 0 0 2px var(--accent-bright),
     0 14px 25px rgba(0, 0, 0, 0.36);
@@ -1206,7 +1220,7 @@ button:disabled {
 /* Overlays and status */
 .connection-pill {
   position: fixed;
-  z-index: 50;
+  z-index: var(--z-connection);
   right: 14px;
   bottom: 12px;
   display: flex;
@@ -1236,7 +1250,7 @@ button:disabled {
 }
 .notice-toast {
   position: fixed;
-  z-index: 70;
+  z-index: var(--z-toast);
   right: 18px;
   top: 86px;
   display: flex;
@@ -1294,7 +1308,7 @@ button:disabled {
 
 .error-toast {
   position: fixed;
-  z-index: 70;
+  z-index: var(--z-toast);
   right: 18px;
   top: 86px;
   display: grid;
@@ -1321,7 +1335,7 @@ button:disabled {
 }
 .modal-scrim {
   position: fixed;
-  z-index: 80;
+  z-index: var(--z-modal);
   inset: 0;
   display: grid;
   place-items: center;
