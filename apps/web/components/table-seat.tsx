@@ -1,6 +1,7 @@
 "use client";
 
 import type { PrivateGameView } from "@shengji/protocol";
+import { motion } from "motion/react";
 import type { TablePosition } from "../lib/cards";
 import { CardBack } from "./card";
 
@@ -21,7 +22,17 @@ export function TableSeat({
         {Array.from({ length: Math.min(3, seat.cardCount) }, (_, index) => (
           <CardBack key={index} compact />
         ))}
-        {seat.cardCount > 0 && <span className="card-count">{seat.cardCount}</span>}
+        {seat.cardCount > 0 && (
+          <motion.span
+            className="card-count"
+            key={seat.cardCount}
+            initial={{ scale: 1.3 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 500, damping: 22 }}
+          >
+            {seat.cardCount}
+          </motion.span>
+        )}
       </div>
       <div className="player-chip">
         <span className="player-avatar">
