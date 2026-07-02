@@ -80,6 +80,7 @@ function finalTrickState(input: {
   state.attackingTeamId = "team-1";
   state.round = {
     roundNumber: 1,
+    redealCount: 0,
     trumpRank: "3",
     trumpSpec: trump,
     deckSeed: "fixture",

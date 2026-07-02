@@ -176,5 +176,45 @@ describe("event-sourced round flow", () => {
     expect(redealt.phase).toBe("dealing");
     expect(redealt.round!.currentBid).toBeUndefined();
     expect(redealt.round!.undealt).toHaveLength(108);
+    expect(redealt.round!.redealCount).toBe(1);
+  });
+
+  it("forces trump from the bottom after the redeal cap instead of redealing forever", () => {
+    let { state } = readyAndDeal(setupLobby());
+
+    const cap = state.rulesetSnapshot.bidding.maxRedeals;
+    for (let redeal = 1; redeal <= cap; redeal += 1) {
+      let next = replayEvents(
+        state,
+        getFinalizeBiddingEvents(state, now, `redeal-seed-${redeal}`),
+      );
+      expect(next.round!.redealCount).toBe(redeal);
+      while (next.phase === "dealing") {
+        next = replayEvents(next, getNextDealEvents(next, now));
+      }
+      state = next;
+    }
+
+    // At the cap, an all-pass finalizes deterministically from the bottom.
+    const forced = getFinalizeBiddingEvents(state, now, "unused-seed");
+    const finalized = replayEvents(state, forced);
+    expect(finalized.phase).toBe("bottom-exchange");
+    expect(finalized.round!.trumpSpec).toBeDefined();
+    expect(finalized.round!.trumpSpec!.rank).toBe(state.round!.trumpRank);
+    expect(finalized.leaderSeat).toBe(0);
+    expect(finalized.defendingTeamId).toBeDefined();
+
+    const firstBottomCard = state.round!.cards[state.round!.bottom[0]!]!;
+    if (firstBottomCard.face.kind === "joker") {
+      expect(finalized.round!.trumpSpec!.mode).toBe("no-trump");
+    } else {
+      expect(finalized.round!.trumpSpec).toMatchObject({
+        mode: "suit",
+        suit: firstBottomCard.face.suit,
+      });
+    }
+
+    // Determinism: the same state produces the same forced finalization.
+    expect(getFinalizeBiddingEvents(state, now, "different-seed")).toEqual(forced);
   });
 });
