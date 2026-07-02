@@ -66,6 +66,39 @@ function readyAndDeal(
 }
 
 describe("event-sourced round flow", () => {
+  it("does not start the round while any seat is empty", () => {
+    let state = createGameState({
+      roomId: "SHORT",
+      ruleset: fourPlayerTwoDeckFixedTeamRuleset,
+      createdAt: now,
+    });
+    for (const [seat, playerId] of playerIds.slice(0, 3).entries()) {
+      state = applyEvent(state, {
+        type: "PLAYER_JOINED",
+        playerId,
+        name: `Player ${seat + 1}`,
+        at: now,
+      });
+      state = replayEvents(
+        state,
+        validateCommand(state, playerId, { type: "SIT", seat }, { now }),
+      );
+    }
+    for (const playerId of playerIds.slice(0, 3)) {
+      state = replayEvents(
+        state,
+        validateCommand(
+          state,
+          playerId,
+          { type: "READY" },
+          { now, roundSeed: "unused" },
+        ),
+      );
+    }
+    expect(state.phase).toBe("lobby");
+    expect(state.round).toBeUndefined();
+  });
+
   it("starts only after all four seated players are ready and deals 25 cards each", () => {
     const setup = readyAndDeal(setupLobby());
 
