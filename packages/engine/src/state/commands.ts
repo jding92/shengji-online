@@ -148,13 +148,21 @@ function nextLeaderOnTeam(state: GameState, teamId: string): number {
   throw new Error(`No seat belongs to ${teamId}`);
 }
 
-function finishRoundEvents(state: GameState, at: string): GameEvent[] {
+/**
+ * The round is over exactly when every hand is empty after a completed
+ * trick. The final winner is re-derived from the last completed trick
+ * rather than gated on `finalTrickWinnerSeat`, so any path that empties
+ * the hands (normal play, forced play, state recovery) finishes the round.
+ */
+export function finishRoundEvents(state: GameState, at: string): GameEvent[] {
   const round = state.round;
   if (
     round === undefined ||
-    round.finalTrickWinnerSeat === undefined ||
     round.buriedBottom === undefined ||
-    round.currentTrick !== undefined
+    round.currentTrick !== undefined ||
+    round.outcome !== undefined ||
+    round.completedTricks.length === 0 ||
+    Object.values(round.hands).some((hand) => hand.length > 0)
   ) {
     return [];
   }
@@ -163,11 +171,11 @@ function finishRoundEvents(state: GameState, at: string): GameEvent[] {
   if (lastTrick === undefined || ledFormat === null || ledFormat === undefined) {
     throw new Error("Completed round is missing its final led format");
   }
+  const finalWinnerSeat = round.finalTrickWinnerSeat ?? lastTrick.winnerSeat;
 
   const multiplier = getBottomMultiplier(ledFormat, state.rulesetSnapshot.bottom);
   const attackersWonLast =
-    teamIdForSeat(round.finalTrickWinnerSeat, state.rulesetSnapshot) ===
-    state.attackingTeamId;
+    teamIdForSeat(finalWinnerSeat, state.rulesetSnapshot) === state.attackingTeamId;
   const bottomPoints = sumCardPoints(cardsById(state, round.buriedBottom));
   const bottomEvent: GameEvent = {
     type: "BOTTOM_REVEALED",
