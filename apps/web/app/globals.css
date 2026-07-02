@@ -872,6 +872,11 @@ button:disabled {
   inset: 0;
   pointer-events: none;
 }
+.phase-slot {
+  position: absolute;
+  display: grid;
+  place-items: center;
+}
 .center-play .playing-card {
   margin-left: -24px;
 }

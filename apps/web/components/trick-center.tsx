@@ -42,9 +42,15 @@ function useTrickSweep(view: PrivateGameView): Sweep | null {
       round.completedTricksSummary.at(-1)?.winnerSeat ?? round.currentTurnSeat;
     if (winnerSeat === undefined) return;
     setSweep({ plays: previous.plays, winnerSeat });
+  }, [round]);
+
+  // The dismiss timer lives with the sweep itself: keying it off `round`
+  // would cancel it on the next snapshot and leave the sweep stuck.
+  useEffect(() => {
+    if (sweep === null) return;
     const timer = setTimeout(() => setSweep(null), TRICK_SWEEP_MS);
     return () => clearTimeout(timer);
-  }, [round]);
+  }, [sweep]);
 
   return sweep;
 }
@@ -143,9 +149,15 @@ export function TrickCenter({
       : SWEEP_VECTORS[relativeSeatPosition(sweep.winnerSeat, view.you.seat)];
   return (
     <div className="trick-center">
-      <AnimatePresence mode="wait">
+      {/*
+        Concurrent mode (not mode="wait"): entering and exiting messages
+        overlap in an absolutely-positioned slot, so a missed exit callback
+        can never wedge the next phase's message out of the tree.
+      */}
+      <AnimatePresence>
         {sweep === null && message && (
           <motion.div
+            className="phase-slot"
             key={message.key}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
