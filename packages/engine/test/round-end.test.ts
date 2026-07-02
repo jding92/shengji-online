@@ -18,6 +18,7 @@ const now = "2026-06-19T12:00:00.000Z";
 function finalTrickState(input: {
   defendingRank?: Rank;
   defenderWinsLast?: boolean;
+  throwPenaltyAdjustment?: number;
 }): GameState {
   let state = createGameState({
     roomId: "ENDING",
@@ -99,7 +100,7 @@ function finalTrickState(input: {
     },
     completedTricks: [],
     attackerPoints: 0,
-    throwPenaltyAdjustment: 0,
+    throwPenaltyAdjustment: input.throwPenaltyAdjustment ?? 0,
   };
   return state;
 }
@@ -132,6 +133,26 @@ describe("round completion", () => {
     expect(completed.phase).toBe("round-scoring");
     expect(completed.ranks).toMatchObject({ p0: "3", p2: "3" });
     expect(completed.leaderSeat).toBe(2);
+  });
+
+  it("lets throw penalties drive the attacker total negative instead of clamping to 0", () => {
+    const state = finalTrickState({
+      defenderWinsLast: true,
+      throwPenaltyAdjustment: -50,
+    });
+    const events = validateCommand(
+      state,
+      "p3",
+      { type: "PLAY_CARDS", cards: [state.round!.hands[3]![0]!], intent: "normal" },
+      { now },
+    );
+
+    expect(events).toContainEqual(
+      expect.objectContaining({
+        type: "ROUND_SCORED",
+        outcome: { attackerPoints: -50, winner: "defenders", levelDelta: 3 },
+      }),
+    );
   });
 
   it("ends the game when the A-level defenders hold", () => {

@@ -50,7 +50,7 @@ export const sixPlayerThreeDeckFutureRuleset = {
   scoring: {
     model: "thresholds",
     thresholds: [
-      { min: 0, maxExclusive: 1, winner: "defenders", levelDelta: 3 },
+      { maxExclusive: 1, winner: "defenders", levelDelta: 3 },
       { min: 1, maxExclusive: 60, winner: "defenders", levelDelta: 2 },
       { min: 60, maxExclusive: 120, winner: "defenders", levelDelta: 1 },
       { min: 120, maxExclusive: 180, winner: "attackers", levelDelta: 0 },

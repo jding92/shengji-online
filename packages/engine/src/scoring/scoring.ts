@@ -12,7 +12,7 @@ export function scoreRound(
 
   const threshold = rules.thresholds.find(
     ({ min, maxExclusive }) =>
-      attackerPoints >= min &&
+      (min === undefined || attackerPoints >= min) &&
       (maxExclusive === undefined || attackerPoints < maxExclusive),
   );
 
