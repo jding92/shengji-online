@@ -1,68 +1,76 @@
+/*
+ * Warm "family game night" palette: deep lacquer-red surfaces, terracotta
+ * felt, cream text, and imperial gold accents. Card faces stay cream so
+ * suits read clearly against the red table.
+ */
 :root {
   /* Text */
-  --ink: #f4f0e6;
-  --text-bright: #dce0da;
-  --text-soft: #c1c6bf;
-  --muted: #aaa99f;
-  --faint: #8e948e;
-  --faint-dark: #757e78;
-  --faint-darker: #59635e;
+  --ink: #fdf6e8;
+  --text-bright: #f3e5d0;
+  --text-soft: #e2cbb2;
+  --muted: #d9b8a2;
+  --faint: #b3907c;
+  --faint-dark: #9c7864;
+  --faint-darker: #7d604f;
 
   /* Page and panel surfaces */
-  --night: #080e0d;
-  --bg-hi: #0b1513;
-  --bg-lo: #060a09;
-  --bg-glow: rgba(42, 119, 99, 0.18);
-  --shell-hi: #0a1210;
-  --shell-lo: #070b0a;
-  --panel: rgba(19, 30, 28, 0.82);
-  --glass-hi: rgba(22, 37, 34, 0.88);
-  --glass-lo: rgba(11, 19, 17, 0.88);
-  --veil: rgba(7, 13, 12, 0.82);
-  --chip-bg: rgba(8, 19, 16, 0.86);
-  --float-bg: rgba(15, 27, 24, 0.9);
-  --dock-hi: rgba(12, 21, 19, 0.92);
-  --dock-lo: #080d0c;
-  --summary-hi: #182b26;
-  --summary-lo: #0c1513;
-  --seat-tag: #10211e;
-  --avatar-bg: #223f37;
-  --badge-ink: #16201d;
-  --overlay: rgba(1, 6, 5, 0.72);
-  --banner-bg: rgba(17, 42, 35, 0.94);
+  --night: #2a0f0d;
+  --bg-hi: #341311;
+  --bg-lo: #1d0908;
+  --bg-glow: rgba(232, 120, 70, 0.16);
+  --shell-hi: #2c100e;
+  --shell-lo: #1a0807;
+  --panel: rgba(59, 22, 18, 0.85);
+  --glass-hi: rgba(74, 28, 22, 0.88);
+  --glass-lo: rgba(40, 13, 11, 0.88);
+  --veil: rgba(32, 10, 8, 0.82);
+  --chip-bg: rgba(43, 15, 12, 0.88);
+  --float-bg: rgba(56, 21, 17, 0.9);
+  --dock-hi: rgba(48, 17, 14, 0.92);
+  --dock-lo: #200a08;
+  --summary-hi: #46201a;
+  --summary-lo: #240b09;
+  --seat-tag: #3a1712;
+  --avatar-bg: #59241c;
+  --badge-ink: #33130e;
+  --overlay: rgba(16, 4, 3, 0.74);
+  --banner-bg: rgba(70, 26, 20, 0.94);
 
   /* Hairlines and tints */
-  --line: rgba(255, 255, 255, 0.1);
-  --frost: rgba(255, 255, 255, 0.03);
-  --frost-strong: rgba(255, 255, 255, 0.05);
-  --watermark: rgba(202, 221, 211, 0.1);
-  --watermark-strong: rgba(255, 255, 255, 0.18);
+  --line: rgba(255, 224, 178, 0.14);
+  --frost: rgba(255, 224, 178, 0.05);
+  --frost-strong: rgba(255, 224, 178, 0.08);
+  --watermark: rgba(255, 214, 170, 0.1);
+  --watermark-strong: rgba(255, 230, 200, 0.18);
 
-  /* Primary accent */
-  --accent: #3fc498;
-  --accent-bright: #72e0b8;
-  --accent-deep: #39b88b;
-  --on-accent: #07130f;
-  --accent-shadow: rgba(53, 190, 143, 0.19);
-  --accent-line-strong: rgba(114, 224, 184, 0.65);
-  --accent-line: rgba(114, 224, 184, 0.42);
-  --accent-line-soft: rgba(114, 224, 184, 0.25);
-  --accent-glow: rgba(65, 203, 155, 0.16);
-  --accent-glow-soft: rgba(70, 191, 149, 0.1);
-  --accent-tint: rgba(61, 174, 135, 0.08);
-  --pulse-halo: rgba(70, 194, 150, 0);
-  --orb-accent: rgba(58, 166, 132, 0.2);
+  /* Primary accent: lacquer red / persimmon */
+  --accent: #e8433a;
+  --accent-bright: #ff6f5e;
+  --accent-deep: #c93430;
+  --on-accent: #2b0705;
+  --accent-shadow: rgba(232, 67, 58, 0.25);
+  --accent-line-strong: rgba(255, 111, 94, 0.65);
+  --accent-line: rgba(255, 111, 94, 0.42);
+  --accent-line-soft: rgba(255, 111, 94, 0.25);
+  --accent-glow: rgba(255, 111, 94, 0.16);
+  --accent-glow-soft: rgba(255, 111, 94, 0.1);
+  --accent-tint: rgba(232, 67, 58, 0.08);
+  --pulse-halo: rgba(255, 111, 94, 0);
+  --orb-accent: rgba(230, 106, 60, 0.2);
 
   /* Gold accent */
-  --gold: #d8b76a;
-  --gold-hi: #ead18f;
-  --gold-deep: #bf9142;
-  --gold-soft: #d6c07d;
-  --on-gold: #1d1508;
-  --gold-line-strong: rgba(216, 183, 106, 0.4);
-  --gold-line: rgba(216, 183, 106, 0.25);
-  --gold-tint: rgba(216, 183, 106, 0.14);
-  --gold-tint-soft: rgba(216, 183, 106, 0.09);
+  --gold: #e9c46a;
+  --gold-hi: #f4d98c;
+  --gold-deep: #c8942e;
+  --gold-soft: #e3c47f;
+  --on-gold: #241505;
+  --gold-line-strong: rgba(233, 196, 106, 0.45);
+  --gold-line: rgba(233, 196, 106, 0.28);
+  --gold-tint: rgba(233, 196, 106, 0.14);
+  --gold-tint-soft: rgba(233, 196, 106, 0.09);
+
+  /* Connectivity */
+  --ok: #8fbf8e;
 
   /* Danger / warnings */
   --danger: #e46f5d;
@@ -74,28 +82,28 @@
   --danger-line: rgba(228, 111, 93, 0.32);
 
   /* Table felt */
-  --felt: #153d35;
-  --felt-deep: #0d2b26;
-  --felt-glow: rgba(59, 139, 117, 0.16);
-  --felt-speckle: rgba(255, 255, 255, 0.008);
-  --felt-ring-line: rgba(211, 185, 121, 0.11);
-  --table-rim: #16241f;
+  --felt: #7d2f24;
+  --felt-deep: #5c1f18;
+  --felt-glow: rgba(255, 160, 110, 0.14);
+  --felt-speckle: rgba(255, 230, 200, 0.01);
+  --felt-ring-line: rgba(233, 196, 106, 0.16);
+  --table-rim: #3a1610;
 
   /* Card faces and backs */
   --card-face-hi: #fffdf6;
-  --card-face-lo: #eae4d7;
-  --card-ink: #17201d;
-  --card-red: #c1454b;
+  --card-face-lo: #f3ecdb;
+  --card-ink: #26201a;
+  --card-red: #c0362c;
   --card-diamond: #d06b3c;
-  --card-club: #2d7770;
-  --card-spade: #222b34;
+  --card-club: #2d7360;
+  --card-spade: #2b2723;
   --card-joker-small: #3f8272;
   --card-joker-big: #bc493e;
-  --card-back-hi: #1d5a4c;
-  --card-back-lo: #194c41;
-  --card-back-border: #d9cda9;
-  --card-back-ink: rgba(237, 222, 174, 0.8);
-  --card-back-line: rgba(240, 218, 164, 0.45);
+  --card-back-hi: #8c2d20;
+  --card-back-lo: #6f2118;
+  --card-back-border: #e3c47f;
+  --card-back-ink: rgba(244, 217, 140, 0.85);
+  --card-back-line: rgba(244, 217, 140, 0.5);
 
   --radius: 22px;
 }
@@ -138,7 +146,8 @@ a {
 button:focus-visible,
 input:focus-visible,
 a:focus-visible {
-  outline: 2px solid var(--accent-bright);
+  /* Gold, not accent red — a red outline vanishes on the red theme. */
+  outline: 2px solid var(--gold);
   outline-offset: 3px;
 }
 
@@ -1214,8 +1223,8 @@ button:disabled {
   background: var(--gold);
 }
 .connection-connected i {
-  background: var(--accent);
-  box-shadow: 0 0 8px var(--accent);
+  background: var(--ok);
+  box-shadow: 0 0 8px var(--ok);
 }
 .connection-offline i {
   background: var(--danger);
