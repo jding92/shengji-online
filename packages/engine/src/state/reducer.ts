@@ -107,6 +107,10 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
       }
       next.round = {
         roundNumber: event.roundNumber,
+        redealCount:
+          next.round !== undefined && next.round.roundNumber === event.roundNumber
+            ? next.round.redealCount + 1
+            : 0,
         trumpRank: event.trumpRank,
         deckSeed: event.seed,
         cards: Object.fromEntries(shuffled.map((card) => [card.id, card])),
@@ -161,7 +165,7 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
     case "TRUMP_FINALIZED": {
       const round = requireRound(next);
       round.trumpSpec = event.trumpSpec;
-      round.currentBid = event.winningBid;
+      if (event.winningBid !== undefined) round.currentBid = event.winningBid;
       delete round.biddingDeadline;
       break;
     }

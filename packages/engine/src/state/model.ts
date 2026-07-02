@@ -44,6 +44,8 @@ export type TrickResult = {
 
 export type RoundState = {
   roundNumber: number;
+  /** How many times this round number has been redealt after an all-pass. */
+  redealCount: number;
   trumpRank: Rank;
   trumpSpec?: TrumpSpec;
   currentBid?: Bid;
@@ -127,7 +129,8 @@ export type GameEvent =
   | {
       type: "TRUMP_FINALIZED";
       trumpSpec: TrumpSpec;
-      winningBid: Bid;
+      /** Absent when trump was forced from the bottom after the redeal cap. */
+      winningBid?: Bid;
       at: string;
     }
   | { type: "LEADER_SET"; seat: SeatIndex; at: string }

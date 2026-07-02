@@ -42,6 +42,8 @@ export const shengJiRulesetSchema = z
       allowNoTrumpJokerBid: z.boolean(),
       minimumJokerBidCount: z.number().int().positive(),
       tiers: z.array(bidTierSchema).min(1),
+      /** After this many all-pass redeals, trump is forced from the bottom. */
+      maxRedeals: z.number().int().nonnegative(),
     }),
     trump: z.object({
       jokersAlwaysTrump: z.literal(true),

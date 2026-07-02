@@ -6,7 +6,7 @@ import { resolveThrowAttempt } from "../throws/throws.js";
 import { validateFollow, validateLead } from "../tricks/legality.js";
 import { determineTrickWinner } from "../tricks/winner.js";
 import type { TrickComponent, TrickFormat } from "../tricks/types.js";
-import type { CardInstance, Rank } from "../types.js";
+import type { Bid, CardInstance, Rank, TrumpSpec } from "../types.js";
 import type { ClientCommand, GameEvent, GameState } from "./model.js";
 import { applyEvent, replayEvents, teamIdForSeat } from "./reducer.js";
 
@@ -555,6 +555,54 @@ export function getNextDealEvents(state: GameState, now: string): GameEvent[] {
   ];
 }
 
+function trumpFinalizedEvents(input: {
+  state: GameState;
+  trumpSpec: TrumpSpec;
+  leaderSeat: number;
+  winningBid?: Bid;
+  now: string;
+}): GameEvent[] {
+  const { state, trumpSpec, leaderSeat, winningBid, now } = input;
+  const events: GameEvent[] = [
+    {
+      type: "TRUMP_FINALIZED",
+      trumpSpec,
+      at: now,
+      ...(winningBid === undefined ? {} : { winningBid }),
+    },
+  ];
+  if (state.round?.roundNumber === 1) {
+    const defendingTeamId = teamIdForSeat(leaderSeat, state.rulesetSnapshot);
+    events.push(
+      { type: "LEADER_SET", seat: leaderSeat, at: now },
+      {
+        type: "TEAMS_UPDATED",
+        defendingTeamId,
+        attackingTeamId: oppositeTeam(state, defendingTeamId),
+        leaderSeat,
+        at: now,
+      },
+    );
+  }
+  events.push({ type: "BOTTOM_PICKED_UP", seat: leaderSeat, at: now });
+  return events;
+}
+
+/**
+ * Deterministic fallback once the redeal cap is reached: the first card of
+ * the bottom declares trump (a joker declares no-trump).
+ */
+function forcedTrumpFromBottom(state: GameState): TrumpSpec {
+  const round = state.round!;
+  const firstBottomCard = round.cards[round.bottom[0] ?? ""];
+  if (firstBottomCard === undefined) {
+    throw new Error("Cannot force trump from an empty bottom");
+  }
+  return firstBottomCard.face.kind === "joker"
+    ? { mode: "no-trump", rank: round.trumpRank }
+    : { mode: "suit", rank: round.trumpRank, suit: firstBottomCard.face.suit };
+}
+
 /** Called when the server-authoritative post-deal deadline expires. */
 export function getFinalizeBiddingEvents(
   state: GameState,
@@ -564,6 +612,15 @@ export function getFinalizeBiddingEvents(
   if (state.phase !== "post-deal-bidding" || state.round === undefined) return [];
   const bid = state.round.currentBid;
   if (bid === undefined) {
+    if (state.round.redealCount >= state.rulesetSnapshot.bidding.maxRedeals) {
+      const leaderSeat = state.round.roundNumber === 1 ? 0 : (state.leaderSeat ?? 0);
+      return trumpFinalizedEvents({
+        state,
+        trumpSpec: forcedTrumpFromBottom(state),
+        leaderSeat,
+        now,
+      });
+    }
     if (redealSeed === undefined || redealSeed.length === 0) {
       throw new CommandValidationError(
         "NO_BID",
@@ -584,22 +641,11 @@ export function getFinalizeBiddingEvents(
   const leaderSeat = state.round.roundNumber === 1 ? bid.seat : state.leaderSeat;
   if (leaderSeat === undefined)
     throw new Error("Later round is missing its progressed leader");
-  const events: GameEvent[] = [
-    { type: "TRUMP_FINALIZED", trumpSpec: bid.declares, winningBid: bid, at: now },
-  ];
-  if (state.round.roundNumber === 1) {
-    const defendingTeamId = teamIdForSeat(leaderSeat, state.rulesetSnapshot);
-    events.push(
-      { type: "LEADER_SET", seat: leaderSeat, at: now },
-      {
-        type: "TEAMS_UPDATED",
-        defendingTeamId,
-        attackingTeamId: oppositeTeam(state, defendingTeamId),
-        leaderSeat,
-        at: now,
-      },
-    );
-  }
-  events.push({ type: "BOTTOM_PICKED_UP", seat: leaderSeat, at: now });
-  return events;
+  return trumpFinalizedEvents({
+    state,
+    trumpSpec: bid.declares,
+    leaderSeat,
+    winningBid: bid,
+    now,
+  });
 }

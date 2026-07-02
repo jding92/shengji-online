@@ -28,6 +28,7 @@ export const sixPlayerThreeDeckFutureRuleset = {
     allowNoTrumpJokerBid: true,
     minimumJokerBidCount: 2,
     tiers: ["level-card", "small-joker", "big-joker"],
+    maxRedeals: 2,
   },
   trump: { jokersAlwaysTrump: true, levelCardsAlwaysTrump: true },
   bottom: {
