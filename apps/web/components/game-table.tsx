@@ -1,7 +1,7 @@
 "use client";
 
 import type { PrivateGameView, WireClientCommand } from "@shengji/protocol";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, LayoutGroup, motion } from "motion/react";
 import { useCallback, useEffect, useMemo } from "react";
 import { useCardSelection } from "../hooks/use-card-selection";
 import { compareCardsForHand, relativeSeatPosition } from "../lib/cards";
@@ -139,32 +139,38 @@ export function GameTable({
         )}
       </AnimatePresence>
 
-      <section className="table-stage">
-        <div className="felt-table">
-          <div className="felt-ring" />
-          {view.seats.map((seat) => (
-            <TableSeat
-              key={seat.seat}
-              seat={seat}
-              position={relativeSeatPosition(seat.seat, view.you.seat)}
-              currentTurn={round?.currentTurnSeat === seat.seat}
-              isYou={seat.playerId === view.you.playerId}
+      <LayoutGroup>
+        <section className="table-stage">
+          <div className="felt-table">
+            <div className="felt-ring" />
+            {view.seats.map((seat) => (
+              <TableSeat
+                key={seat.seat}
+                seat={seat}
+                position={relativeSeatPosition(seat.seat, view.you.seat)}
+                currentTurn={round?.currentTurnSeat === seat.seat}
+                isYou={seat.playerId === view.you.playerId}
+              />
+            ))}
+            <TrickCenter
+              view={view}
+              turnDeadline={turnDeadline}
+              serverNow={serverNow}
             />
-          ))}
-          <TrickCenter view={view} turnDeadline={turnDeadline} serverNow={serverNow} />
-        </div>
-      </section>
+          </div>
+        </section>
 
-      <HandDock
-        cards={cards}
-        selected={selected}
-        selectedCards={selectedCards}
-        onToggle={toggle}
-        onClear={clear}
-        actions={actions}
-        bottomSize={view.ruleset.bottomSize}
-        submit={submit}
-      />
+        <HandDock
+          cards={cards}
+          selected={selected}
+          selectedCards={selectedCards}
+          onToggle={toggle}
+          onClear={clear}
+          actions={actions}
+          bottomSize={view.ruleset.bottomSize}
+          submit={submit}
+        />
+      </LayoutGroup>
 
       <RoundSummaryModal view={view} actions={actions} submit={submit} />
     </main>

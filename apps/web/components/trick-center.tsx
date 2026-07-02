@@ -1,10 +1,52 @@
 "use client";
 
 import type { PrivateGameView } from "@shengji/protocol";
-import { AnimatePresence, motion } from "motion/react";
-import type { ReactNode } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { relativeSeatPosition, type TablePosition } from "../lib/cards";
 import { Countdown } from "./countdown";
 import { PlayingCard } from "./card";
+
+type PublicTrick = NonNullable<
+  NonNullable<PrivateGameView["publicRound"]>["currentTrick"]
+>;
+
+/** Pixel offset from table center toward each seat, for the sweep exit. */
+const SWEEP_VECTORS: Record<TablePosition, { x: number; y: number }> = {
+  south: { x: 0, y: 300 },
+  north: { x: 0, y: -300 },
+  east: { x: 340, y: 0 },
+  west: { x: -340, y: 0 },
+};
+
+type Sweep = { plays: PublicTrick["plays"]; winnerSeat: number };
+
+/**
+ * Keeps a just-completed trick on the table for a beat and returns it so it
+ * can be animated toward the winner's seat before disappearing.
+ */
+function useTrickSweep(view: PrivateGameView): Sweep | null {
+  const round = view.publicRound;
+  const [sweep, setSweep] = useState<Sweep | null>(null);
+  const previousTrick = useRef<PublicTrick | undefined>(round?.currentTrick);
+
+  useEffect(() => {
+    const previous = previousTrick.current;
+    const current = round?.currentTrick;
+    previousTrick.current = current;
+    if (previous === undefined || current !== undefined || round === undefined) {
+      return;
+    }
+    const winnerSeat =
+      round.completedTricksSummary.at(-1)?.winnerSeat ?? round.currentTurnSeat;
+    if (winnerSeat === undefined) return;
+    setSweep({ plays: previous.plays, winnerSeat });
+    const timer = setTimeout(() => setSweep(null), 700);
+    return () => clearTimeout(timer);
+  }, [round]);
+
+  return sweep;
+}
 
 /** The single centered status message for the current phase, keyed for exits. */
 function phaseMessage(
@@ -92,10 +134,16 @@ export function TrickCenter({
 }) {
   const round = view.publicRound;
   const message = phaseMessage(view, turnDeadline, serverNow);
+  const sweep = useTrickSweep(view);
+  const reducedMotion = useReducedMotion() ?? false;
+  const sweepVector =
+    sweep === null || reducedMotion
+      ? { x: 0, y: 0 }
+      : SWEEP_VECTORS[relativeSeatPosition(sweep.winnerSeat, view.you.seat)];
   return (
     <div className="trick-center">
       <AnimatePresence mode="wait">
-        {message && (
+        {sweep === null && message && (
           <motion.div
             key={message.key}
             initial={{ opacity: 0, y: 8 }}
@@ -107,6 +155,22 @@ export function TrickCenter({
           </motion.div>
         )}
       </AnimatePresence>
+      {sweep !== null && (
+        <motion.div
+          className="trick-sweep"
+          initial={{ x: 0, y: 0, scale: 1, opacity: 1 }}
+          animate={{ ...sweepVector, scale: 0.45, opacity: 0 }}
+          transition={{ duration: 0.6, ease: "easeIn", delay: 0.12 }}
+        >
+          {sweep.plays.map((play, playIndex) => (
+            <div className={`center-play play-${playIndex}`} key={play.seat}>
+              {play.cards.map((card) => (
+                <PlayingCard key={card.id} card={card} compact />
+              ))}
+            </div>
+          ))}
+        </motion.div>
+      )}
       {round?.currentTrick?.plays.map((play, playIndex) => (
         <motion.div
           className={`center-play play-${playIndex}`}

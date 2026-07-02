@@ -62,6 +62,7 @@ export function PlayingCard({
     <motion.button
       type="button"
       layout
+      layoutId={card.id}
       aria-label={display.label}
       aria-pressed={selected}
       disabled={disabled || onSelect === undefined}

@@ -989,6 +989,11 @@ button:disabled {
   display: flex;
   align-items: center;
 }
+.trick-sweep {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
 .center-play .playing-card {
   margin-left: -24px;
 }
