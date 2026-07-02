@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import {
   CommandValidationError,
+  finishRoundEvents,
   getFinalizeBiddingEvents,
   getNextDealEvents,
   replayEvents,
@@ -98,6 +99,11 @@ export class Room {
 
   private rescheduleTimers(): void {
     this.clearTimers();
+    // Self-heal: a restored or interrupted room whose final trick already
+    // completed can sit in "playing" with empty hands and no outcome.
+    if (this.currentState.phase === "playing") {
+      this.commit(finishRoundEvents(this.currentState, new Date().toISOString()));
+    }
     if (!this.timersEnabled) return;
     if (this.currentState.phase === "dealing") {
       this.dealTimer = setTimeout(() => {

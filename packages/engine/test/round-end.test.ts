@@ -3,6 +3,7 @@ import {
   applyEvent,
   createDeck,
   createGameState,
+  finishRoundEvents,
   fourPlayerTwoDeckFixedTeamRuleset,
   parseTrickFormat,
   replayEvents,
@@ -153,6 +154,41 @@ describe("round completion", () => {
         outcome: { attackerPoints: -50, winner: "defenders", levelDelta: 3 },
       }),
     );
+  });
+
+  it("finishes a round whose final trick completed without finalTrickWinnerSeat", () => {
+    // Simulates a recovered state (e.g. after an interruption) where the
+    // last trick is in completedTricks but the flag was never set.
+    const state = finalTrickState({});
+    const round = state.round!;
+    const finalCard = round.cards[round.hands[3]![0]!]!;
+    const trump = round.trumpSpec!;
+    const plays = [
+      ...round.currentTrick!.plays,
+      {
+        seat: 3,
+        cards: [finalCard],
+        format: parseTrickFormat([finalCard], trump),
+        eligibleToWin: true,
+      },
+    ];
+    round.completedTricks.push({ leadSeat: 0, winnerSeat: 1, points: 0, plays });
+    delete round.currentTrick;
+    round.hands[3] = [];
+    expect(round.finalTrickWinnerSeat).toBeUndefined();
+
+    const events = finishRoundEvents(state, now);
+    expect(events.some((event) => event.type === "BOTTOM_REVEALED")).toBe(true);
+    const scored = events.find((event) => event.type === "ROUND_SCORED");
+    expect(scored?.type).toBe("ROUND_SCORED");
+    if (scored?.type === "ROUND_SCORED") {
+      expect(scored.outcome.winner).toBe("defenders");
+    }
+  });
+
+  it("returns no finish events while any hand still holds cards", () => {
+    const state = finalTrickState({});
+    expect(finishRoundEvents(state, now)).toEqual([]);
   });
 
   it("ends the game when the A-level defenders hold", () => {
