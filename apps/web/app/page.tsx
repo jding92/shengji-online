@@ -13,7 +13,11 @@ export default function HomePage() {
     setCreating(true);
     setError(null);
     try {
-      const response = await fetch("/api/rooms", { method: "POST", body: "{}" });
+      const response = await fetch("/api/rooms", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: "{}",
+      });
       const body = (await response.json()) as {
         room?: { roomId: string };
         error?: string;
