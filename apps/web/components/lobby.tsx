@@ -72,7 +72,7 @@ export function Lobby({ view, sendCommand }: LobbyProps) {
                     : seat.playerId === null
                       ? "Tap to sit"
                       : teammate
-                        ? "Team jade"
+                        ? "Team gold"
                         : "Team ember"}
                 </small>
                 {seat.ready && <span className="ready-stamp">READY</span>}

@@ -79,7 +79,7 @@ function Seat({
           <small>
             {seat.rank === null
               ? "Waiting"
-              : `Level ${seat.rank} · ${seat.seat % 2 === 0 ? "Jade" : "Ember"}`}
+              : `Level ${seat.rank} · ${seat.seat % 2 === 0 ? "Gold" : "Ember"}`}
           </small>
         </span>
         {!seat.connected && seat.playerId !== null && <i className="offline-dot" />}
