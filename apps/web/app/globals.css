@@ -1329,7 +1329,31 @@ button:disabled {
   padding: 20px;
   backdrop-filter: blur(8px);
 }
+.confetti {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+.confetti-piece {
+  position: absolute;
+  top: 0;
+  width: 8px;
+  height: 13px;
+  border-radius: 2px;
+}
+.victory-mark {
+  display: block;
+  margin: 10px auto 4px;
+  color: var(--gold);
+  font-family: Georgia, serif;
+  font-size: 4.4rem;
+  line-height: 1;
+}
 .round-summary {
+  position: relative;
+  overflow: hidden;
   width: min(100%, 510px);
   border: 1px solid var(--line);
   border-radius: 25px;
