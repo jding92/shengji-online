@@ -3,8 +3,9 @@
 import type { PrivateGameView, WireClientCommand } from "@shengji/protocol";
 import { AnimatePresence, LayoutGroup, motion } from "motion/react";
 import { useCallback, useEffect, useMemo } from "react";
+import { compareCardsForSort } from "@shengji/engine";
 import { useCardSelection } from "../hooks/use-card-selection";
-import { compareCardsForHand, relativeSeatPosition } from "../lib/cards";
+import { relativeSeatPosition } from "../lib/cards";
 import { HandDock } from "./hand-dock";
 import { LeaveButton } from "./leave-button";
 import { RoundSummaryModal } from "./round-summary-modal";
@@ -26,12 +27,17 @@ export function GameTable({
   turnDeadline,
   serverNow,
 }: GameTableProps) {
-  const cards = useMemo(
-    () => [...view.you.hand].sort(compareCardsForHand),
-    [view.you.hand],
-  );
-  const { selected, selectedCards, toggle, clear } = useCardSelection(cards);
   const round = view.publicRound;
+  // Sort trump-aware: before a suit is declared, treat the level rank as
+  // no-trump so level cards group with the jokers instead of their suits.
+  const cards = useMemo(() => {
+    const trump = round?.trumpSpec ?? {
+      mode: "no-trump" as const,
+      rank: round?.trumpRank ?? "2",
+    };
+    return [...view.you.hand].sort((a, b) => compareCardsForSort(a, b, trump));
+  }, [view.you.hand, round?.trumpSpec, round?.trumpRank]);
+  const { selected, selectedCards, toggle, clear } = useCardSelection(cards);
   const actions = useMemo(() => new Set(view.legalActions), [view.legalActions]);
 
   const submit = useCallback(
@@ -150,6 +156,12 @@ export function GameTable({
                 position={relativeSeatPosition(seat.seat, view.you.seat)}
                 currentTurn={round?.currentTurnSeat === seat.seat}
                 isYou={seat.playerId === view.you.playerId}
+                bid={
+                  (view.phase === "dealing" || view.phase === "post-deal-bidding") &&
+                  round?.currentBid?.seat === seat.seat
+                    ? round.currentBid
+                    : undefined
+                }
               />
             ))}
             <TrickCenter

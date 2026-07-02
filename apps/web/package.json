@@ -10,6 +10,7 @@
     "typecheck": "pnpm --filter @shengji/protocol build && tsc --noEmit"
   },
   "dependencies": {
+    "@shengji/engine": "workspace:*",
     "@shengji/protocol": "workspace:*",
     "motion": "12.40.0",
     "next": "16.2.9",

@@ -10,7 +10,7 @@ export default function HomePage() {
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function createRoom() {
+  async function createRoom(practice = false) {
     setCreating(true);
     setError(null);
     try {
@@ -26,7 +26,7 @@ export default function HomePage() {
       if (!response.ok || body.room === undefined) {
         throw new Error(body.error ?? "Could not create a table");
       }
-      router.push(`/room/${body.room.roomId}`);
+      router.push(`/room/${body.room.roomId}${practice ? "?practice=1" : ""}`);
     } catch (createError) {
       setError(
         createError instanceof Error ? createError.message : "Could not create table",
@@ -93,6 +93,15 @@ export default function HomePage() {
           >
             How to play
           </a>
+
+          <button
+            className="button button-ghost menu-button"
+            type="button"
+            disabled={creating}
+            onClick={() => void createRoom(true)}
+          >
+            Practice table · solo
+          </button>
         </div>
 
         {error && <p className="inline-error">{error}</p>}
