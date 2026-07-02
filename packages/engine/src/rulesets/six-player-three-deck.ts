@@ -32,8 +32,7 @@ export const sixPlayerThreeDeckFutureRuleset = {
   trump: { jokersAlwaysTrump: true, levelCardsAlwaysTrump: true },
   bottom: {
     size: 6,
-    lastTrickMultipliers: { single: 2, pair: 4, tractor: 8 },
-    throwMultiplierStrategy: "longest-component",
+    lastTrickMultiplier: { strategy: "per-card-in-largest-component", perCard: 2 },
   },
   trickPlay: {
     formats: ["single", "tuple", "tractor", "throw"],
@@ -44,8 +43,8 @@ export const sixPlayerThreeDeckFutureRuleset = {
     enabled: true,
     failedThrowResolution: "force-smallest-failing-component",
     failedThrowAttackerPointDelta: {
-      defenderFailedThrow: 10,
-      attackerFailedThrow: -10,
+      defenderFailedThrow: 0,
+      attackerFailedThrow: 0,
     },
   },
   scoring: {

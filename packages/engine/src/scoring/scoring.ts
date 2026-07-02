@@ -1,5 +1,6 @@
 import type { RoundOutcome } from "../types.js";
 import type { ShengJiRuleset } from "../rulesets/schema.js";
+import type { TrickFormat } from "../tricks/types.js";
 
 export function scoreRound(
   attackerPoints: number,
@@ -26,20 +27,18 @@ export function scoreRound(
   };
 }
 
+/**
+ * Bottom points are multiplied per card in the largest component of the
+ * final trick's led format: single = 2x, pair = 4x, triple = 6x,
+ * two-pair tractor = 8x, and so on.
+ */
 export function getBottomMultiplier(
-  format:
-    | { kind: "single" }
-    | { kind: "tuple"; tupleSize: number }
-    | { kind: "tractor" }
-    | { kind: "throw"; longestComponent: "single" | "pair" | "tractor" },
+  format: TrickFormat,
   rules: ShengJiRuleset["bottom"],
 ): number {
-  if (format.kind === "throw") {
-    return rules.lastTrickMultipliers[format.longestComponent];
-  }
-  if (format.kind === "tractor") return rules.lastTrickMultipliers.tractor;
-  if (format.kind === "tuple" && format.tupleSize >= 2) {
-    return rules.lastTrickMultipliers.pair;
-  }
-  return rules.lastTrickMultipliers.single;
+  const largestComponentCardCount = format.components.reduce(
+    (largest, component) => Math.max(largest, component.cardCount),
+    1,
+  );
+  return rules.lastTrickMultiplier.perCard * largestComponentCardCount;
 }

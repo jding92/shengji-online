@@ -148,13 +148,6 @@ function nextLeaderOnTeam(state: GameState, teamId: string): number {
   throw new Error(`No seat belongs to ${teamId}`);
 }
 
-function longestThrowComponent(format: TrickFormat): "single" | "pair" | "tractor" {
-  const longest = [...format.components].sort((a, b) => b.cardCount - a.cardCount)[0];
-  if (longest?.kind === "tractor") return "tractor";
-  if (longest?.kind === "tuple" && longest.tupleSize >= 2) return "pair";
-  return "single";
-}
-
 function finishRoundEvents(state: GameState, at: string): GameEvent[] {
   const round = state.round;
   if (
@@ -171,22 +164,7 @@ function finishRoundEvents(state: GameState, at: string): GameEvent[] {
     throw new Error("Completed round is missing its final led format");
   }
 
-  const multiplier = getBottomMultiplier(
-    ledFormat.kind === "single"
-      ? { kind: "single" }
-      : ledFormat.kind === "tractor"
-        ? { kind: "tractor" }
-        : ledFormat.kind === "tuple"
-          ? {
-              kind: "tuple",
-              tupleSize:
-                ledFormat.components[0]?.kind === "tuple"
-                  ? ledFormat.components[0].tupleSize
-                  : 1,
-            }
-          : { kind: "throw", longestComponent: longestThrowComponent(ledFormat) },
-    state.rulesetSnapshot.bottom,
-  );
+  const multiplier = getBottomMultiplier(ledFormat, state.rulesetSnapshot.bottom);
   const attackersWonLast =
     teamIdForSeat(round.finalTrickWinnerSeat, state.rulesetSnapshot) ===
     state.attackingTeamId;
