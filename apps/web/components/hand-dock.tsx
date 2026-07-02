@@ -47,6 +47,7 @@ export function HandDock({
           <PlayingCard
             key={card.id}
             card={card}
+            entrance="deal"
             selected={selected.has(card.id)}
             onSelect={(event) => onToggle(card, index, event.shiftKey)}
           />

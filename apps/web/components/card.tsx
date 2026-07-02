@@ -1,7 +1,7 @@
 "use client";
 
 import type { CardInstance } from "@shengji/protocol";
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import type { MouseEvent } from "react";
 
 const suitGlyph = {
@@ -16,6 +16,8 @@ type CardProps = {
   selected?: boolean;
   compact?: boolean;
   disabled?: boolean;
+  /** "deal" drops in from above (hand cards); "pop" scales in (table plays). */
+  entrance?: "deal" | "pop";
   onSelect?: (event: MouseEvent<HTMLButtonElement>) => void;
 };
 
@@ -24,8 +26,10 @@ export function PlayingCard({
   selected = false,
   compact = false,
   disabled = false,
+  entrance = "pop",
   onSelect,
 }: CardProps) {
+  const reducedMotion = useReducedMotion() ?? false;
   const face = card.face;
   const display =
     face.kind === "joker"
@@ -44,6 +48,16 @@ export function PlayingCard({
           label: `${face.rank} of ${face.suit}`,
         };
 
+  const initial = reducedMotion
+    ? { opacity: 0 }
+    : entrance === "deal"
+      ? { opacity: 0, y: -90, rotate: -5 }
+      : { opacity: 0, scale: 0.82 };
+  const transition =
+    entrance === "deal" && !reducedMotion
+      ? { type: "spring" as const, stiffness: 420, damping: 30 }
+      : { duration: 0.16 };
+
   return (
     <motion.button
       type="button"
@@ -53,9 +67,9 @@ export function PlayingCard({
       disabled={disabled || onSelect === undefined}
       className={`playing-card card-${display.color} ${selected ? "is-selected" : ""} ${compact ? "is-compact" : ""}`}
       onClick={onSelect}
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: selected ? -18 : 0 }}
-      transition={{ duration: 0.16 }}
+      initial={initial}
+      animate={{ opacity: 1, y: selected ? -18 : 0, scale: 1, rotate: 0 }}
+      transition={transition}
     >
       <span className="card-corner">
         <strong>{display.rank}</strong>
