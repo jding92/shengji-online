@@ -877,6 +877,70 @@ button:disabled {
   display: grid;
   place-items: center;
 }
+.practice-bar {
+  position: fixed;
+  z-index: var(--z-banner);
+  left: 50%;
+  top: 76px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--gold-line);
+  border-radius: 999px;
+  background: var(--float-bg);
+  padding: 6px 10px;
+  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.4);
+}
+
+.practice-label {
+  color: var(--gold);
+  padding: 0 6px;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+}
+
+.practice-tab {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 0.68rem;
+  font-weight: 750;
+}
+
+.practice-tab.is-active {
+  border-color: var(--gold-line-strong);
+  background: var(--gold-tint);
+  color: var(--gold);
+}
+
+.practice-tab.is-turn {
+  color: var(--accent-bright);
+}
+
+.practice-tab.is-active.is-turn {
+  color: var(--gold);
+}
+
+.bid-badge {
+  position: absolute;
+  top: -12px;
+  right: -10px;
+  border: 1px solid var(--gold-line-strong);
+  border-radius: 999px;
+  background: var(--gold-tint);
+  color: var(--gold);
+  padding: 4px 10px;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.32);
+}
 .center-play .playing-card {
   margin-left: -24px;
 }

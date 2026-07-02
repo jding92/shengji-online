@@ -3,7 +3,7 @@
 import type { PrivateGameView } from "@shengji/protocol";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { relativeSeatPosition, type TablePosition } from "../lib/cards";
+import { cardFaceLabel, relativeSeatPosition, type TablePosition } from "../lib/cards";
 import { TRICK_SWEEP_MS } from "../lib/constants";
 import { Countdown } from "./countdown";
 import { PlayingCard } from "./card";
@@ -63,13 +63,18 @@ function phaseMessage(
 ): { key: string; node: ReactNode } | null {
   const round = view.publicRound;
   if (view.phase === "dealing") {
+    const bid = round?.currentBid;
     return {
       key: "dealing",
       node: (
         <div className="phase-message">
           <span className="deal-spinner">升</span>
           <strong>Dealing the cards</strong>
-          <small>Bids are open during the deal.</small>
+          <small>
+            {bid
+              ? `Seat ${bid.seat + 1} declared ${cardFaceLabel(bid.face)}${bid.count > 1 ? ` ×${bid.count}` : ""}`
+              : "Bids are open during the deal."}
+          </small>
         </div>
       ),
     };
@@ -87,7 +92,7 @@ function phaseMessage(
           <strong>{round.currentBid ? "Raise or pass" : "Declare trump"}</strong>
           <small>
             {round.currentBid
-              ? `Seat ${round.currentBid.seat + 1}: ${round.currentBid.count} × ${round.currentBid.tier}`
+              ? `Seat ${round.currentBid.seat + 1} declared ${cardFaceLabel(round.currentBid.face)}${round.currentBid.count > 1 ? ` ×${round.currentBid.count}` : ""}`
               : "Select level cards or a joker pair."}
           </small>
         </div>

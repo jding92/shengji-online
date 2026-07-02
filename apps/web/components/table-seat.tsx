@@ -1,21 +1,28 @@
 "use client";
 
 import type { PrivateGameView } from "@shengji/protocol";
-import { motion } from "motion/react";
-import type { TablePosition } from "../lib/cards";
+import { AnimatePresence, motion } from "motion/react";
+import { cardFaceLabel, type TablePosition } from "../lib/cards";
 import { teamLabelForSeat } from "../lib/strings";
 import { CardBack } from "./card";
+
+type CurrentBid = NonNullable<
+  NonNullable<PrivateGameView["publicRound"]>["currentBid"]
+>;
 
 export function TableSeat({
   seat,
   position,
   currentTurn,
   isYou,
+  bid,
 }: {
   seat: PrivateGameView["seats"][number];
   position: TablePosition;
   currentTurn: boolean;
   isYou: boolean;
+  /** This seat's standing trump bid, shown as a badge until finalization. */
+  bid?: CurrentBid | undefined;
 }) {
   return (
     <div className={`table-seat seat-${position} ${currentTurn ? "is-turn" : ""}`}>
@@ -49,6 +56,20 @@ export function TableSeat({
         </span>
         {!seat.connected && seat.playerId !== null && <i className="offline-dot" />}
       </div>
+      <AnimatePresence>
+        {bid && (
+          <motion.span
+            className="bid-badge"
+            initial={{ opacity: 0, scale: 0.7 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.85 }}
+            transition={{ type: "spring", stiffness: 420, damping: 24 }}
+          >
+            主 {cardFaceLabel(bid.face)}
+            {bid.count > 1 ? ` ×${bid.count}` : ""}
+          </motion.span>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
