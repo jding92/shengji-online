@@ -3,6 +3,7 @@ import {
   CommandValidationError,
   finishRoundEvents,
   getFinalizeBiddingEvents,
+  getForcedPlayEvents,
   getNextDealEvents,
   replayEvents,
   validateCommand,
@@ -23,6 +24,8 @@ import type { SqliteStore } from "./persistence/sqlite-store.js";
 type RoomOptions = {
   timersEnabled?: boolean;
   dealIntervalMs?: number;
+  /** Test override for turn timeouts; defaults to the ruleset's seconds. */
+  turnTimeoutMsOverride?: { connected: number; disconnected: number };
 };
 
 export class Room {
@@ -31,9 +34,14 @@ export class Room {
   private readonly processedRequests = new Map<string, Set<string>>();
   private dealTimer?: NodeJS.Timeout;
   private bidTimer?: NodeJS.Timeout;
+  private turnTimer?: NodeJS.Timeout;
   private tickTimer?: NodeJS.Timeout;
   private readonly timersEnabled: boolean;
   private readonly dealIntervalMs: number;
+  private readonly turnTimeoutMsOverride?: {
+    connected: number;
+    disconnected: number;
+  };
 
   constructor(
     private currentState: GameState,
@@ -44,6 +52,9 @@ export class Room {
     this.dealIntervalMs =
       options.dealIntervalMs ??
       Number.parseInt(process.env.DEAL_INTERVAL_MS ?? "45", 10);
+    if (options.turnTimeoutMsOverride !== undefined) {
+      this.turnTimeoutMsOverride = options.turnTimeoutMsOverride;
+    }
     this.rescheduleTimers();
   }
 
@@ -91,10 +102,26 @@ export class Room {
   private clearTimers(): void {
     if (this.dealTimer !== undefined) clearTimeout(this.dealTimer);
     if (this.bidTimer !== undefined) clearTimeout(this.bidTimer);
+    if (this.turnTimer !== undefined) clearTimeout(this.turnTimer);
     if (this.tickTimer !== undefined) clearInterval(this.tickTimer);
     delete this.dealTimer;
     delete this.bidTimer;
+    delete this.turnTimer;
     delete this.tickTimer;
+  }
+
+  private startTicking(deadline: string): void {
+    this.tickTimer = setInterval(() => {
+      const tick: ServerEnvelope = {
+        type: "TIMER_TICK",
+        protocolVersion: PROTOCOL_VERSION,
+        deadline,
+        serverTime: new Date().toISOString(),
+      };
+      for (const sockets of this.connections.values()) {
+        for (const socket of sockets) this.send(socket, tick);
+      }
+    }, 1_000);
   }
 
   private rescheduleTimers(): void {
@@ -114,33 +141,63 @@ export class Room {
       }, this.dealIntervalMs);
       return;
     }
-    const deadline = this.currentState.round?.biddingDeadline;
-    if (this.currentState.phase !== "post-deal-bidding" || deadline === undefined)
+    if (this.currentState.phase === "post-deal-bidding") {
+      const deadline = this.currentState.round?.biddingDeadline;
+      if (deadline === undefined) return;
+      const remaining = Math.max(0, Date.parse(deadline) - Date.now());
+      this.bidTimer = setTimeout(() => {
+        void this.serialize(() => {
+          this.commit(
+            getFinalizeBiddingEvents(
+              this.currentState,
+              new Date().toISOString(),
+              randomUUID(),
+            ),
+          );
+          this.rescheduleTimers();
+        });
+      }, remaining);
+      this.startTicking(deadline);
       return;
-    const remaining = Math.max(0, Date.parse(deadline) - Date.now());
-    this.bidTimer = setTimeout(() => {
+    }
+    this.scheduleTurnTimeout();
+  }
+
+  /**
+   * Force-plays for the current actor (trick turn or bottom exchange) when
+   * their window expires, so a disconnected or idle player never stalls the
+   * game. Disconnected players get the shorter window.
+   */
+  private scheduleTurnTimeout(): void {
+    const state = this.currentState;
+    if (state.phase !== "playing" && state.phase !== "bottom-exchange") return;
+    const seat =
+      state.phase === "playing" ? state.round?.currentTurnSeat : state.leaderSeat;
+    if (seat === undefined) return;
+    const playerId = state.seats[seat];
+    if (playerId === null || playerId === undefined) return;
+    const connected = state.players[playerId]?.connected === true;
+    const { playTimeoutSeconds, disconnectedTimeoutSeconds } =
+      state.rulesetSnapshot.turns;
+    const timeoutMs = connected
+      ? (this.turnTimeoutMsOverride?.connected ?? playTimeoutSeconds * 1_000)
+      : (this.turnTimeoutMsOverride?.disconnected ??
+        disconnectedTimeoutSeconds * 1_000);
+    const deadline = new Date(Date.now() + timeoutMs).toISOString();
+    this.turnTimer = setTimeout(() => {
       void this.serialize(() => {
-        this.commit(
-          getFinalizeBiddingEvents(
-            this.currentState,
-            new Date().toISOString(),
-            randomUUID(),
-          ),
-        );
+        try {
+          this.commit(getForcedPlayEvents(this.currentState, new Date().toISOString()));
+        } catch (error) {
+          console.error(
+            `Forced play failed in room ${this.currentState.roomId}:`,
+            error,
+          );
+        }
         this.rescheduleTimers();
       });
-    }, remaining);
-    this.tickTimer = setInterval(() => {
-      const tick: ServerEnvelope = {
-        type: "TIMER_TICK",
-        protocolVersion: PROTOCOL_VERSION,
-        deadline,
-        serverTime: new Date().toISOString(),
-      };
-      for (const sockets of this.connections.values()) {
-        for (const socket of sockets) this.send(socket, tick);
-      }
-    }, 1_000);
+    }, timeoutMs);
+    this.startTicking(deadline);
   }
 
   private reject(
@@ -232,6 +289,7 @@ export class Room {
             at: new Date().toISOString(),
           },
         ]);
+        this.rescheduleTimers();
       }
       this.sendSnapshot(playerId, socket);
     });
@@ -276,6 +334,8 @@ export class Room {
               at: new Date().toISOString(),
             },
           ]);
+          // Shorten the current actor's window if it was them who left.
+          this.rescheduleTimers();
         }
       });
     });
