@@ -56,6 +56,12 @@ export const shengJiRulesetSchema = z
         perCard: z.number().int().positive(),
       }),
     }),
+    turns: z.object({
+      /** Seconds a connected player may take before the server force-plays. */
+      playTimeoutSeconds: z.number().int().positive(),
+      /** Shorter window applied when the player is disconnected. */
+      disconnectedTimeoutSeconds: z.number().int().positive(),
+    }),
     trickPlay: z.object({
       formats: z.array(z.enum(["single", "tuple", "tractor", "throw"])).min(1),
       mustFollowEffectiveSuit: z.boolean(),

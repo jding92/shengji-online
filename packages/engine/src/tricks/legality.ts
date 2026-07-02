@@ -29,7 +29,7 @@ export type ValidatedPlay = {
   eligibleToWin: boolean;
 };
 
-type CardGroup = {
+export type CardGroup = {
   key: string;
   order: number;
   cards: CardInstance[];
@@ -53,7 +53,10 @@ function validateOwnership(
   }
 }
 
-function groupsFor(cards: readonly CardInstance[], trump: TrumpSpec): CardGroup[] {
+export function groupsFor(
+  cards: readonly CardInstance[],
+  trump: TrumpSpec,
+): CardGroup[] {
   const groups = new Map<string, CardInstance[]>();
   for (const card of cards) {
     const key = cardFaceKey(card.face);
@@ -128,7 +131,7 @@ function normalMatchProfile(
   return tractorProfile(cards, component.tupleSize, component.runLength, trump);
 }
 
-function chooseConsecutiveGroups(
+export function chooseConsecutiveGroups(
   groups: readonly CardGroup[],
   tupleSize: number,
   maxGroups: number,
@@ -154,20 +157,23 @@ function chooseConsecutiveGroups(
 }
 
 /**
- * Computes a lexicographic "match as fully as possible" profile for throws.
- * Components are allocated in their canonical parse order, so the same cards
- * cannot satisfy multiple led components.
+ * Allocates cards to a thrown format's components in their canonical parse
+ * order, so the same cards cannot satisfy multiple led components. Returns
+ * both the lexicographic "match as fully as possible" profile and the exact
+ * cards the allocation consumed — the consumed cards are a maximal legal
+ * structural match, which forced/auto plays reuse to construct a follow.
  */
-function throwMatchProfile(
+export function allocateThrowMatches(
   cards: readonly CardInstance[],
   ledFormat: TrickFormat,
   trump: TrumpSpec,
-): number[] {
+): { profile: number[]; consumed: CardInstance[] } {
   const groups = groupsFor(cards, trump).map((group) => ({
     ...group,
     cards: [...group.cards],
   }));
   const profile: number[] = [];
+  const consumed: CardInstance[] = [];
 
   for (const component of ledFormat.components) {
     if (component.kind === "tractor") {
@@ -187,9 +193,11 @@ function throwMatchProfile(
       }
       profile.push(chosen.length, consecutive.length);
       for (const chosenGroup of chosen) {
-        groups
-          .find(({ key }) => key === chosenGroup.key)!
-          .cards.splice(0, component.tupleSize);
+        consumed.push(
+          ...groups
+            .find(({ key }) => key === chosenGroup.key)!
+            .cards.splice(0, component.tupleSize),
+        );
       }
     } else {
       const best = groups.sort((a, b) => {
@@ -198,10 +206,18 @@ function throwMatchProfile(
       })[0];
       const matched = Math.min(component.tupleSize, best?.cards.length ?? 0);
       profile.push(matched);
-      best?.cards.splice(0, matched);
+      if (best !== undefined) consumed.push(...best.cards.splice(0, matched));
     }
   }
-  return profile;
+  return { profile, consumed };
+}
+
+function throwMatchProfile(
+  cards: readonly CardInstance[],
+  ledFormat: TrickFormat,
+  trump: TrumpSpec,
+): number[] {
+  return allocateThrowMatches(cards, ledFormat, trump).profile;
 }
 
 function formatShapeMatches(candidate: TrickFormat, led: TrickFormat): boolean {
