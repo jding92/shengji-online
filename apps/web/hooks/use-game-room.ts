@@ -7,6 +7,7 @@ import {
   type WireClientCommand,
 } from "@shengji/protocol";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { safeStorage } from "../lib/safe-storage";
 
 export type ConnectionStatus =
   | "join-required"
@@ -39,6 +40,9 @@ export function useGameRoom(roomId: string) {
   const retryRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const attemptsRef = useRef(0);
   const intentionalCloseRef = useRef(false);
+  /** serverTime - clientTime, updated from TIMER_TICK; keeps countdowns honest. */
+  const serverOffsetRef = useRef(0);
+  const [turnDeadline, setTurnDeadline] = useState<string | null>(null);
 
   const updateView = useCallback((next: PrivateGameView) => {
     viewRef.current = next;
@@ -70,11 +74,14 @@ export function useGameRoom(roomId: string) {
           updateView(envelope.view);
           return;
         }
-        if (envelope.type === "COMMAND_REJECTED") {
-          setError(envelope.message);
-          if (envelope.code === "STALE_REVISION") {
-            socket.close(4000, "Refresh stale state");
-          }
+        if (envelope.type === "TIMER_TICK") {
+          serverOffsetRef.current = Date.parse(envelope.serverTime) - Date.now();
+          setTurnDeadline(envelope.deadline);
+          return;
+        }
+        setError(envelope.message);
+        if (envelope.code === "STALE_REVISION") {
+          socket.close(4000, "Refresh stale state");
         }
       });
       socket.addEventListener("close", () => {
@@ -93,7 +100,7 @@ export function useGameRoom(roomId: string) {
   );
 
   useEffect(() => {
-    const stored = window.localStorage.getItem(sessionKey(roomId));
+    const stored = safeStorage.get(sessionKey(roomId));
     if (stored === null) setStatus("join-required");
     else connect(stored);
     return () => {
@@ -115,7 +122,7 @@ export function useGameRoom(roomId: string) {
       if (!response.ok || body.playerToken === undefined) {
         throw new Error(body.error ?? "Could not join room");
       }
-      window.localStorage.setItem(sessionKey(roomId), body.playerToken);
+      safeStorage.set(sessionKey(roomId), body.playerToken);
       connect(body.playerToken);
     },
     [connect, roomId],
@@ -125,7 +132,7 @@ export function useGameRoom(roomId: string) {
     (command: WireClientCommand) => {
       const socket = socketRef.current;
       const current = viewRef.current;
-      const token = window.localStorage.getItem(sessionKey(roomId));
+      const token = safeStorage.get(sessionKey(roomId));
       if (socket?.readyState !== WebSocket.OPEN || current === null || token === null) {
         setError("You are not connected yet.");
         return false;
@@ -148,11 +155,13 @@ export function useGameRoom(roomId: string) {
   const leaveSession = useCallback(() => {
     intentionalCloseRef.current = true;
     socketRef.current?.close(1000, "Forget this session");
-    window.localStorage.removeItem(sessionKey(roomId));
+    safeStorage.remove(sessionKey(roomId));
     viewRef.current = null;
     setView(null);
-    window.location.reload();
+    window.location.href = "/";
   }, [roomId]);
+
+  const serverNow = useCallback(() => Date.now() + serverOffsetRef.current, []);
 
   return {
     view,
@@ -162,5 +171,7 @@ export function useGameRoom(roomId: string) {
     join,
     sendCommand,
     leaveSession,
+    turnDeadline,
+    serverNow,
   };
 }

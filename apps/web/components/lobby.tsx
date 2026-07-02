@@ -2,13 +2,15 @@
 
 import type { PrivateGameView, WireClientCommand } from "@shengji/protocol";
 import { useState } from "react";
+import { LeaveButton } from "./leave-button";
 
 type LobbyProps = {
   view: PrivateGameView;
   sendCommand: (command: WireClientCommand) => boolean;
+  onLeave: () => void;
 };
 
-export function Lobby({ view, sendCommand }: LobbyProps) {
+export function Lobby({ view, sendCommand, onLeave }: LobbyProps) {
   const [copied, setCopied] = useState(false);
   const occupied = view.seats.filter(({ playerId }) => playerId !== null).length;
   const you = view.seats.find(({ playerId }) => playerId === view.you.playerId);
@@ -86,14 +88,17 @@ export function Lobby({ view, sendCommand }: LobbyProps) {
             <strong>{occupied} / 4 seated</strong>
             <span>All players must be ready to deal.</span>
           </div>
-          <button
-            type="button"
-            className="button button-primary"
-            disabled={view.you.seat === null}
-            onClick={() => sendCommand({ type: "READY", ready: !you?.ready })}
-          >
-            {you?.ready ? "Not ready" : "Ready up"}
-          </button>
+          <div className="lobby-footer-actions">
+            <LeaveButton onLeave={onLeave} />
+            <button
+              type="button"
+              className="button button-primary"
+              disabled={view.you.seat === null}
+              onClick={() => sendCommand({ type: "READY", ready: !you?.ready })}
+            >
+              {you?.ready ? "Not ready" : "Ready up"}
+            </button>
+          </div>
         </footer>
       </section>
     </main>
