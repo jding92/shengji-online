@@ -1229,6 +1229,64 @@ button:disabled {
 .connection-offline i {
   background: var(--danger);
 }
+.notice-toast {
+  position: fixed;
+  z-index: 70;
+  right: 18px;
+  top: 86px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--gold-line);
+  border-radius: 999px;
+  background: var(--float-bg);
+  color: var(--text-soft);
+  padding: 10px 16px;
+  font-size: 0.72rem;
+  cursor: pointer;
+  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.28);
+}
+
+.notice-toast i {
+  font-style: normal;
+  color: var(--muted);
+}
+
+/* Keep the notice from covering the error toast when both are visible. */
+.notice-toast + .error-toast {
+  top: 140px;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.leave-button.is-confirming {
+  border-color: var(--danger-line);
+  color: var(--danger-bright);
+}
+
+.clear-selection {
+  margin-left: 10px;
+  border: 0;
+  background: transparent;
+  color: var(--gold);
+  cursor: pointer;
+  font-size: 0.56rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.lobby-footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .error-toast {
   position: fixed;
   z-index: 70;

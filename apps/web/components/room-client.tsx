@@ -1,27 +1,67 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useGameRoom } from "../hooks/use-game-room";
 import { GameTable } from "./game-table";
 import { Lobby } from "./lobby";
 
+/** Announces seat connection changes ("Ada disconnected") as passing notices. */
+function useConnectionNotices(
+  seats:
+    | { playerId: string | null; name: string | null; connected: boolean }[]
+    | undefined,
+) {
+  const [notice, setNotice] = useState<string | null>(null);
+  const previous = useRef(new Map<string, boolean>());
+
+  useEffect(() => {
+    if (seats === undefined) return;
+    for (const seat of seats) {
+      if (seat.playerId === null) continue;
+      const wasConnected = previous.current.get(seat.playerId);
+      if (wasConnected !== undefined && wasConnected !== seat.connected) {
+        setNotice(
+          `${seat.name ?? "A player"} ${seat.connected ? "reconnected" : "disconnected"}`,
+        );
+      }
+      previous.current.set(seat.playerId, seat.connected);
+    }
+  }, [seats]);
+
+  useEffect(() => {
+    if (notice === null) return;
+    const timer = setTimeout(() => setNotice(null), 5_000);
+    return () => clearTimeout(timer);
+  }, [notice]);
+
+  return { notice, clearNotice: () => setNotice(null) };
+}
+
 export function RoomClient({ roomId }: { roomId: string }) {
-  const { view, status, error, clearError, join, sendCommand } = useGameRoom(roomId);
+  const {
+    view,
+    status,
+    error,
+    clearError,
+    join,
+    sendCommand,
+    leaveSession,
+    turnDeadline,
+    serverNow,
+  } = useGameRoom(roomId);
   const [name, setName] = useState("");
   const [joining, setJoining] = useState(false);
+  const [joinError, setJoinError] = useState<string | null>(null);
+  const { notice, clearNotice } = useConnectionNotices(view?.seats);
 
   async function handleJoin(event: FormEvent) {
     event.preventDefault();
     setJoining(true);
+    setJoinError(null);
     try {
       await join(name);
-    } catch (joinError) {
-      clearError();
-      window.setTimeout(() => {
-        const message =
-          joinError instanceof Error ? joinError.message : "Could not join";
-        window.alert(message);
-      }, 0);
+    } catch (cause) {
+      setJoinError(cause instanceof Error ? cause.message : "Could not join");
     } finally {
       setJoining(false);
     }
@@ -56,6 +96,17 @@ export function RoomClient({ roomId }: { roomId: string }) {
             </button>
           </form>
         </section>
+        {joinError && (
+          <button
+            type="button"
+            className="error-toast"
+            onClick={() => setJoinError(null)}
+          >
+            <strong>Could not join</strong>
+            <span>{joinError}</span>
+            <i>×</i>
+          </button>
+        )}
       </main>
     );
   }
@@ -75,13 +126,25 @@ export function RoomClient({ roomId }: { roomId: string }) {
   return (
     <>
       {view.phase === "lobby" ? (
-        <Lobby view={view} sendCommand={sendCommand} />
+        <Lobby view={view} sendCommand={sendCommand} onLeave={leaveSession} />
       ) : (
-        <GameTable view={view} sendCommand={sendCommand} />
+        <GameTable
+          view={view}
+          sendCommand={sendCommand}
+          onLeave={leaveSession}
+          turnDeadline={turnDeadline}
+          serverNow={serverNow}
+        />
       )}
       <div className={`connection-pill connection-${status}`}>
         <i /> {status === "connected" ? "Live" : status}
       </div>
+      {notice && (
+        <button type="button" className="notice-toast" onClick={clearNotice}>
+          <span>{notice}</span>
+          <i>×</i>
+        </button>
+      )}
       {error && (
         <button type="button" className="error-toast" onClick={clearError}>
           <strong>That move didn’t work</strong>

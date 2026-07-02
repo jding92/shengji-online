@@ -6,8 +6,9 @@ import type {
   WireClientCommand,
 } from "@shengji/protocol";
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CardBack, PlayingCard } from "./card";
+import { LeaveButton } from "./leave-button";
 
 const rankOrder = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
 const suitOrder = ["clubs", "diamonds", "spades", "hearts"];
@@ -36,14 +37,27 @@ function relativePosition(seat: number, you: number | null): string {
   return ["south", "east", "north", "west"][relative] ?? "north";
 }
 
-function Countdown({ deadline }: { deadline: string | undefined }) {
-  const [now, setNow] = useState(Date.now());
+function Countdown({
+  deadline,
+  now,
+}: {
+  deadline: string | undefined;
+  now: () => number;
+}) {
+  // State holds whole seconds so React skips renders between ticks.
+  const [remaining, setRemaining] = useState<number | null>(null);
   useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 250);
+    if (deadline === undefined) {
+      setRemaining(null);
+      return;
+    }
+    const target = Date.parse(deadline);
+    const update = () => setRemaining(Math.max(0, Math.ceil((target - now()) / 1_000)));
+    update();
+    const timer = setInterval(update, 250);
     return () => clearInterval(timer);
-  }, []);
-  if (deadline === undefined) return null;
-  const remaining = Math.max(0, Math.ceil((Date.parse(deadline) - now) / 1_000));
+  }, [deadline, now]);
+  if (remaining === null) return null;
   return (
     <span className={remaining <= 5 ? "countdown is-urgent" : "countdown"}>
       {remaining}s
@@ -91,14 +105,23 @@ function Seat({
 type GameTableProps = {
   view: PrivateGameView;
   sendCommand: (command: WireClientCommand) => boolean;
+  onLeave: () => void;
+  turnDeadline: string | null;
+  serverNow: () => number;
 };
 
-export function GameTable({ view, sendCommand }: GameTableProps) {
+export function GameTable({
+  view,
+  sendCommand,
+  onLeave,
+  turnDeadline,
+  serverNow,
+}: GameTableProps) {
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
   const lastSelected = useRef<number | null>(null);
   const cards = useMemo(() => [...view.you.hand].sort(cardSort), [view.you.hand]);
   const round = view.publicRound;
-  const actions = new Set(view.legalActions);
+  const actions = useMemo(() => new Set(view.legalActions), [view.legalActions]);
 
   useEffect(() => {
     const owned = new Set(view.you.hand.map(({ id }) => id));
@@ -127,6 +150,45 @@ export function GameTable({ view, sendCommand }: GameTableProps) {
       lastSelected.current = null;
     }
   }
+
+  function clearSelection() {
+    setSelected(new Set());
+    lastSelected.current = null;
+  }
+
+  const primaryAction = useCallback((): WireClientCommand | null => {
+    const cardIds = cards.filter(({ id }) => selected.has(id)).map(({ id }) => id);
+    if (actions.has("play-cards") && cardIds.length > 0) {
+      return { type: "PLAY_CARDS", cards: cardIds, intent: "normal" };
+    }
+    if (actions.has("bury-bottom") && cardIds.length === view.ruleset.bottomSize) {
+      return { type: "BURY_BOTTOM", cards: cardIds };
+    }
+    if (actions.has("bid") && cardIds.length > 0) {
+      return { type: "BID", cards: cardIds };
+    }
+    return null;
+  }, [actions, cards, selected, view.ruleset.bottomSize]);
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.target instanceof HTMLInputElement) return;
+      if (event.key === "Escape") {
+        setSelected(new Set());
+        lastSelected.current = null;
+        return;
+      }
+      if (event.key === "Enter") {
+        const command = primaryAction();
+        if (command !== null && sendCommand(command)) {
+          setSelected(new Set());
+          lastSelected.current = null;
+        }
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [primaryAction, sendCommand]);
 
   const trumpLabel =
     round?.trumpSpec?.mode === "no-trump"
@@ -161,14 +223,17 @@ export function GameTable({ view, sendCommand }: GameTableProps) {
             </strong>
           </span>
         </div>
-        <button
-          type="button"
-          className="icon-button"
-          title="Copy invite link"
-          onClick={() => void navigator.clipboard.writeText(window.location.href)}
-        >
-          ↗
-        </button>
+        <div className="topbar-actions">
+          <button
+            type="button"
+            className="icon-button"
+            title="Copy invite link"
+            onClick={() => void navigator.clipboard.writeText(window.location.href)}
+          >
+            ↗
+          </button>
+          <LeaveButton onLeave={onLeave} />
+        </div>
       </header>
 
       <AnimatePresence>
@@ -222,7 +287,7 @@ export function GameTable({ view, sendCommand }: GameTableProps) {
               round !== undefined &&
               round.currentTrick === undefined && (
                 <div className="phase-message bid-message">
-                  <Countdown deadline={round.biddingDeadline} />
+                  <Countdown deadline={round.biddingDeadline} now={serverNow} />
                   <strong>
                     {round.currentBid ? "Raise or pass" : "Declare trump"}
                   </strong>
@@ -269,6 +334,9 @@ export function GameTable({ view, sendCommand }: GameTableProps) {
                       ? "Your lead"
                       : "Waiting for lead"}
                   </small>
+                  {round.currentTurnSeat === view.you.seat && (
+                    <Countdown deadline={turnDeadline ?? undefined} now={serverNow} />
+                  )}
                 </div>
               )}
           </div>
@@ -280,7 +348,18 @@ export function GameTable({ view, sendCommand }: GameTableProps) {
           <span>
             YOUR HAND <b>{cards.length}</b>
           </span>
-          <span>{selected.size} selected</span>
+          <span>
+            {selected.size} selected
+            {selected.size > 0 && (
+              <button
+                type="button"
+                className="clear-selection"
+                onClick={clearSelection}
+              >
+                Clear
+              </button>
+            )}
+          </span>
         </div>
         <div className="hand-scroll" role="group" aria-label="Your hand">
           {cards.map((card, index) => (
