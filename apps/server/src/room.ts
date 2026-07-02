@@ -234,7 +234,15 @@ export class Room {
       this.sendSnapshot(playerId, socket);
       return;
     }
-    if (envelope.expectedRevision !== this.currentState.revision) {
+    // During the deal the revision advances every few milliseconds as cards
+    // go out, so a client can never hold the current revision long enough to
+    // bid. Commands are fully re-validated against the live state, so a
+    // stale envelope is safe to accept here; every other phase keeps strict
+    // optimistic concurrency.
+    if (
+      envelope.expectedRevision !== this.currentState.revision &&
+      this.currentState.phase !== "dealing"
+    ) {
       this.reject(
         socket,
         envelope.requestId,
