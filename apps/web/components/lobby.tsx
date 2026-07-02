@@ -2,6 +2,7 @@
 
 import type { PrivateGameView, WireClientCommand } from "@shengji/protocol";
 import { useState } from "react";
+import { teamLabelForSeat } from "../lib/strings";
 import { LeaveButton } from "./leave-button";
 
 type LobbyProps = {
@@ -54,7 +55,6 @@ export function Lobby({ view, sendCommand, onLeave }: LobbyProps) {
         <div className="seat-picker">
           {view.seats.map((seat) => {
             const isYou = seat.playerId === view.you.playerId;
-            const teammate = seat.seat % 2 === (view.you.seat ?? seat.seat) % 2;
             return (
               <button
                 key={seat.seat}
@@ -73,9 +73,7 @@ export function Lobby({ view, sendCommand, onLeave }: LobbyProps) {
                     ? "You"
                     : seat.playerId === null
                       ? "Tap to sit"
-                      : teammate
-                        ? "Team gold"
-                        : "Team ember"}
+                      : `Team ${teamLabelForSeat(seat.seat).toLowerCase()}`}
                 </small>
                 {seat.ready && <span className="ready-stamp">READY</span>}
               </button>

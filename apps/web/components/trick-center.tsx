@@ -4,6 +4,7 @@ import type { PrivateGameView } from "@shengji/protocol";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { relativeSeatPosition, type TablePosition } from "../lib/cards";
+import { TRICK_SWEEP_MS } from "../lib/constants";
 import { Countdown } from "./countdown";
 import { PlayingCard } from "./card";
 
@@ -41,7 +42,7 @@ function useTrickSweep(view: PrivateGameView): Sweep | null {
       round.completedTricksSummary.at(-1)?.winnerSeat ?? round.currentTurnSeat;
     if (winnerSeat === undefined) return;
     setSweep({ plays: previous.plays, winnerSeat });
-    const timer = setTimeout(() => setSweep(null), 700);
+    const timer = setTimeout(() => setSweep(null), TRICK_SWEEP_MS);
     return () => clearTimeout(timer);
   }, [round]);
 

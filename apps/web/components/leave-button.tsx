@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { LEAVE_CONFIRM_MS } from "../lib/constants";
 
 /**
  * Two-tap leave control: the first tap arms a short confirmation window
@@ -11,7 +12,7 @@ export function LeaveButton({ onLeave }: { onLeave: () => void }) {
 
   useEffect(() => {
     if (!confirming) return;
-    const timer = setTimeout(() => setConfirming(false), 3_000);
+    const timer = setTimeout(() => setConfirming(false), LEAVE_CONFIRM_MS);
     return () => clearTimeout(timer);
   }, [confirming]);
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useGameRoom } from "../hooks/use-game-room";
+import { NOTICE_DISMISS_MS } from "../lib/constants";
 import { GameTable } from "./game-table";
 import { Lobby } from "./lobby";
 
@@ -30,7 +31,7 @@ function useConnectionNotices(
 
   useEffect(() => {
     if (notice === null) return;
-    const timer = setTimeout(() => setNotice(null), 5_000);
+    const timer = setTimeout(() => setNotice(null), NOTICE_DISMISS_MS);
     return () => clearTimeout(timer);
   }, [notice]);
 
