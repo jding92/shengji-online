@@ -19,6 +19,7 @@ export function PracticeRoomClient({ roomId }: { roomId: string }) {
   const p4 = useGameRoom(roomId, "practice-4");
   const players = [p1, p2, p3, p4];
   const [active, setActive] = useState(0);
+  const [joinError, setJoinError] = useState<string | null>(null);
   const joinAttempted = useRef(new Set<number>());
 
   // Auto-join all four seats' sessions once.
@@ -26,8 +27,8 @@ export function PracticeRoomClient({ roomId }: { roomId: string }) {
     players.forEach((player, index) => {
       if (player.status === "join-required" && !joinAttempted.current.has(index)) {
         joinAttempted.current.add(index);
-        void player.join(PLAYER_NAMES[index]!).catch(() => {
-          joinAttempted.current.delete(index);
+        void player.join(PLAYER_NAMES[index]!).catch((cause: unknown) => {
+          setJoinError(cause instanceof Error ? cause.message : "Could not join");
         });
       }
     });
@@ -36,6 +37,27 @@ export function PracticeRoomClient({ roomId }: { roomId: string }) {
 
   const current = players[active]!;
   const view = current.view;
+
+  // A join rejection (e.g. the game started in another browser) would
+  // otherwise leave the loading screen up forever: practice sessions live
+  // in the browser that created the table.
+  if (view === null && joinError !== null) {
+    return (
+      <main className="join-shell">
+        <section className="join-card glass-panel">
+          <span className="brand-mark large">升</span>
+          <h1>Can’t open this practice table</h1>
+          <p>
+            {joinError}. Practice tables can only be controlled from the browser that
+            created them — start a fresh one from the menu.
+          </p>
+          <a className="button button-primary menu-button" href="/">
+            Back to the menu
+          </a>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <>
