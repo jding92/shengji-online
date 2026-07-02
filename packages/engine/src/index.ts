@@ -8,6 +8,7 @@ export * from "./scoring/scoring.js";
 export * from "./scoring/ranks.js";
 export * from "./simulation/round-simulator.js";
 export * from "./state/model.js";
+export * from "./state/autoplay.js";
 export * from "./state/commands.js";
 export * from "./state/reducer.js";
 export * from "./throws/throws.js";

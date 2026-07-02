@@ -46,6 +46,10 @@ export const fourPlayerTwoDeckFixedTeamRuleset = {
       perCard: 2,
     },
   },
+  turns: {
+    playTimeoutSeconds: 60,
+    disconnectedTimeoutSeconds: 10,
+  },
   trickPlay: {
     formats: ["single", "tuple", "tractor", "throw"],
     mustFollowEffectiveSuit: true,

@@ -35,6 +35,7 @@ export const sixPlayerThreeDeckFutureRuleset = {
     size: 6,
     lastTrickMultiplier: { strategy: "per-card-in-largest-component", perCard: 2 },
   },
+  turns: { playTimeoutSeconds: 60, disconnectedTimeoutSeconds: 10 },
   trickPlay: {
     formats: ["single", "tuple", "tractor", "throw"],
     mustFollowEffectiveSuit: true,
