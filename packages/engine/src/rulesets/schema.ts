@@ -48,12 +48,10 @@ export const shengJiRulesetSchema = z
     }),
     bottom: z.object({
       size: z.number().int().nonnegative(),
-      lastTrickMultipliers: z.object({
-        single: z.number().int().positive(),
-        pair: z.number().int().positive(),
-        tractor: z.number().int().positive(),
+      lastTrickMultiplier: z.object({
+        strategy: z.literal("per-card-in-largest-component"),
+        perCard: z.number().int().positive(),
       }),
-      throwMultiplierStrategy: z.literal("longest-component"),
     }),
     trickPlay: z.object({
       formats: z.array(z.enum(["single", "tuple", "tractor", "throw"])).min(1),

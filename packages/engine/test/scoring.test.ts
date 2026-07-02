@@ -1,11 +1,30 @@
 import { describe, expect, it } from "vitest";
 import {
+  createDeck,
   fourPlayerTwoDeckFixedTeamRuleset,
   getBottomMultiplier,
+  parseThrow,
+  parseTrickFormat,
   scoreRound,
+  type CardInstance,
+  type Rank,
+  type Suit,
+  type TrumpSpec,
 } from "../src/index.js";
 
 const { scoring, bottom } = fourPlayerTwoDeckFixedTeamRuleset;
+const trump: TrumpSpec = { mode: "suit", rank: "2", suit: "hearts" };
+const deck = createDeck(3);
+
+function cards(suit: Suit, rank: Rank, count: number): CardInstance[] {
+  const matches = deck.filter(
+    (card) =>
+      card.face.kind === "standard" &&
+      card.face.suit === suit &&
+      card.face.rank === rank,
+  );
+  return matches.slice(0, count);
+}
 
 describe("round scoring", () => {
   it.each([
@@ -32,15 +51,31 @@ describe("round scoring", () => {
 });
 
 describe("bottom multipliers", () => {
-  it("uses 2x, 4x, and 8x for singles, pairs, and tractors", () => {
-    expect(getBottomMultiplier({ kind: "single" }, bottom)).toBe(2);
-    expect(getBottomMultiplier({ kind: "tuple", tupleSize: 2 }, bottom)).toBe(4);
-    expect(getBottomMultiplier({ kind: "tractor" }, bottom)).toBe(8);
+  it("doubles per card in the largest component: single 2x, pair 4x, triple 6x", () => {
+    expect(
+      getBottomMultiplier(parseTrickFormat(cards("spades", "9", 1), trump), bottom),
+    ).toBe(2);
+    expect(
+      getBottomMultiplier(parseTrickFormat(cards("spades", "9", 2), trump), bottom),
+    ).toBe(4);
+    expect(
+      getBottomMultiplier(parseTrickFormat(cards("spades", "9", 3), trump), bottom),
+    ).toBe(6);
   });
 
-  it("uses the longest throw component", () => {
-    expect(
-      getBottomMultiplier({ kind: "throw", longestComponent: "tractor" }, bottom),
-    ).toBe(8);
+  it("scales with tractor length: two-pair 8x, three-pair 12x", () => {
+    const twoPair = [...cards("spades", "9", 2), ...cards("spades", "10", 2)];
+    const threePair = [...twoPair, ...cards("spades", "J", 2)];
+    expect(getBottomMultiplier(parseTrickFormat(twoPair, trump), bottom)).toBe(8);
+    expect(getBottomMultiplier(parseTrickFormat(threePair, trump), bottom)).toBe(12);
+  });
+
+  it("uses the largest component of a throw", () => {
+    const throwCards = [
+      ...cards("spades", "9", 2),
+      ...cards("spades", "10", 2),
+      ...cards("spades", "A", 1),
+    ];
+    expect(getBottomMultiplier(parseThrow(throwCards, trump), bottom)).toBe(8);
   });
 });

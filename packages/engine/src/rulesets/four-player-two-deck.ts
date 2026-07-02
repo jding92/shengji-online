@@ -40,12 +40,10 @@ export const fourPlayerTwoDeckFixedTeamRuleset = {
   },
   bottom: {
     size: 8,
-    lastTrickMultipliers: {
-      single: 2,
-      pair: 4,
-      tractor: 8,
+    lastTrickMultiplier: {
+      strategy: "per-card-in-largest-component",
+      perCard: 2,
     },
-    throwMultiplierStrategy: "longest-component",
   },
   trickPlay: {
     formats: ["single", "tuple", "tractor", "throw"],
@@ -56,8 +54,8 @@ export const fourPlayerTwoDeckFixedTeamRuleset = {
     enabled: true,
     failedThrowResolution: "force-smallest-failing-component",
     failedThrowAttackerPointDelta: {
-      defenderFailedThrow: 10,
-      attackerFailedThrow: -10,
+      defenderFailedThrow: 0,
+      attackerFailedThrow: 0,
     },
   },
   scoring: {

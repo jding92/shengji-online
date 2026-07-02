@@ -31,6 +31,14 @@ const attemptedThrow = [
   one("spades", "9"),
 ];
 
+const penaltyRules = {
+  ...fourPlayerTwoDeckFixedTeamRuleset.throws,
+  failedThrowAttackerPointDelta: {
+    defenderFailedThrow: 10,
+    attackerFailedThrow: -10,
+  },
+};
+
 describe("throw resolution", () => {
   it("allows a throw when no opponent can beat any component", () => {
     const result = resolveThrowAttempt({
@@ -47,13 +55,24 @@ describe("throw resolution", () => {
     expect(result.kind).toBe("successful");
   });
 
-  it("forces the smallest failing component and awards +10 for a defender failure", () => {
+  it("imposes no point penalty on a failed throw by default", () => {
     const result = resolveThrowAttempt({
       cards: attemptedThrow,
       opponents: [{ seat: 1, hand: [one("spades", "10")] }],
       trump,
       throwingRole: "defenders",
       rules: fourPlayerTwoDeckFixedTeamRuleset.throws,
+    });
+    expect(result).toMatchObject({ kind: "failed", pointDeltaToAttackers: 0 });
+  });
+
+  it("forces the smallest failing component and awards +10 for a defender failure when the penalty is enabled", () => {
+    const result = resolveThrowAttempt({
+      cards: attemptedThrow,
+      opponents: [{ seat: 1, hand: [one("spades", "10")] }],
+      trump,
+      throwingRole: "defenders",
+      rules: penaltyRules,
     });
     expect(result.kind).toBe("failed");
     if (result.kind === "failed") {
@@ -64,13 +83,13 @@ describe("throw resolution", () => {
     }
   });
 
-  it("subtracts 10 when an attacker fails a throw", () => {
+  it("subtracts 10 when an attacker fails a throw and the penalty is enabled", () => {
     const result = resolveThrowAttempt({
       cards: attemptedThrow,
       opponents: [{ seat: 2, hand: [one("spades", "10")] }],
       trump,
       throwingRole: "attackers",
-      rules: fourPlayerTwoDeckFixedTeamRuleset.throws,
+      rules: penaltyRules,
     });
     expect(result).toMatchObject({ kind: "failed", pointDeltaToAttackers: -10 });
   });
