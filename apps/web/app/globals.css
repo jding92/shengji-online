@@ -926,6 +926,22 @@ button:disabled {
   color: var(--gold);
 }
 
+.playing-card.is-hinted {
+  border-color: var(--gold-line-strong);
+  box-shadow:
+    0 0 0 1px var(--gold-line),
+    0 0 18px var(--gold-tint),
+    0 10px 22px rgba(0, 0, 0, 0.35);
+}
+
+.throw-warning {
+  margin: 8px auto 0;
+  max-width: 640px;
+  color: var(--gold);
+  font-size: 0.74rem;
+  text-align: center;
+}
+
 .bid-badge {
   position: absolute;
   top: -12px;
@@ -1289,6 +1305,28 @@ button:disabled {
   width: 8px;
   height: 13px;
   border-radius: 2px;
+}
+.bottom-reveal {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+  justify-items: center;
+}
+.bottom-reveal small {
+  color: var(--gold);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+.bottom-reveal-cards {
+  display: flex;
+  justify-content: center;
+}
+.bottom-reveal-cards .playing-card {
+  margin-left: -26px;
+}
+.bottom-reveal-cards .playing-card:first-child {
+  margin-left: 0;
 }
 .victory-mark {
   display: block;

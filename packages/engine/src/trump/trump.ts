@@ -1,3 +1,4 @@
+import { cardFaceKey } from "../cards/deck.js";
 import {
   RANKS,
   SUITS,
@@ -102,5 +103,9 @@ export function compareCardsForSort(
   const rankDifference =
     getEffectiveRankGroup(a, trump).order - getEffectiveRankGroup(b, trump).order;
   if (rankDifference !== 0) return rankDifference;
+  // Equal-order cards (e.g. off-suit trump-rank cards) still group by face
+  // so identical cards sit together instead of interleaving by deck.
+  const faceDifference = cardFaceKey(a.face).localeCompare(cardFaceKey(b.face));
+  if (faceDifference !== 0) return faceDifference;
   return a.id.localeCompare(b.id);
 }

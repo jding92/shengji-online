@@ -3,7 +3,12 @@
 import type { PrivateGameView, WireClientCommand } from "@shengji/protocol";
 import { AnimatePresence, LayoutGroup, motion } from "motion/react";
 import { useCallback, useEffect, useMemo } from "react";
-import { compareCardsForSort } from "@shengji/engine";
+import {
+  compareCardsForSort,
+  getEffectiveSuit,
+  parseThrow,
+  parseTrickFormat,
+} from "@shengji/engine";
 import { useCardSelection } from "../hooks/use-card-selection";
 import { relativeSeatPosition } from "../lib/cards";
 import { HandDock } from "./hand-dock";
@@ -28,6 +33,7 @@ export function GameTable({
   serverNow,
 }: GameTableProps) {
   const round = view.publicRound;
+  const actions = useMemo(() => new Set(view.legalActions), [view.legalActions]);
   // Sort trump-aware: before a suit is declared, treat the level rank as
   // no-trump so level cards group with the jokers instead of their suits.
   const cards = useMemo(() => {
@@ -38,7 +44,53 @@ export function GameTable({
     return [...view.you.hand].sort((a, b) => compareCardsForSort(a, b, trump));
   }, [view.you.hand, round?.trumpSpec, round?.trumpRank]);
   const { selected, selectedCards, toggle, clear } = useCardSelection(cards);
-  const actions = useMemo(() => new Set(view.legalActions), [view.legalActions]);
+
+  // Would the current selection lead as a throw (multiple components)?
+  // Only meaningful when leading; followers may legally mix suits when void.
+  const selectionKind = useMemo((): "normal" | "throw" | "unleadable" => {
+    const trump = round?.trumpSpec;
+    if (trump === undefined || selectedCards.length < 2) return "normal";
+    try {
+      parseTrickFormat(selectedCards, trump);
+      return "normal";
+    } catch {
+      try {
+        return parseThrow(selectedCards, trump).components.length > 1
+          ? "throw"
+          : "normal";
+      } catch {
+        return "unleadable";
+      }
+    }
+  }, [selectedCards, round?.trumpSpec]);
+
+  // Decision hints: bid-eligible cards while bidding; led-suit cards on your
+  // turn to follow. An empty set means anything goes.
+  const hinted = useMemo(() => {
+    const ids = new Set<string>();
+    if (actions.has("bid")) {
+      for (const card of cards) {
+        if (card.face.kind === "joker" || card.face.rank === round?.trumpRank) {
+          ids.add(card.id);
+        }
+      }
+      return ids;
+    }
+    const leadPlay = round?.currentTrick?.plays[0];
+    if (
+      view.phase === "playing" &&
+      round?.currentTurnSeat === view.you.seat &&
+      leadPlay !== undefined &&
+      leadPlay.cards[0] !== undefined &&
+      round.trumpSpec !== undefined
+    ) {
+      const ledSuit = getEffectiveSuit(leadPlay.cards[0], round.trumpSpec);
+      for (const card of cards) {
+        if (getEffectiveSuit(card, round.trumpSpec) === ledSuit) ids.add(card.id);
+      }
+    }
+    return ids;
+  }, [actions, cards, round, view.phase, view.you.seat]);
 
   const submit = useCallback(
     (command: WireClientCommand) => {
@@ -50,6 +102,8 @@ export function GameTable({
   const primaryAction = useCallback((): WireClientCommand | null => {
     const cardIds = selectedCards.map(({ id }) => id);
     if (actions.has("play-cards") && cardIds.length > 0) {
+      // Throws need the explicit two-tap button, never the Enter shortcut.
+      if (actions.has("attempt-throw") && selectionKind !== "normal") return null;
       return { type: "PLAY_CARDS", cards: cardIds, intent: "normal" };
     }
     if (actions.has("bury-bottom") && cardIds.length === view.ruleset.bottomSize) {
@@ -59,7 +113,7 @@ export function GameTable({
       return { type: "BID", cards: cardIds };
     }
     return null;
-  }, [actions, selectedCards, view.ruleset.bottomSize]);
+  }, [actions, selectedCards, selectionKind, view.ruleset.bottomSize]);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -176,6 +230,8 @@ export function GameTable({
           cards={cards}
           selected={selected}
           selectedCards={selectedCards}
+          hinted={hinted}
+          selectionKind={selectionKind}
           onToggle={toggle}
           onClear={clear}
           actions={actions}

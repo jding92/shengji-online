@@ -70,6 +70,12 @@ export type RoundState = {
   };
   finalTrickWinnerSeat?: SeatIndex;
   outcome?: RoundOutcome;
+  /** Set when the round ends: the buried bottom revealed to everyone. */
+  bottomReveal?: {
+    cards: string[];
+    multiplier: number;
+    pointsAwarded: number;
+  };
 };
 
 export type GameState = {
