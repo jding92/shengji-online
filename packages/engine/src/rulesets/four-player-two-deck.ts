@@ -61,7 +61,7 @@ export const fourPlayerTwoDeckFixedTeamRuleset = {
   scoring: {
     model: "thresholds",
     thresholds: [
-      { min: 0, maxExclusive: 1, winner: "defenders", levelDelta: 3 },
+      { maxExclusive: 1, winner: "defenders", levelDelta: 3 },
       { min: 1, maxExclusive: 40, winner: "defenders", levelDelta: 2 },
       { min: 40, maxExclusive: 80, winner: "defenders", levelDelta: 1 },
       { min: 80, maxExclusive: 120, winner: "attackers", levelDelta: 0 },

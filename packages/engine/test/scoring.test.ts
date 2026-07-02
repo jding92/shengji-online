@@ -28,6 +28,8 @@ function cards(suit: Suit, rank: Rank, count: number): CardInstance[] {
 
 describe("round scoring", () => {
   it.each([
+    [-50, "defenders", 3],
+    [-10, "defenders", 3],
     [0, "defenders", 3],
     [1, "defenders", 2],
     [39, "defenders", 2],

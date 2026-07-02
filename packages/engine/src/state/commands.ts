@@ -178,10 +178,8 @@ function finishRoundEvents(state: GameState, at: string): GameEvent[] {
   };
   const afterBottom = applyEvent(state, bottomEvent);
   const afterBottomRound = afterBottom.round!;
-  const finalAttackerPoints = Math.max(
-    0,
-    afterBottomRound.attackerPoints + afterBottomRound.throwPenaltyAdjustment,
-  );
+  const finalAttackerPoints =
+    afterBottomRound.attackerPoints + afterBottomRound.throwPenaltyAdjustment;
   const outcome = scoreRound(finalAttackerPoints, state.rulesetSnapshot.scoring);
   const scoreEvent: GameEvent = { type: "ROUND_SCORED", outcome, at };
   const events: GameEvent[] = [bottomEvent, scoreEvent];

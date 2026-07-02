@@ -4,7 +4,8 @@ import { RANKS } from "../types.js";
 const bidTierSchema = z.enum(["level-card", "small-joker", "big-joker"]);
 
 const scoringThresholdSchema = z.object({
-  min: z.number().int().nonnegative(),
+  /** Inclusive lower bound; omit on the first threshold for an open lower bound. */
+  min: z.number().int().nonnegative().optional(),
   maxExclusive: z.number().int().positive().optional(),
   winner: z.enum(["defenders", "attackers"]),
   levelDelta: z.number().int().nonnegative(),
@@ -134,11 +135,19 @@ export const shengJiRulesetSchema = z
     for (let index = 0; index < thresholds.length; index += 1) {
       const threshold = thresholds[index];
       if (threshold === undefined) continue;
-      if (index === 0 && threshold.min !== 0) {
+      if (index === 0 && threshold.min !== undefined) {
         context.addIssue({
           code: "custom",
           path: ["scoring", "thresholds", index, "min"],
-          message: "Scoring thresholds must start at 0",
+          message:
+            "The first scoring threshold must be open-ended below to cover throw penalties",
+        });
+      }
+      if (index > 0 && threshold.min === undefined) {
+        context.addIssue({
+          code: "custom",
+          path: ["scoring", "thresholds", index, "min"],
+          message: "Only the first threshold may omit min",
         });
       }
       const next = thresholds[index + 1];
