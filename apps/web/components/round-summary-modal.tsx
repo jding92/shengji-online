@@ -3,6 +3,7 @@
 import type { PrivateGameView, WireClientCommand } from "@shengji/protocol";
 import { AnimatePresence, animate, motion, useReducedMotion } from "motion/react";
 import { useEffect, useState } from "react";
+import { PlayingCard } from "./card";
 
 const CONFETTI_COLORS = ["var(--gold)", "var(--accent-bright)", "var(--ink)"];
 
@@ -130,6 +131,21 @@ export function RoundSummaryModal({
                 </motion.strong>
               </span>
             </div>
+            {round.bottomReveal && (
+              <div className="bottom-reveal">
+                <small>
+                  BOTTOM · 底牌 ×{round.bottomReveal.multiplier}
+                  {round.bottomReveal.pointsAwarded > 0
+                    ? ` → +${round.bottomReveal.pointsAwarded} to attackers`
+                    : " → no points (defenders took the last trick)"}
+                </small>
+                <div className="bottom-reveal-cards">
+                  {round.bottomReveal.cards.map((card) => (
+                    <PlayingCard key={card.id} card={card} compact />
+                  ))}
+                </div>
+              </div>
+            )}
             {gameOver ? (
               <p>Thanks for playing — start a new room for another climb.</p>
             ) : (

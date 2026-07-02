@@ -135,6 +135,11 @@ describe("round completion", () => {
     expect(completed.phase).toBe("round-scoring");
     expect(completed.ranks).toMatchObject({ p0: "3", p2: "3" });
     expect(completed.leaderSeat).toBe(2);
+    expect(completed.round?.bottomReveal).toMatchObject({
+      multiplier: 2,
+      pointsAwarded: 40,
+    });
+    expect(completed.round?.bottomReveal?.cards).toHaveLength(8);
   });
 
   it("lets throw penalties drive the attacker total negative instead of clamping to 0", () => {

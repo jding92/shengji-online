@@ -5,12 +5,16 @@ import type {
   PrivateGameView,
   WireClientCommand,
 } from "@shengji/protocol";
+import { AnimatePresence, motion } from "motion/react";
+import { useEffect, useState } from "react";
 import { PlayingCard } from "./card";
 
 export function HandDock({
   cards,
   selected,
   selectedCards,
+  hinted,
+  selectionKind,
   onToggle,
   onClear,
   actions,
@@ -20,6 +24,8 @@ export function HandDock({
   cards: readonly CardInstance[];
   selected: ReadonlySet<string>;
   selectedCards: readonly CardInstance[];
+  hinted: ReadonlySet<string>;
+  selectionKind: "normal" | "throw" | "unleadable";
   onToggle: (card: CardInstance, index: number, shift: boolean) => void;
   onClear: () => void;
   actions: ReadonlySet<PrivateGameView["legalActions"][number]>;
@@ -27,6 +33,26 @@ export function HandDock({
   submit: (command: WireClientCommand) => void;
 }) {
   const selectedIds = selectedCards.map(({ id }) => id);
+  const isLeading = actions.has("attempt-throw");
+  const isThrow = isLeading && selectionKind === "throw";
+  const [confirmingThrow, setConfirmingThrow] = useState(false);
+  const selectionSignature = selectedIds.join(",");
+
+  // Changing the selection disarms a pending throw confirmation.
+  useEffect(() => setConfirmingThrow(false), [selectionSignature]);
+
+  function play() {
+    if (!isThrow) {
+      submit({ type: "PLAY_CARDS", cards: selectedIds, intent: "normal" });
+      return;
+    }
+    if (!confirmingThrow) {
+      setConfirmingThrow(true);
+      return;
+    }
+    submit({ type: "PLAY_CARDS", cards: selectedIds, intent: "throw" });
+  }
+
   return (
     <section className="hand-dock">
       <div className="hand-meta">
@@ -49,10 +75,25 @@ export function HandDock({
             card={card}
             entrance="deal"
             selected={selected.has(card.id)}
+            hinted={hinted.has(card.id)}
             onSelect={(event) => onToggle(card, index, event.shiftKey)}
           />
         ))}
       </div>
+
+      <AnimatePresence>
+        {confirmingThrow && (
+          <motion.p
+            className="throw-warning"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+          >
+            This is a throw (甩牌): every part must be unbeatable. If an opponent can
+            beat any part, you are forced to lead its smallest piece instead.
+          </motion.p>
+        )}
+      </AnimatePresence>
 
       <div className="action-dock">
         {actions.has("pass-bid") && (
@@ -84,28 +125,20 @@ export function HandDock({
             Bury {selectedIds.length} / {bottomSize}
           </button>
         )}
-        {actions.has("attempt-throw") && (
-          <button
-            className="button button-ghost"
-            type="button"
-            disabled={selectedIds.length < 2}
-            onClick={() =>
-              submit({ type: "PLAY_CARDS", cards: selectedIds, intent: "throw" })
-            }
-          >
-            Throw / 甩牌
-          </button>
-        )}
         {actions.has("play-cards") && (
           <button
-            className="button button-primary"
+            className={`button ${isThrow ? "button-gold" : "button-primary"}`}
             type="button"
-            disabled={selectedIds.length === 0}
-            onClick={() =>
-              submit({ type: "PLAY_CARDS", cards: selectedIds, intent: "normal" })
+            disabled={
+              selectedIds.length === 0 || (isLeading && selectionKind === "unleadable")
             }
+            onClick={play}
           >
-            Play selected
+            {isThrow
+              ? confirmingThrow
+                ? "Confirm throw 甩牌"
+                : "Play throw 甩牌"
+              : "Play selected"}
           </button>
         )}
       </div>

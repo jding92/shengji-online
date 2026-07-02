@@ -86,6 +86,12 @@ export type PrivateGameView = {
       winner: "defenders" | "attackers";
       levelDelta: number;
     };
+    /** The buried bottom, revealed to everyone once the round is scored. */
+    bottomReveal?: {
+      cards: CardInstance[];
+      multiplier: number;
+      pointsAwarded: number;
+    };
   };
   legalActions: LegalAction[];
 };

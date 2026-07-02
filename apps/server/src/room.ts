@@ -52,7 +52,7 @@ export class Room {
     this.timersEnabled = options.timersEnabled ?? true;
     this.dealIntervalMs =
       options.dealIntervalMs ??
-      Number.parseInt(process.env.DEAL_INTERVAL_MS ?? "45", 10);
+      Number.parseInt(process.env.DEAL_INTERVAL_MS ?? "600", 10);
     if (options.turnTimeoutMsOverride !== undefined) {
       this.turnTimeoutMsOverride = options.turnTimeoutMsOverride;
     }

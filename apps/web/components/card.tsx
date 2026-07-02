@@ -16,6 +16,8 @@ type CardProps = {
   selected?: boolean;
   compact?: boolean;
   disabled?: boolean;
+  /** Soft gold glow marking cards relevant to the current decision. */
+  hinted?: boolean;
   /** "deal" drops in from above (hand cards); "pop" scales in (table plays). */
   entrance?: "deal" | "pop";
   onSelect?: (event: MouseEvent<HTMLButtonElement>) => void;
@@ -26,6 +28,7 @@ export function PlayingCard({
   selected = false,
   compact = false,
   disabled = false,
+  hinted = false,
   entrance = "pop",
   onSelect,
 }: CardProps) {
@@ -66,7 +69,7 @@ export function PlayingCard({
       aria-label={display.label}
       aria-pressed={selected}
       disabled={disabled || onSelect === undefined}
-      className={`playing-card card-${display.color} ${selected ? "is-selected" : ""} ${compact ? "is-compact" : ""}`}
+      className={`playing-card card-${display.color} ${selected ? "is-selected" : ""} ${compact ? "is-compact" : ""} ${hinted ? "is-hinted" : ""}`}
       onClick={onSelect}
       initial={initial}
       animate={{ opacity: 1, y: selected ? -18 : 0, scale: 1, rotate: 0 }}

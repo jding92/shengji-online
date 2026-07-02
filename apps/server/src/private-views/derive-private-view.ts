@@ -125,6 +125,15 @@ export function derivePrivateView(state: GameState, playerId: string): PrivateGa
             buriedBottomCount: round.buriedBottom?.length ?? 0,
             ...(round.lastThrow === undefined ? {} : { lastThrow: round.lastThrow }),
             ...(round.outcome === undefined ? {} : { outcome: round.outcome }),
+            ...(round.bottomReveal === undefined
+              ? {}
+              : {
+                  bottomReveal: {
+                    cards: round.bottomReveal.cards.map((id) => round.cards[id]!),
+                    multiplier: round.bottomReveal.multiplier,
+                    pointsAwarded: round.bottomReveal.pointsAwarded,
+                  },
+                }),
           },
         }),
     legalActions: legalActions(state, playerId),

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   compareCards,
+  compareCardsForSort,
   createDeck,
   getEffectiveRankGroup,
   getEffectiveSuit,
@@ -8,6 +9,7 @@ import {
   type CardInstance,
   type Rank,
   type Suit,
+  type TrumpSpec,
 } from "../src/index.js";
 
 const deck = createDeck(2);
@@ -92,5 +94,30 @@ describe("no-trump behavior", () => {
     const big = getEffectiveRankGroup(joker("big"), trump);
     expect(small.order - level.order).toBe(1);
     expect(big.order - small.order).toBe(1);
+  });
+});
+
+describe("hand sort grouping", () => {
+  it("groups equal-order trump-rank cards by suit instead of deck order", () => {
+    const deck = createDeck(2);
+    const trump: TrumpSpec = { mode: "suit", rank: "2", suit: "hearts" };
+    const twos = deck.filter(
+      (card) => card.face.kind === "standard" && card.face.rank === "2",
+    );
+    const sorted = [...twos].sort((a, b) => compareCardsForSort(a, b, trump));
+    const suits = sorted.map((card) =>
+      card.face.kind === "standard" ? card.face.suit : "joker",
+    );
+    // Both copies of each off-suit two sit adjacent; hearts (primary) last.
+    expect(suits).toEqual([
+      "clubs",
+      "clubs",
+      "diamonds",
+      "diamonds",
+      "spades",
+      "spades",
+      "hearts",
+      "hearts",
+    ]);
   });
 });

@@ -247,7 +247,13 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
       break;
     }
     case "BOTTOM_REVEALED": {
-      requireRound(next).attackerPoints += event.pointsAwarded;
+      const round = requireRound(next);
+      round.attackerPoints += event.pointsAwarded;
+      round.bottomReveal = {
+        cards: [...event.cards],
+        multiplier: event.multiplier,
+        pointsAwarded: event.pointsAwarded,
+      };
       break;
     }
     case "ROUND_SCORED": {
