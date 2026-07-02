@@ -113,6 +113,42 @@ function roundStartedEvent(input: {
   };
 }
 
+function nextRoundEvents(state: GameState, seed: string, at: string): GameEvent[] {
+  const seat = state.leaderSeat;
+  const playerId = seat === undefined ? undefined : state.seats[seat];
+  const trumpRank =
+    playerId === null || playerId === undefined ? undefined : state.ranks[playerId];
+  if (trumpRank === undefined) throw new Error("Leader rank is unavailable");
+  return [
+    roundStartedEvent({
+      state,
+      seed,
+      roundNumber: (state.round?.roundNumber ?? 0) + 1,
+      trumpRank,
+      at,
+    }),
+  ];
+}
+
+/**
+ * Starts the next round on the leader's behalf when their window expires,
+ * so a disconnected leader cannot lock the table in round-scoring.
+ */
+export function getAutoStartNextRoundEvents(
+  state: GameState,
+  at: string,
+  seed: string,
+): GameEvent[] {
+  if (
+    state.phase !== "round-scoring" ||
+    state.round?.outcome === undefined ||
+    state.leaderSeat === undefined
+  ) {
+    return [];
+  }
+  return nextRoundEvents(state, seed, at);
+}
+
 function componentFormat(component: TrickComponent): TrickFormat {
   return {
     kind:
@@ -512,19 +548,7 @@ export function validateCommand(
           "The next leader starts the next round",
         );
       }
-      const playerId = state.seats[seat];
-      const trumpRank =
-        playerId === null || playerId === undefined ? undefined : state.ranks[playerId];
-      if (trumpRank === undefined) throw new Error("Leader rank is unavailable");
-      return [
-        roundStartedEvent({
-          state,
-          seed: requireRoundSeed(context),
-          roundNumber: state.round.roundNumber + 1,
-          trumpRank,
-          at: context.now,
-        }),
-      ];
+      return nextRoundEvents(state, requireRoundSeed(context), context.now);
     }
   }
 }

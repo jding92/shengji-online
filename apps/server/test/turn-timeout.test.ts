@@ -85,13 +85,16 @@ describe("turn timeout auto-play", () => {
       turnTimeoutMsOverride: { connected: 5, disconnected: 5 },
     });
 
-    await vi.waitFor(() => expect(room.state.phase).toBe("round-scoring"), {
-      timeout: 20_000,
+    // Round 1 completes by forced plays alone, and the absent leader's
+    // window expires too, so round 2 auto-starts instead of locking the
+    // table at "waiting for the next leader". Reaching round 2 proves both:
+    // the auto-start only fires from a scored round.
+    await vi.waitFor(() => expect(room.state.round?.roundNumber).toBe(2), {
+      timeout: 30_000,
       interval: 50,
     });
-    expect(room.state.round?.outcome).toBeDefined();
 
     room.close();
     store.close();
-  }, 30_000);
+  }, 40_000);
 });

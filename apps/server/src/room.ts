@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import {
   CommandValidationError,
   finishRoundEvents,
+  getAutoStartNextRoundEvents,
   getFinalizeBiddingEvents,
   getForcedPlayEvents,
   getNextDealEvents,
@@ -164,13 +165,20 @@ export class Room {
   }
 
   /**
-   * Force-plays for the current actor (trick turn or bottom exchange) when
-   * their window expires, so a disconnected or idle player never stalls the
-   * game. Disconnected players get the shorter window.
+   * Acts for the current actor when their window expires — force-plays a
+   * trick turn or bottom exchange, or starts the next round for an absent
+   * leader — so a disconnected or idle player never stalls the game.
+   * Disconnected players get the shorter window.
    */
   private scheduleTurnTimeout(): void {
     const state = this.currentState;
-    if (state.phase !== "playing" && state.phase !== "bottom-exchange") return;
+    if (
+      state.phase !== "playing" &&
+      state.phase !== "bottom-exchange" &&
+      state.phase !== "round-scoring"
+    ) {
+      return;
+    }
     const seat =
       state.phase === "playing" ? state.round?.currentTurnSeat : state.leaderSeat;
     if (seat === undefined) return;
@@ -187,7 +195,12 @@ export class Room {
     this.turnTimer = setTimeout(() => {
       void this.serialize(() => {
         try {
-          this.commit(getForcedPlayEvents(this.currentState, new Date().toISOString()));
+          const now = new Date().toISOString();
+          this.commit(
+            this.currentState.phase === "round-scoring"
+              ? getAutoStartNextRoundEvents(this.currentState, now, randomUUID())
+              : getForcedPlayEvents(this.currentState, now),
+          );
         } catch (error) {
           console.error(
             `Forced play failed in room ${this.currentState.roomId}:`,
