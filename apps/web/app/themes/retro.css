@@ -611,11 +611,7 @@ html[data-theme="retro"] .board {
   border-bottom: 0;
   border-radius: 14px 14px 0 0;
   background:
-    repeating-linear-gradient(
-      0deg,
-      transparent 0 3px,
-      var(--felt-speckle) 3px 4px
-    ),
+    repeating-linear-gradient(0deg, transparent 0 3px, var(--felt-speckle) 3px 4px),
     linear-gradient(180deg, var(--felt), var(--felt-deep));
   box-shadow:
     inset 3px 3px 0 var(--table-rim-hi),
