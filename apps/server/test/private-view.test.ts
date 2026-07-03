@@ -75,6 +75,28 @@ describe("private views", () => {
     expect(derivePrivateView(state, "p0").publicRound?.bottomCount).toBe(8);
   });
 
+  it("exposes bot identity without widening the card boundary", () => {
+    let state = dealtState();
+    state = applyEvent(state, {
+      type: "PLAYER_CONTROL_CHANGED",
+      playerId: "p1",
+      bot: { difficulty: "expert" },
+      at: now,
+    });
+
+    const view = derivePrivateView(state, "p0");
+    expect(view.seats[1]).toMatchObject({
+      isBot: true,
+      botDifficulty: "expert",
+      connected: true,
+    });
+    expect(view.seats[0]).toMatchObject({ isBot: false });
+    const serialized = JSON.stringify(view);
+    for (const cardId of state.round!.hands[1]!) {
+      expect(serialized).not.toContain(cardId);
+    }
+  });
+
   it("shows a buried bottom only to the leader until round scoring", () => {
     const state = dealtState();
     const buried = [...state.round!.bottom];

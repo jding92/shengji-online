@@ -1,6 +1,9 @@
 import { randomUUID } from "node:crypto";
 import {
+  botConfigForDifficulty,
   CommandValidationError,
+  decideBotAction,
+  deriveBotObservation,
   finishRoundEvents,
   getAutoStartNextRoundEvents,
   getFinalizeBiddingEvents,
@@ -9,6 +12,7 @@ import {
   replayEvents,
   validateCommand,
   type ClientCommand,
+  type BotDifficulty,
   type GameEvent,
   type GameState,
 } from "@shengji/engine";
@@ -22,11 +26,20 @@ import WebSocket from "ws";
 import { derivePrivateView } from "./private-views/derive-private-view.js";
 import type { SqliteStore } from "./persistence/sqlite-store.js";
 
-type RoomOptions = {
+export type RoomOptions = {
   timersEnabled?: boolean;
   dealIntervalMs?: number;
   /** Test override for turn timeouts; defaults to the ruleset's seconds. */
   turnTimeoutMsOverride?: { connected: number; disconnected: number };
+  /** Test override for ordinary bot decisions, including bidding and play. */
+  botDelayMsOverride?: { min: number; max: number };
+  /** Round summaries linger longer than ordinary bot decisions. */
+  botNextRoundDelayMs?: number;
+};
+
+type PendingBotTimer = {
+  key: string;
+  timer: NodeJS.Timeout;
 };
 
 export class Room {
@@ -37,12 +50,15 @@ export class Room {
   private bidTimer?: NodeJS.Timeout;
   private turnTimer?: NodeJS.Timeout;
   private tickTimer?: NodeJS.Timeout;
+  private readonly botTimers = new Map<string, PendingBotTimer>();
   private readonly timersEnabled: boolean;
   private readonly dealIntervalMs: number;
   private readonly turnTimeoutMsOverride?: {
     connected: number;
     disconnected: number;
   };
+  private readonly botDelayMsOverride?: { min: number; max: number };
+  private readonly botNextRoundDelayMs: number;
 
   constructor(
     private currentState: GameState,
@@ -56,6 +72,10 @@ export class Room {
     if (options.turnTimeoutMsOverride !== undefined) {
       this.turnTimeoutMsOverride = options.turnTimeoutMsOverride;
     }
+    if (options.botDelayMsOverride !== undefined) {
+      this.botDelayMsOverride = options.botDelayMsOverride;
+    }
+    this.botNextRoundDelayMs = options.botNextRoundDelayMs ?? 10_000;
     this.rescheduleTimers();
   }
 
@@ -100,7 +120,7 @@ export class Room {
     this.broadcastSnapshots();
   }
 
-  private clearTimers(): void {
+  private clearGameTimers(): void {
     if (this.dealTimer !== undefined) clearTimeout(this.dealTimer);
     if (this.bidTimer !== undefined) clearTimeout(this.bidTimer);
     if (this.turnTimer !== undefined) clearTimeout(this.turnTimer);
@@ -109,6 +129,16 @@ export class Room {
     delete this.bidTimer;
     delete this.turnTimer;
     delete this.tickTimer;
+  }
+
+  private clearBotTimers(): void {
+    for (const { timer } of this.botTimers.values()) clearTimeout(timer);
+    this.botTimers.clear();
+  }
+
+  private clearTimers(): void {
+    this.clearGameTimers();
+    this.clearBotTimers();
   }
 
   private startTicking(deadline: string): void {
@@ -126,13 +156,16 @@ export class Room {
   }
 
   private rescheduleTimers(): void {
-    this.clearTimers();
+    this.clearGameTimers();
     // Self-heal: a restored or interrupted room whose final trick already
     // completed can sit in "playing" with empty hands and no outcome.
     if (this.currentState.phase === "playing") {
       this.commit(finishRoundEvents(this.currentState, new Date().toISOString()));
     }
-    if (!this.timersEnabled) return;
+    if (!this.timersEnabled) {
+      this.clearBotTimers();
+      return;
+    }
     if (this.currentState.phase === "dealing") {
       this.dealTimer = setTimeout(() => {
         void this.serialize(() => {
@@ -140,28 +173,149 @@ export class Room {
           this.rescheduleTimers();
         });
       }, this.dealIntervalMs);
-      return;
-    }
-    if (this.currentState.phase === "post-deal-bidding") {
+    } else if (this.currentState.phase === "post-deal-bidding") {
       const deadline = this.currentState.round?.biddingDeadline;
-      if (deadline === undefined) return;
-      const remaining = Math.max(0, Date.parse(deadline) - Date.now());
-      this.bidTimer = setTimeout(() => {
-        void this.serialize(() => {
-          this.commit(
-            getFinalizeBiddingEvents(
-              this.currentState,
-              new Date().toISOString(),
-              randomUUID(),
-            ),
-          );
-          this.rescheduleTimers();
-        });
-      }, remaining);
-      this.startTicking(deadline);
-      return;
+      if (deadline !== undefined) {
+        const remaining = Math.max(0, Date.parse(deadline) - Date.now());
+        this.bidTimer = setTimeout(() => {
+          void this.serialize(() => {
+            this.commit(
+              getFinalizeBiddingEvents(
+                this.currentState,
+                new Date().toISOString(),
+                randomUUID(),
+              ),
+            );
+            this.rescheduleTimers();
+          });
+        }, remaining);
+        this.startTicking(deadline);
+      }
+    } else {
+      this.scheduleTurnTimeout();
     }
-    this.scheduleTurnTimeout();
+    this.scheduleBotActions();
+  }
+
+  private botActionKey(playerId: string): string | null {
+    const state = this.currentState;
+    const player = state.players[playerId];
+    const seat = player?.seat;
+    const round = state.round;
+    if (player?.bot === undefined || seat === null || seat === undefined) {
+      return null;
+    }
+    if (state.phase === "dealing" || state.phase === "post-deal-bidding") {
+      if (
+        round === undefined ||
+        round.currentBid?.seat === seat ||
+        (state.phase === "post-deal-bidding" && round.passedBidSeats.includes(seat))
+      ) {
+        return null;
+      }
+      const bidKey =
+        round.currentBid === undefined
+          ? "none"
+          : `${round.currentBid.seat}:${round.currentBid.count}:${JSON.stringify(round.currentBid.face)}`;
+      return `${state.phase}:${round.roundNumber}:${round.redealCount}:${bidKey}`;
+    }
+    if (state.phase === "bottom-exchange") {
+      return state.leaderSeat === seat
+        ? `bottom-exchange:${round?.roundNumber ?? 0}`
+        : null;
+    }
+    if (state.phase === "playing") {
+      if (round?.currentTurnSeat !== seat) return null;
+      return `playing:${round.roundNumber}:${round.completedTricks.length}:${round.currentTrick?.plays.length ?? 0}`;
+    }
+    if (state.phase === "round-scoring") {
+      return state.leaderSeat === seat
+        ? `round-scoring:${round?.roundNumber ?? 0}`
+        : null;
+    }
+    return null;
+  }
+
+  private botDelayMs(): number {
+    const range =
+      this.botDelayMsOverride ??
+      (this.currentState.phase === "bottom-exchange"
+        ? { min: 2_000, max: 4_000 }
+        : { min: 600, max: 1_500 });
+    const minimum = Math.max(0, Math.min(range.min, range.max));
+    const maximum = Math.max(minimum, Math.max(range.min, range.max));
+    return Math.round(minimum + Math.random() * (maximum - minimum));
+  }
+
+  private scheduleBotActions(): void {
+    const actionable = new Map<string, string>();
+    for (const player of Object.values(this.currentState.players)) {
+      const key = this.botActionKey(player.id);
+      if (key !== null) actionable.set(player.id, key);
+    }
+
+    for (const [playerId, pending] of this.botTimers) {
+      if (actionable.get(playerId) !== pending.key) {
+        clearTimeout(pending.timer);
+        this.botTimers.delete(playerId);
+      }
+    }
+    for (const [playerId, key] of actionable) {
+      if (this.botTimers.has(playerId)) continue;
+      const delay =
+        this.currentState.phase === "round-scoring"
+          ? this.botNextRoundDelayMs
+          : this.botDelayMs();
+      const pending: PendingBotTimer = {
+        key,
+        timer: setTimeout(() => {
+          void this.serialize(() => {
+            if (this.botTimers.get(playerId) !== pending) return;
+            this.botTimers.delete(playerId);
+            this.runBotDecision(playerId);
+          });
+        }, delay),
+      };
+      this.botTimers.set(playerId, pending);
+    }
+  }
+
+  private runBotDecision(playerId: string): void {
+    const player = this.currentState.players[playerId];
+    if (player?.bot === undefined || this.botActionKey(playerId) === null) return;
+    const now = new Date().toISOString();
+    try {
+      const command = decideBotAction(
+        deriveBotObservation(this.currentState, playerId),
+        botConfigForDifficulty(player.bot.difficulty),
+        `${this.currentState.roomId}:${playerId}:${this.currentState.revision}`,
+      );
+      if (command === null) return;
+      this.commit(
+        validateCommand(this.currentState, playerId, command, {
+          now,
+          roundSeed: randomUUID(),
+        }),
+      );
+      this.rescheduleTimers();
+    } catch (error) {
+      console.error(
+        `Bot decision failed for ${playerId} in room ${this.currentState.roomId}:`,
+        error,
+      );
+      try {
+        const fallback = getForcedPlayEvents(this.currentState, now);
+        if (fallback.length > 0) {
+          this.commit(fallback);
+          this.rescheduleTimers();
+        }
+      } catch (fallbackError) {
+        console.error(
+          `Bot fallback failed for ${playerId} in room ${this.currentState.roomId}:`,
+          fallbackError,
+        );
+      }
+    }
   }
 
   /**
@@ -301,15 +455,25 @@ export class Room {
     }
     sockets.add(socket);
     void this.serialize(() => {
-      if (this.currentState.players[playerId]?.connected === false) {
-        this.commit([
-          {
-            type: "PLAYER_CONNECTION_CHANGED",
-            playerId,
-            connected: true,
-            at: new Date().toISOString(),
-          },
-        ]);
+      const player = this.currentState.players[playerId];
+      const events: GameEvent[] = [];
+      if (player?.bot !== undefined) {
+        events.push({
+          type: "PLAYER_CONTROL_CHANGED",
+          playerId,
+          at: new Date().toISOString(),
+        });
+      }
+      if (player?.connected === false) {
+        events.push({
+          type: "PLAYER_CONNECTION_CHANGED",
+          playerId,
+          connected: true,
+          at: new Date().toISOString(),
+        });
+      }
+      if (events.length > 0) {
+        this.commit(events);
         this.rescheduleTimers();
       }
       this.sendSnapshot(playerId, socket);
@@ -364,6 +528,87 @@ export class Room {
 
   addPlayer(playerId: string, name: string, at: string): void {
     this.commit([{ type: "PLAYER_JOINED", playerId, name, at }]);
+  }
+
+  addBot(
+    name: string,
+    seat: number,
+    difficulty: BotDifficulty,
+    at: string,
+    playerId = randomUUID(),
+  ): string {
+    if (this.currentState.phase !== "lobby") {
+      throw new RangeError("Bots can only be added in the lobby");
+    }
+    if (
+      Object.keys(this.currentState.players).length >=
+      this.currentState.rulesetSnapshot.players.count
+    ) {
+      throw new RangeError("Room is full");
+    }
+    const normalizedName = name.trim();
+    if (normalizedName.length < 1 || normalizedName.length > 32) {
+      throw new RangeError("Bot name must be between 1 and 32 characters");
+    }
+    const joined: GameEvent = {
+      type: "PLAYER_JOINED",
+      playerId,
+      name: normalizedName,
+      bot: { difficulty },
+      at,
+    };
+    let preview = replayEvents(this.currentState, [joined]);
+    const seated = validateCommand(
+      preview,
+      playerId,
+      { type: "SIT", seat },
+      { now: at },
+    );
+    preview = replayEvents(preview, seated);
+    const ready = validateCommand(
+      preview,
+      playerId,
+      { type: "READY" },
+      { now: at, roundSeed: randomUUID() },
+    );
+    this.commit([joined, ...seated, ...ready]);
+    this.rescheduleTimers();
+    return playerId;
+  }
+
+  removeBot(playerId: string, at: string): void {
+    if (this.currentState.phase !== "lobby") {
+      throw new RangeError("Bots can only be removed in the lobby");
+    }
+    if (this.currentState.players[playerId]?.bot === undefined) {
+      throw new RangeError("Player is not a bot");
+    }
+    this.commit([{ type: "PLAYER_REMOVED", playerId, at }]);
+    this.rescheduleTimers();
+  }
+
+  takeoverByBot(playerId: string, difficulty: BotDifficulty, at: string): void {
+    const player = this.currentState.players[playerId];
+    if (
+      this.currentState.phase === "lobby" ||
+      this.currentState.phase === "game-over"
+    ) {
+      throw new RangeError("Bot takeover is only available during a game");
+    }
+    if (player === undefined) throw new RangeError("Player not found");
+    if (player.bot !== undefined) throw new RangeError("Player is already a bot");
+    if (player.connected) {
+      throw new RangeError("Connected players cannot be replaced by a bot");
+    }
+    this.commit([
+      {
+        type: "PLAYER_CONTROL_CHANGED",
+        playerId,
+        bot: { difficulty },
+        at,
+      },
+    ]);
+    this.rescheduleTimers();
   }
 
   close(): void {

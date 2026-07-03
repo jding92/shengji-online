@@ -1,5 +1,6 @@
 import type {
   Bid,
+  BotDifficulty,
   CardInstance,
   GamePhase,
   Rank,
@@ -8,7 +9,7 @@ import type {
   TrumpSpec,
 } from "@shengji/engine";
 
-export type { CardInstance } from "@shengji/engine";
+export type { BotDifficulty, CardInstance } from "@shengji/engine";
 
 export type LegalAction =
   | "sit"
@@ -25,6 +26,8 @@ export type SeatView = {
   playerId: string | null;
   name: string | null;
   connected: boolean;
+  isBot: boolean;
+  botDifficulty?: BotDifficulty;
   ready: boolean;
   rank: Rank | null;
   cardCount: number;

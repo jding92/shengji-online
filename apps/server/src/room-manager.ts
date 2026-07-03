@@ -2,12 +2,14 @@ import { createHash, randomBytes, randomUUID } from "node:crypto";
 import {
   createGameState,
   fourPlayerTwoDeckFixedTeamRuleset,
+  type BotDifficulty,
   type GameState,
 } from "@shengji/engine";
-import { Room } from "./room.js";
+import { Room, type RoomOptions } from "./room.js";
 import type { SqliteStore } from "./persistence/sqlite-store.js";
 
 const ROOM_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+const BOT_NAMES = ["Ming", "Wei", "Lan", "Jun", "Mei", "Bo"] as const;
 
 function tokenHash(token: string): string {
   return createHash("sha256").update(token).digest("hex");
@@ -25,16 +27,27 @@ export type JoinResult = {
   resumed: boolean;
 };
 
+export type CreateRoomOptions = {
+  at?: string;
+  practice?: boolean;
+  botDifficulty?: BotDifficulty;
+};
+
 export class RoomManager {
   private readonly rooms = new Map<string, Room>();
 
-  constructor(private readonly store: SqliteStore) {
+  constructor(
+    private readonly store: SqliteStore,
+    private readonly roomOptions: RoomOptions = {},
+  ) {
     for (const state of store.loadActiveRooms()) {
-      this.rooms.set(state.roomId, new Room(state, store));
+      this.rooms.set(state.roomId, new Room(state, store, roomOptions));
     }
   }
 
-  createRoom(at = new Date().toISOString()): Room {
+  createRoom(input: CreateRoomOptions | string = {}): Room {
+    const options = typeof input === "string" ? { at: input } : input;
+    const at = options.at ?? new Date().toISOString();
     let roomId = roomCode();
     while (this.rooms.has(roomId) || this.store.loadRoom(roomId) !== null)
       roomId = roomCode();
@@ -57,8 +70,14 @@ export class RoomManager {
       createdAt: at,
     });
     this.store.createRoom(state);
-    const room = new Room(state, this.store);
+    const room = new Room(state, this.store, this.roomOptions);
     this.rooms.set(roomId, room);
+    if (options.practice === true) {
+      const difficulty = options.botDifficulty ?? "intermediate";
+      for (let seat = 1; seat < ruleset.players.count; seat += 1) {
+        this.addBot(roomId, seat, difficulty, at);
+      }
+    }
     return room;
   }
 
@@ -129,6 +148,20 @@ export class RoomManager {
     );
   }
 
+  addBot(
+    roomId: string,
+    seat: number,
+    difficulty: BotDifficulty,
+    at = new Date().toISOString(),
+  ): string {
+    const room = this.getRoom(roomId);
+    if (room === null) throw new RangeError("Room not found");
+    const botCount = Object.values(room.state.players).filter(
+      ({ bot }) => bot !== undefined,
+    ).length;
+    return room.addBot(BOT_NAMES[botCount % BOT_NAMES.length]!, seat, difficulty, at);
+  }
+
   roomSummary(state: Readonly<GameState>) {
     return {
       roomId: state.roomId,
@@ -146,6 +179,7 @@ export class RoomManager {
           seat,
           occupied: playerId !== null,
           name: playerId === null ? null : (state.players[playerId]?.name ?? null),
+          isBot: playerId === null ? false : state.players[playerId]?.bot !== undefined,
         };
       }),
     };

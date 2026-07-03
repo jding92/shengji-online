@@ -48,6 +48,10 @@ export function derivePrivateView(state: GameState, playerId: string): PrivateGa
         playerId: occupantId,
         name: occupant?.name ?? null,
         connected: occupant?.connected ?? false,
+        isBot: occupant?.bot !== undefined,
+        ...(occupant?.bot === undefined
+          ? {}
+          : { botDifficulty: occupant.bot.difficulty }),
         ready: occupant?.ready ?? false,
         rank: occupantId === null ? null : (state.ranks[occupantId] ?? null),
         cardCount: round?.hands[seat]?.length ?? 0,
