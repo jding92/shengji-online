@@ -12,8 +12,10 @@ The current game includes:
 - suit and joker-declared no-trump contracts;
 - singles, tuples, tractors, throws, forced follow rules, and trump ruffs;
 - bottom exchange, last-trick bottom scoring, rank progression, and game end;
-- server turn timeouts that make a legal play for idle or disconnected players;
-- a solo practice table in which one browser controls four real player sessions.
+- visible bids, trump-aware hand sorting, and structure-aware follow hints;
+- server timeouts that play, bury, or start the next round for an idle player;
+- a solo practice table in which one browser controls four real player sessions;
+- Default, Retro, and Minimal themes that persist in the browser.
 
 There are no accounts, matchmaking, spectators, or bots. Practice mode is a
 four-seat control surface, not an AI opponent.
@@ -38,7 +40,24 @@ pnpm dev
 For a normal game, create a table and open its invite link in four browser
 profiles. Each player joins, chooses a seat, and readies up. For local
 exploration, choose **Practice table · solo**; switch between the four players
-with the practice bar and play every seat yourself.
+with the practice bar and play every seat yourself. Practice sessions are
+browser-local, so reopen that table in the browser that created it.
+
+## Using the table
+
+The table shows the current level, trump, attacker points, timer, team colors,
+leader, active turn, standing bid, and each opponent's remaining card count.
+The leader can reopen their own buried cards during play, and the round summary
+reveals the bottom, multiplier, and points awarded to everyone.
+
+Cards sort by effective suit and trump strength; equal-strength level cards
+remain grouped by printed face instead of interleaving deck copies. Click to
+toggle cards or Shift-click to select a range. Gold hints mark bid candidates
+or the relevant led-suit tuples when following; these are guidance, not a
+legality guarantee. The primary button names recognizable plays and requires a
+second click to confirm a throw. Escape clears a selection, while Enter submits
+a normal bid, bury, or play but never confirms a throw. Feedback banners and
+errors dismiss automatically and can also be clicked away.
 
 ## How it is built
 
@@ -100,12 +119,15 @@ transaction. Active rooms are restored on server startup.
 
 The database contains hidden cards and deck seeds and must remain private.
 Clients receive only `PrivateGameView`: their own hand, public played cards,
-counts, and public round metadata. Other hands, the deck seed, and the buried
-bottom stay server-side until the bottom is revealed after scoring.
+counts, and public round metadata. After burying, the leader can still inspect
+the cards they personally buried; other players see only the count. The buried
+cards become public to everyone in the round summary after scoring. Other
+hands, the undealt deck, and the deck seed always stay server-side.
 
 A join returns a random resume token. The browser stores the token in
-`localStorage`; SQLite stores only its SHA-256 hash. There is no password or
-account recovery, so clearing browser storage loses that session.
+`localStorage` (with an in-memory fallback when storage is unavailable); SQLite
+stores only its SHA-256 hash. There is no password or account recovery, so
+clearing browser storage loses that session.
 
 ## Configuration
 

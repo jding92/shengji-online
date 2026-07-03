@@ -15,26 +15,72 @@ derives a separate private view for every connected player.
 
 ## State and replay
 
-Commands express intent; events are durable facts. `applyEvent` is deterministic,
-and a shuffled deck is reproducible from the server-generated round seed. The
-seed and full deck order never enter a private view. SQLite currently snapshots
-after every command/timer batch, which favors simple recovery; event rows retain
-the audit/replay history.
+Commands express intent; events are durable facts. `applyEvent` is
+deterministic, every event increments the revision, and a shuffled deck is
+reproducible from the server-generated round seed. Random seeds and timestamps
+enter through server command context or events, never from reducer-side clocks
+or random APIs.
+
+SQLite inserts a command or timer's event batch and its resulting latest
+snapshot in one `BEGIN IMMEDIATE` transaction guarded by the previous revision.
+This favors simple recovery while retaining event rows for audit and replay.
 
 ## Timers
 
-The room owns deal pacing and bidding deadlines. The 30-second post-deal timer is
-replaced by a 15-second timer after a valid raise. Restored rooms reconstruct
-their active timer from the persisted deadline. If nobody bids, the server
-redeals the same round with a new cryptographically random seed.
+The room owns deal pacing, bidding deadlines, and actor timeouts. It clears and
+reschedules timers after every committed state change so timer callbacks and
+player commands pass through the same per-room queue.
+
+- Dealing emits one card event per interval. The code default is 600 ms.
+- The persisted 30-second post-deal deadline is replaced by a 15-second
+  response deadline after each valid post-deal bid.
+- An all-pass round is redealt at the same rank with a fresh server seed. After
+  two redeals, trump is forced from the first bottom card instead; a joker
+  forces no-trump.
+- Bottom exchange, trick turns, and starting the next round use the ruleset's
+  60-second connected or 10-second disconnected window. Expiry uses the same
+  engine validation and event path as a human action.
+
+Only bidding deadlines are part of round state. A restored bidding room
+continues from that deadline; restored dealing and actor turns receive a fresh
+interval or window. Timer setup also self-heals a recovered `playing` state
+whose hands are already empty by deriving the missing round-end events.
 
 ## Hidden state
 
-Only `derivePrivateView` crosses the server/client boundary. It includes the
-requesting player's hand, public played cards, seat card counts, and public round
-metadata. It excludes other hands, buried card identities, deck order, and seed.
-The server currently sends fresh private snapshots after every state change;
-this deliberately favors a small anti-cheat surface over premature patch logic.
+Only `derivePrivateView` projects full state across the server/client boundary.
+It includes the requesting player's hand, public bids and played cards, seat
+card counts, and public round metadata. The leader also receives the cards they
+personally buried; other players receive only the buried count. Once scoring
+emits `BOTTOM_REVEALED`, the buried cards, multiplier, and awarded points become
+public in every view.
+
+Other hands, undealt cards, the unrevealed bottom, and the deck seed stay out of
+the projection. The server sends a newly derived complete snapshot to each
+player after every state change. Although an `EVENTS` envelope is declared, it
+is not emitted, so raw engine events never cross the hidden-state boundary.
+
+## Web client
+
+`useGameRoom` owns the browser's resume token, REST join, reconnecting
+WebSocket, revisioned command envelopes, and server-time offset. Storage uses
+`localStorage` with an in-memory fallback; leaving forgets the local token but
+does not remove the player or free their seat.
+
+Practice mode creates a normal room and runs four independent `useGameRoom`
+sessions and sockets in one browser. The practice bar only selects which
+private view and command surface is active; it does not add bots or bypass
+server authority. Its four tokens are local to the browser that created the
+table.
+
+The web layer imports pure engine helpers for trump-aware hand sorting and
+selection previews. Bid and follow highlights are advisory and can be coarser
+than the full legality rules; rejection from the authoritative server remains a
+normal UI outcome.
+
+Shared layout and responsive rules live in `app/globals.css`. The Default,
+Retro, and Minimal skins are scoped under `html[data-theme="..."]`; the choice
+is stored locally and applied before first paint.
 
 ## Extension points
 
