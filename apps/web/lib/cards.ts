@@ -64,7 +64,13 @@ function shapeNoun(format: TrickFormat): string | null {
       return null;
     case "tuple": {
       const n = format.cardCount;
-      return n === 2 ? "pair" : n === 3 ? "triple" : n === 4 ? "bomb" : `${n}-of-a-kind`;
+      return n === 2
+        ? "pair"
+        : n === 3
+          ? "triple"
+          : n === 4
+            ? "bomb"
+            : `${n}-of-a-kind`;
     }
     case "tractor":
       return "tractor";
@@ -101,7 +107,8 @@ export function describePlaySelection(
     }
   }
 
-  if (jokerNoun !== null) return shape ? `Play ${jokerNoun} ${shape}` : `Play ${jokerNoun}`;
+  if (jokerNoun !== null)
+    return shape ? `Play ${jokerNoun} ${shape}` : `Play ${jokerNoun}`;
   if (shape !== null) return `Play ${shape}`;
   return "Play";
 }

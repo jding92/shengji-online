@@ -304,9 +304,7 @@ export function GameTable({
               exit={{ opacity: 0 }}
             >
               <strong>
-                {round.lastThrow.kind === "failed"
-                  ? "Throw failed"
-                  : "Throw succeeds"}
+                {round.lastThrow.kind === "failed" ? "Throw failed" : "Throw succeeds"}
               </strong>
               <span>{round.lastThrow.explanation}</span>
               {round.lastThrow.pointDeltaToAttackers !== 0 && (
@@ -408,8 +406,8 @@ export function GameTable({
                     transition={{ type: "spring", stiffness: 380, damping: 28 }}
                   >
                     <small>
-                      YOUR BOTTOM · {buried.length} cards · {sumCardPoints(buried)}{" "}
-                      pts (multiplier applies if attackers take the last trick)
+                      YOUR BOTTOM · {buried.length} cards · {sumCardPoints(buried)} pts
+                      (multiplier applies if attackers take the last trick)
                     </small>
                     <div className="buried-panel-cards">
                       {buried.map((card) => (

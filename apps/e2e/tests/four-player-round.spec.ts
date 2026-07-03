@@ -70,9 +70,7 @@ test("four players join, bid, bury, and complete a legal trick", async ({
       await clickCard(bidderCards.nth(index));
     }
     await bidder.page.getByRole("button", { name: "Bury 8 / 8" }).click();
-    await expect(
-      bidder.page.getByRole("button", { name: /^Play/ }),
-    ).toBeVisible();
+    await expect(bidder.page.getByRole("button", { name: /^Play/ })).toBeVisible();
 
     const trumpSuit = bidLabel.split(" of ")[1]!;
     const leadCards = bidder.page.locator(".hand-scroll .playing-card");
