@@ -3,4 +3,6 @@ node_modules/
 dist/
 coverage/
 .next/
+.next-playwright-*/
+.claude/
 pnpm-lock.yaml

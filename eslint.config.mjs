@@ -7,6 +7,7 @@ export default tseslint.config(
       "**/dist/**",
       "**/coverage/**",
       "**/.next/**",
+      "**/.next-playwright-*/**",
       ".pnpm-store/**",
       "eslint.config.mjs",
       "prettier.config.mjs",

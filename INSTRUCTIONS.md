@@ -19,6 +19,7 @@ The game currently has no AI opponents. Practice mode (`apps/web/components/prac
 ## Phase 1 — Engine: player model & events
 
 **`packages/engine/src/state/model.ts`**
+
 - `PlayerState` (line 24) gains `bot?: { difficulty: BotDifficulty }`.
 - `PLAYER_JOINED` event (line 113) gains optional `bot?: { difficulty }` (old persisted events replay fine).
 - New events:
@@ -26,6 +27,7 @@ The game currently has no AI opponents. Practice mode (`apps/web/components/prac
   - `PLAYER_REMOVED { playerId, at }` — lobby-only bot removal (no removal event exists today).
 
 **`packages/engine/src/state/reducer.ts`**
+
 - `PLAYER_JOINED`: copy `bot`; bots keep `connected: true` always (no offline dot, normal timeout window).
 - `PLAYER_CONTROL_CHANGED`: set/delete `player.bot`; takeover also sets `connected = true`.
 - `PLAYER_REMOVED`: delete from `players`/`ranks`, clear seat.
@@ -38,18 +40,18 @@ Tests: `packages/engine/test/bot-events.test.ts` — replay round-trips for the 
 
 New directory `packages/engine/src/bot/` (exported from `src/index.ts`):
 
-| File | Contents |
-|---|---|
-| `observation.ts` | `BotObservation` + `deriveBotObservation(state, playerId)` — the ONLY bridge from `GameState`. Includes: phase, own seat/hand (+own buried if leader), trump/bids/passed seats, current trick plays, full `completedTricks[].plays` history (public), card counts per seat, points, ruleset slices. **Excludes** `round.cards`, other hands, `undealt`, `bottom`, `deckSeed`. |
-| `knowledge.ts` | Config-gated modules: card counting (live copies per face/effective suit, "boss" detection), void inference per seat, partner/trick-winner helpers (via `determineTrickWinner` on partial plays). |
-| `rng.ts` | Seeded PRNG (mulberry32), `softmaxPick(candidates, scores, τ, rng)`, ε-blunder gate. |
-| `bidding.ts` | BID / PASS_BID / wait — evaluated after every dealt card AND in the post-deal window, all difficulties. Hand-strength eval per declarable suit (reuses `createAndValidateBid` logic from `bidding/bidding.ts`); config scales bid threshold (aggression), declare-timing (bid the moment a level card lands vs. wait for suit backing / hold for a pair), and counterbid/reinforce willingness. |
-| `bury.ts` | Scores all cards for expendability (trumpness, points, boss status, void creation, tractor breakup) → bottom-size lowest. |
-| `lead.ts` | Candidates from `groupsFor(hand, trump)`: boss singles, pairs, tractors, low leads; Advanced+ adds counting-proven-safe throws (never calls `resolveThrowAttempt` — that needs opponents' hands = cheating). |
-| `follow.ts` | Candidate variants, each validated via `validateFollow` before scoring: minimal (reuse `selectForcedFollow`), strongest winning match, point-dump to winning partner, ruff/decline when void, trash discard. Port or export the private `structuralMatch` from `state/autoplay.ts:67`. |
-| `score.ts` | Single shared scorer: `wTrick·P(win)·(trickPoints+leadValue) − wPoints·pointsToOpponents + wPartner·pointsToPartner − wSpend·cardEquity + wEndgame·lastTrickStake`. Knowledge gates change inputs (exact boss detection vs rank prior); knobs change weights; τ/ε change selection. |
-| `policy.ts` | Entry point `decideBotAction(obs, config, rngSeed) → ClientCommand \| null`: lobby→SIT/READY, dealing + post-deal-bidding→bid module (all difficulties bid during the deal; config scales aggression/timing/counterbids), bottom-exchange→bury (if leader), playing→lead/follow (if own turn), round-scoring→START_NEXT_ROUND (if leader). |
-| `difficulty.ts` | The 4 `BotConfig` presets (table below). |
+| File             | Contents                                                                                                                                                                                                                                                                                                                                                                                        |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `observation.ts` | `BotObservation` + `deriveBotObservation(state, playerId)` — the ONLY bridge from `GameState`. Includes: phase, own seat/hand (+own buried if leader), trump/bids/passed seats, current trick plays, full `completedTricks[].plays` history (public), card counts per seat, points, ruleset slices. **Excludes** `round.cards`, other hands, `undealt`, `bottom`, `deckSeed`.                   |
+| `knowledge.ts`   | Config-gated modules: card counting (live copies per face/effective suit, "boss" detection), void inference per seat, partner/trick-winner helpers (via `determineTrickWinner` on partial plays).                                                                                                                                                                                               |
+| `rng.ts`         | Seeded PRNG (mulberry32), `softmaxPick(candidates, scores, τ, rng)`, ε-blunder gate.                                                                                                                                                                                                                                                                                                            |
+| `bidding.ts`     | BID / PASS_BID / wait — evaluated after every dealt card AND in the post-deal window, all difficulties. Hand-strength eval per declarable suit (reuses `createAndValidateBid` logic from `bidding/bidding.ts`); config scales bid threshold (aggression), declare-timing (bid the moment a level card lands vs. wait for suit backing / hold for a pair), and counterbid/reinforce willingness. |
+| `bury.ts`        | Scores all cards for expendability (trumpness, points, boss status, void creation, tractor breakup) → bottom-size lowest.                                                                                                                                                                                                                                                                       |
+| `lead.ts`        | Candidates from `groupsFor(hand, trump)`: boss singles, pairs, tractors, low leads; Advanced+ adds counting-proven-safe throws (never calls `resolveThrowAttempt` — that needs opponents' hands = cheating).                                                                                                                                                                                    |
+| `follow.ts`      | Candidate variants, each validated via `validateFollow` before scoring: minimal (reuse `selectForcedFollow`), strongest winning match, point-dump to winning partner, ruff/decline when void, trash discard. Port or export the private `structuralMatch` from `state/autoplay.ts:67`.                                                                                                          |
+| `score.ts`       | Single shared scorer: `wTrick·P(win)·(trickPoints+leadValue) − wPoints·pointsToOpponents + wPartner·pointsToPartner − wSpend·cardEquity + wEndgame·lastTrickStake`. Knowledge gates change inputs (exact boss detection vs rank prior); knobs change weights; τ/ε change selection.                                                                                                             |
+| `policy.ts`      | Entry point `decideBotAction(obs, config, rngSeed) → ClientCommand \| null`: lobby→SIT/READY, dealing + post-deal-bidding→bid module (all difficulties bid during the deal; config scales aggression/timing/counterbids), bottom-exchange→bury (if leader), playing→lead/follow (if own turn), round-scoring→START_NEXT_ROUND (if leader).                                                      |
+| `difficulty.ts`  | The 4 `BotConfig` presets (table below).                                                                                                                                                                                                                                                                                                                                                        |
 
 **New `packages/engine/src/simulation/bot-match-simulator.ts`** — seeded full-game simulation of 4 bots at configurable difficulties (drives `validateCommand` + `getNextDealEvents` + `getFinalizeBiddingEvents`), modeled on existing `simulation/round-simulator.ts`.
 
@@ -57,23 +59,23 @@ New directory `packages/engine/src/bot/` (exported from `src/index.ts`):
 
 Noise mechanism everywhere: score candidates with the one strong scorer → ε chance of uniform random legal pick, else `softmax(score/τ)` sample.
 
-| Knob | Beginner | Intermediate | Advanced | Expert |
-|---|---|---|---|---|
-| Temperature τ / ε-blunder | 1.6 / 0.15 | 0.9 / 0.06 | 0.45 / 0.015 | 0.12 / 0 |
-| Candidate set | truncated (minimal follow, low lead, 1 random) | full | full | full |
-| Card counting (boss detection) | off (rank prior) | off | on | on |
-| Void/trump inference | off | off | on | on |
-| Team coordination | off | knows if partner winning | + no overtrump of partner, feeds points | + leads at inferred voids/partner strength |
-| Point management | off | hold vs opponents, dump to partner | on | + tracks live totals vs 40/80 thresholds |
-| Trump conservation | off | won't ruff 0-point tricks with honors | full spend-cost model | full |
-| Throws | never | never | counting-proven safe, ≤2 components | full counting-proven safe |
-| Bottom-multiplier endgame | off | off | keeps a control card for last trick | full stake weighing both roles |
-| Bid aggression | bids on any lone level card (~60% gate) | needs level card + ~4-card suit | proper hand eval threshold | full eval incl. joker/no-trump tiers |
-| Bid timing (during deal) | impulsive: declares the moment a declarable card lands | waits a few more cards for suit backing | deliberate: bids mid-deal once strength is clear | strategic: waits to maximize info, weighs risk of being beaten to the declare; holds pairs to declare uncontestably |
-| Counterbids / reinforce | never | rare, only with a pair | counterbids when clearly stronger | full counterbids + reinforces own bid (`samePlayerReinforceAllowed`) |
-| Bury quality | lowest ranks (noise may bury points) | avoids points, keeps trump | + void creation, boss retention | + endgame stake awareness |
+| Knob                           | Beginner                                               | Intermediate                            | Advanced                                         | Expert                                                                                                              |
+| ------------------------------ | ------------------------------------------------------ | --------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| Temperature τ / ε-blunder      | 1.6 / 0.15                                             | 0.9 / 0.06                              | 0.45 / 0.015                                     | 0.12 / 0                                                                                                            |
+| Candidate set                  | truncated (minimal follow, low lead, 1 random)         | full                                    | full                                             | full                                                                                                                |
+| Card counting (boss detection) | off (rank prior)                                       | off                                     | on                                               | on                                                                                                                  |
+| Void/trump inference           | off                                                    | off                                     | on                                               | on                                                                                                                  |
+| Team coordination              | off                                                    | knows if partner winning                | + no overtrump of partner, feeds points          | + leads at inferred voids/partner strength                                                                          |
+| Point management               | off                                                    | hold vs opponents, dump to partner      | on                                               | + tracks live totals vs 40/80 thresholds                                                                            |
+| Trump conservation             | off                                                    | won't ruff 0-point tricks with honors   | full spend-cost model                            | full                                                                                                                |
+| Throws                         | never                                                  | never                                   | counting-proven safe, ≤2 components              | full counting-proven safe                                                                                           |
+| Bottom-multiplier endgame      | off                                                    | off                                     | keeps a control card for last trick              | full stake weighing both roles                                                                                      |
+| Bid aggression                 | bids on any lone level card (~60% gate)                | needs level card + ~4-card suit         | proper hand eval threshold                       | full eval incl. joker/no-trump tiers                                                                                |
+| Bid timing (during deal)       | impulsive: declares the moment a declarable card lands | waits a few more cards for suit backing | deliberate: bids mid-deal once strength is clear | strategic: waits to maximize info, weighs risk of being beaten to the declare; holds pairs to declare uncontestably |
+| Counterbids / reinforce        | never                                                  | rare, only with a pair                  | counterbids when clearly stronger                | full counterbids + reinforces own bid (`samePlayerReinforceAllowed`)                                                |
+| Bury quality                   | lowest ranks (noise may bury points)                   | avoids points, keeps trump              | + void creation, boss retention                  | + endgame stake awareness                                                                                           |
 
-All levels bid during dealing — the ladder scales *how well and when*, not *whether*. Tune τ/ε until simulation shows each level beats the one below at 55–70% of rounds.
+All levels bid during dealing — the ladder scales _how well and when_, not _whether_. Tune τ/ε until simulation shows each level beats the one below at 55–70% of rounds.
 
 **Think delays are pacing, not difficulty**: one uniform jittered range for all levels (≈600–1500 ms per play/bid) so bot-heavy tables remain readable by humans; without it a 3-bot trick resolves in <50 ms. Delay knobs live in `RoomOptions`, not `BotConfig`.
 
@@ -86,6 +88,7 @@ All levels bid during dealing — the ladder scales *how well and when*, not *wh
 **`apps/server/src/private-views/derive-private-view.ts`**: populate `isBot`/`botDifficulty` on each `SeatView`.
 
 **`apps/server/src/room.ts`** — bot scheduler:
+
 - `RoomOptions` gains `botDelayMsOverride?: {min,max}` and `botNextRoundDelayMs?` (tests set 0).
 - New `botTimers = Map<playerId, Timeout>`; cleared in `clearTimers()`.
 - `scheduleBotActions()`: called from constructor and after every `commit` + `rescheduleTimers()` path — including each `CARD_DEALT` commit during dealing, which is what lets every difficulty bid mid-deal (the bid module returns null until its timing/aggression gate opens; re-evaluation is a cheap pure call). Skips bots already in `passedBidSeats` or holding `currentBid` to avoid loops. Delays: uniform jitter ≈600–1500 ms for plays/bids at all levels, bury 2–4 s, START_NEXT_ROUND ~10 s (humans must read the round summary; 60 s auto-start remains the backstop).
@@ -100,6 +103,7 @@ All levels bid during dealing — the ladder scales *how well and when*, not *wh
 **`apps/server/src/room-manager.ts`**: `createRoom({practice, botDifficulty})` — if practice, `addBot()` ×3 for seats 1–3 with names from a small pool ("Ming", "Wei", "Lan"…). Bot playerIds are `randomUUID()`, **no** `player_sessions` row (so `authenticate()` can never resolve a bot). `roomSummary` seats gain `isBot`.
 
 **`apps/server/src/index.ts`**:
+
 - `createRoomBodySchema` (line 7) → `z.object({ practice: z.boolean().optional(), botDifficulty: z.enum([...]).optional() }).optional()`.
 - New routes (membership-checked via `playerToken` + `rooms.authenticate`):
   - `POST /api/rooms/:roomId/bots {playerToken, seat, difficulty}` — lobby only; reject if table would be all-bot (≥1 human required).
@@ -109,6 +113,7 @@ All levels bid during dealing — the ladder scales *how well and when*, not *wh
 ## Phase 6 — Web
 
 **Practice rework:**
+
 - **Delete `components/practice-room-client.tsx`** (4-hook POV controller + switcher).
 - `app/room/[roomId]/page.tsx`: drop the `?practice=1` branch; always render `RoomClient`.
 - `hooks/use-game-room.ts`: remove `sessionSlot` param and the slot branch of `sessionKey()` (lines 24–28); move `sessionKey` into new `apps/web/lib/session.ts` so the home page can pre-store the join token.
@@ -116,6 +121,7 @@ All levels bid during dealing — the ladder scales *how well and when*, not *wh
 - `components/room-client.tsx`: auto-SIT effect — in lobby, if `you.seat === null` and all occupied seats are bots, SIT at lowest open seat once. READY stays manual (one tap starts round 1 since bots are pre-readied).
 
 **Bot UI:**
+
 - `components/lobby.tsx`: bot seats show badge + "Bot · Advanced" + "×" remove (lobby only); empty seats keep tap-to-sit and add a secondary "Add bot" affordance with difficulty select. New `apps/web/lib/bot-api.ts` wraps the bot endpoints.
 - `components/table-seat.tsx`: bot chip next to name (like the existing leader badge); when `!connected && playerId !== null && !isBot`, show a "Replace with bot" button (difficulty popover) → takeover endpoint.
 - `components/room-client.tsx`: connection notices announce takeovers/reclaims.
