@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useGameRoom } from "../hooks/use-game-room";
-import { NOTICE_DISMISS_MS } from "../lib/constants";
+import { NOTICE_DISMISS_MS, TOAST_DISMISS_MS } from "../lib/constants";
 import { GameTable } from "./game-table";
 import { Lobby } from "./lobby";
 
@@ -54,6 +54,13 @@ export function RoomClient({ roomId }: { roomId: string }) {
   const [joining, setJoining] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
   const { notice, clearNotice } = useConnectionNotices(view?.seats);
+
+  // Every toast auto-dismisses; all remain click-dismissable.
+  useEffect(() => {
+    if (joinError === null) return;
+    const timer = setTimeout(() => setJoinError(null), TOAST_DISMISS_MS);
+    return () => clearTimeout(timer);
+  }, [joinError]);
 
   async function handleJoin(event: FormEvent) {
     event.preventDefault();

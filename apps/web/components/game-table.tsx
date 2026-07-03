@@ -1,15 +1,21 @@
 "use client";
 
-import type { PrivateGameView, WireClientCommand } from "@shengji/protocol";
+import type {
+  CardInstance,
+  PrivateGameView,
+  WireClientCommand,
+} from "@shengji/protocol";
 import { AnimatePresence, LayoutGroup, motion } from "motion/react";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  cardFaceKey,
   compareCardsForSort,
   getEffectiveSuit,
   parseThrow,
   parseTrickFormat,
 } from "@shengji/engine";
 import { useCardSelection } from "../hooks/use-card-selection";
+import { THROW_BANNER_MS } from "../lib/constants";
 import { relativeSeatPosition } from "../lib/cards";
 import { HandDock } from "./hand-dock";
 import { LeaveButton } from "./leave-button";
@@ -84,13 +90,55 @@ export function GameTable({
       leadPlay.cards[0] !== undefined &&
       round.trumpSpec !== undefined
     ) {
-      const ledSuit = getEffectiveSuit(leadPlay.cards[0], round.trumpSpec);
-      for (const card of cards) {
-        if (getEffectiveSuit(card, round.trumpSpec) === ledSuit) ids.add(card.id);
+      const trump = round.trumpSpec;
+      const ledSuit = getEffectiveSuit(leadPlay.cards[0], trump);
+      const suitCards = cards.filter(
+        (card) => getEffectiveSuit(card, trump) === ledSuit,
+      );
+      // Following a pair or tractor: hint only the pairs you hold in the led
+      // suit (they're what the format obliges); otherwise the whole suit.
+      const ledHasTuples = (() => {
+        try {
+          return parseTrickFormat(leadPlay.cards, trump).components.some(
+            ({ tupleSize }) => tupleSize >= 2,
+          );
+        } catch {
+          try {
+            return parseThrow(leadPlay.cards, trump).components.some(
+              ({ tupleSize }) => tupleSize >= 2,
+            );
+          } catch {
+            return false;
+          }
+        }
+      })();
+      if (ledHasTuples) {
+        const byFace = new Map<string, CardInstance[]>();
+        for (const card of suitCards) {
+          const key = cardFaceKey(card.face);
+          byFace.set(key, [...(byFace.get(key) ?? []), card]);
+        }
+        for (const group of byFace.values()) {
+          if (group.length >= 2) for (const card of group) ids.add(card.id);
+        }
+        if (ids.size > 0) return ids;
       }
+      for (const card of suitCards) ids.add(card.id);
     }
     return ids;
   }, [actions, cards, round, view.phase, view.you.seat]);
+
+  // The throw banner auto-dismisses and can be clicked away; the engine
+  // keeps lastThrow for the whole round, so visibility is client-side.
+  const throwKey = round?.lastThrow
+    ? `${round.lastThrow.seat}:${round.lastThrow.kind}:${round.lastThrow.explanation}`
+    : null;
+  const [dismissedThrow, setDismissedThrow] = useState<string | null>(null);
+  useEffect(() => {
+    if (throwKey === null) return;
+    const timer = setTimeout(() => setDismissedThrow(throwKey), THROW_BANNER_MS);
+    return () => clearTimeout(timer);
+  }, [throwKey]);
 
   const submit = useCallback(
     (command: WireClientCommand) => {
@@ -178,9 +226,11 @@ export function GameTable({
       </header>
 
       <AnimatePresence>
-        {round?.lastThrow && (
-          <motion.div
+        {round?.lastThrow && dismissedThrow !== throwKey && (
+          <motion.button
+            type="button"
             className={`throw-banner throw-${round.lastThrow.kind}`}
+            onClick={() => setDismissedThrow(throwKey)}
             initial={{ opacity: 0, y: -12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
@@ -195,7 +245,8 @@ export function GameTable({
                 {round.lastThrow.pointDeltaToAttackers} points
               </b>
             )}
-          </motion.div>
+            <i>×</i>
+          </motion.button>
         )}
       </AnimatePresence>
 

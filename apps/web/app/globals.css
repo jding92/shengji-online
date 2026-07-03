@@ -652,6 +652,9 @@ button:disabled {
   z-index: var(--z-banner);
   top: 82px;
   left: 50%;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -669,6 +672,11 @@ button:disabled {
 }
 .throw-banner b {
   color: var(--gold);
+}
+.throw-banner i {
+  margin-left: 4px;
+  color: var(--muted);
+  font-style: normal;
 }
 .throw-failed {
   border-color: var(--danger-line);
@@ -1025,7 +1033,7 @@ button:disabled {
   height: 140px;
   margin: auto;
   align-items: flex-end;
-  justify-content: center;
+  justify-content: flex-start;
   overflow-x: auto;
   overflow-y: hidden;
   padding: 24px 50px 8px;
@@ -1036,7 +1044,10 @@ button:disabled {
   margin-left: -37px;
 }
 .hand-scroll .playing-card:first-child {
-  margin-left: 0;
+  margin-left: auto;
+}
+.hand-scroll .playing-card:last-child {
+  margin-right: auto;
 }
 .hand-scroll .playing-card:hover {
   z-index: var(--z-card-hover);

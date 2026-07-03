@@ -7,7 +7,11 @@ import {
   type WireClientCommand,
 } from "@shengji/protocol";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { RECONNECT_BASE_MS, RECONNECT_MAX_MS } from "../lib/constants";
+import {
+  RECONNECT_BASE_MS,
+  RECONNECT_MAX_MS,
+  TOAST_DISMISS_MS,
+} from "../lib/constants";
 import { safeStorage } from "../lib/safe-storage";
 
 export type ConnectionStatus =
@@ -168,6 +172,13 @@ export function useGameRoom(roomId: string, sessionSlot?: string) {
   }, [roomId, sessionSlot]);
 
   const serverNow = useCallback(() => Date.now() + serverOffsetRef.current, []);
+
+  // Error toasts auto-dismiss for every consumer; they stay click-dismissable.
+  useEffect(() => {
+    if (error === null) return;
+    const timer = setTimeout(() => setError(null), TOAST_DISMISS_MS);
+    return () => clearTimeout(timer);
+  }, [error]);
 
   return {
     view,
