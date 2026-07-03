@@ -1,4 +1,5 @@
 export * from "./bidding/bidding.js";
+export * from "./bot/types.js";
 export * from "./cards/deck.js";
 export * from "./cards/shuffle.js";
 export * from "./rulesets/four-player-two-deck.js";

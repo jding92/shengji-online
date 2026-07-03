@@ -64,14 +64,34 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
         seat: null,
         ready: false,
         connected: true,
+        ...(event.bot === undefined ? {} : { bot: { ...event.bot } }),
       };
       next.ranks[event.playerId] = next.rulesetSnapshot.ranks.sequence[0]!;
+      break;
+    }
+    case "PLAYER_CONTROL_CHANGED": {
+      const player = next.players[event.playerId];
+      if (player === undefined) throw new Error(`Unknown player ${event.playerId}`);
+      if (event.bot === undefined) {
+        delete player.bot;
+      } else {
+        player.bot = { ...event.bot };
+        player.connected = true;
+      }
+      break;
+    }
+    case "PLAYER_REMOVED": {
+      const player = next.players[event.playerId];
+      if (player === undefined) throw new Error(`Unknown player ${event.playerId}`);
+      if (player.seat !== null) next.seats[player.seat] = null;
+      delete next.players[event.playerId];
+      delete next.ranks[event.playerId];
       break;
     }
     case "PLAYER_CONNECTION_CHANGED": {
       const player = next.players[event.playerId];
       if (player === undefined) throw new Error(`Unknown player ${event.playerId}`);
-      player.connected = event.connected;
+      player.connected = player.bot === undefined ? event.connected : true;
       break;
     }
     case "PLAYER_SEATED": {

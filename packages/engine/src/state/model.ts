@@ -1,5 +1,6 @@
 import type { ShengJiRuleset } from "../rulesets/schema.js";
 import type { PlayedCards, TrickFormat } from "../tricks/types.js";
+import type { BotDifficulty } from "../bot/types.js";
 import type {
   Bid,
   CardInstance,
@@ -27,6 +28,7 @@ export type PlayerState = {
   seat: SeatIndex | null;
   ready: boolean;
   connected: boolean;
+  bot?: { difficulty: BotDifficulty };
 };
 
 export type TrickState = {
@@ -110,7 +112,20 @@ export type ClientCommand =
   | { type: "START_NEXT_ROUND" };
 
 export type GameEvent =
-  | { type: "PLAYER_JOINED"; playerId: PlayerId; name: string; at: string }
+  | {
+      type: "PLAYER_JOINED";
+      playerId: PlayerId;
+      name: string;
+      bot?: { difficulty: BotDifficulty };
+      at: string;
+    }
+  | {
+      type: "PLAYER_CONTROL_CHANGED";
+      playerId: PlayerId;
+      bot?: { difficulty: BotDifficulty };
+      at: string;
+    }
+  | { type: "PLAYER_REMOVED"; playerId: PlayerId; at: string }
   | {
       type: "PLAYER_CONNECTION_CHANGED";
       playerId: PlayerId;
