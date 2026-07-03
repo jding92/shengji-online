@@ -74,6 +74,13 @@ export function derivePrivateView(state: GameState, playerId: string): PrivateGa
       seat: player.seat,
       hand: yourHand,
       ...(yourTeamId === undefined ? {} : { teamId: yourTeamId }),
+      // The leader buried these from their own hand, so it's their
+      // information; everyone else keeps seeing only buriedBottomCount.
+      ...(player.seat !== null &&
+      player.seat === state.leaderSeat &&
+      round?.buriedBottom !== undefined
+        ? { buried: round.buriedBottom.map((id) => round.cards[id]!) }
+        : {}),
     },
     seats,
     ...(round === undefined

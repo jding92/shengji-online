@@ -59,10 +59,10 @@ export function PracticeRoomClient({ roomId }: { roomId: string }) {
     );
   }
 
-  return (
-    <>
-      <div className="practice-bar" role="tablist" aria-label="Practice players">
-        <span className="practice-label">PRACTICE</span>
+  const switcher = (
+    <div className="practice-bar" role="tablist" aria-label="Practice players">
+      <span className="practice-label">PRACTICE</span>
+      <div className="practice-tabs">
         {players.map((player, index) => {
           const seat = player.view?.you.seat;
           const isTurn =
@@ -85,17 +85,25 @@ export function PracticeRoomClient({ roomId }: { roomId: string }) {
           );
         })}
       </div>
+    </div>
+  );
+
+  return (
+    <>
       {view === null ? (
         <main className="join-shell">
           <div className="loading-mark">升</div>
           <strong>Opening the practice table…</strong>
         </main>
       ) : view.phase === "lobby" ? (
-        <Lobby
-          view={view}
-          sendCommand={current.sendCommand}
-          onLeave={current.leaveSession}
-        />
+        <>
+          <div className="practice-float">{switcher}</div>
+          <Lobby
+            view={view}
+            sendCommand={current.sendCommand}
+            onLeave={current.leaveSession}
+          />
+        </>
       ) : (
         <GameTable
           view={view}
@@ -103,6 +111,7 @@ export function PracticeRoomClient({ roomId }: { roomId: string }) {
           onLeave={current.leaveSession}
           turnDeadline={current.turnDeadline}
           serverNow={current.serverNow}
+          sideSlot={switcher}
         />
       )}
       {current.error && (

@@ -6,22 +6,33 @@ import type {
   WireClientCommand,
 } from "@shengji/protocol";
 import { AnimatePresence, LayoutGroup, motion } from "motion/react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   cardFaceKey,
-  compareCardsForSort,
   getEffectiveSuit,
   parseThrow,
   parseTrickFormat,
+  sumCardPoints,
 } from "@shengji/engine";
 import { useCardSelection } from "../hooks/use-card-selection";
 import { THROW_BANNER_MS } from "../lib/constants";
-import { relativeSeatPosition } from "../lib/cards";
+import { compareForHandDisplay, relativeSeatPosition } from "../lib/cards";
+import { CardBack, PlayingCard } from "./card";
+import { Countdown } from "./countdown";
+import { HandActions } from "./hand-actions";
 import { HandDock } from "./hand-dock";
 import { LeaveButton } from "./leave-button";
 import { RoundSummaryModal } from "./round-summary-modal";
 import { TableSeat } from "./table-seat";
+import { ThemeSwitcher } from "./theme-switcher";
 import { TrickCenter } from "./trick-center";
+
+const SUIT_GLYPHS = {
+  spades: "♠",
+  hearts: "♥",
+  clubs: "♣",
+  diamonds: "♦",
+} as const;
 
 type GameTableProps = {
   view: PrivateGameView;
@@ -29,6 +40,8 @@ type GameTableProps = {
   onLeave: () => void;
   turnDeadline: string | null;
   serverNow: () => number;
+  /** Extra sidebar content, e.g. the practice-mode player switcher. */
+  sideSlot?: ReactNode;
 };
 
 export function GameTable({
@@ -37,6 +50,7 @@ export function GameTable({
   onLeave,
   turnDeadline,
   serverNow,
+  sideSlot,
 }: GameTableProps) {
   const round = view.publicRound;
   const actions = useMemo(() => new Set(view.legalActions), [view.legalActions]);
@@ -47,8 +61,14 @@ export function GameTable({
       mode: "no-trump" as const,
       rank: round?.trumpRank ?? "2",
     };
-    return [...view.you.hand].sort((a, b) => compareCardsForSort(a, b, trump));
+    return [...view.you.hand].sort((a, b) => compareForHandDisplay(a, b, trump));
   }, [view.you.hand, round?.trumpSpec, round?.trumpRank]);
+
+  // Steady-state hand size = (all dealt cards − the buried bottom) ÷ players.
+  // A standard deck here is 54 cards (52 + two jokers).
+  const fullHandSize = Math.round(
+    (view.ruleset.decks * 54 - view.ruleset.bottomSize) / view.ruleset.players,
+  );
   const { selected, selectedCards, toggle, clear } = useCardSelection(cards);
 
   // Would the current selection lead as a throw (multiple components)?
@@ -179,16 +199,44 @@ export function GameTable({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [primaryAction, submit, clear]);
 
-  const trumpLabel =
-    round?.trumpSpec?.mode === "no-trump"
-      ? "No-trump / 无主"
-      : round?.trumpSpec?.mode === "suit"
-        ? `${round.trumpSpec.suit} / 主`
-        : "Undeclared";
+  const trumpSpec = round?.trumpSpec;
+  const trumpDisplay =
+    trumpSpec === undefined
+      ? { glyph: "—", red: false, label: "Trump undeclared" }
+      : trumpSpec.mode === "no-trump"
+        ? { glyph: "NT", red: false, label: "No-trump" }
+        : {
+            glyph: SUIT_GLYPHS[trumpSpec.suit],
+            red: trumpSpec.suit === "hearts" || trumpSpec.suit === "diamonds",
+            label: `Trump ${trumpSpec.suit}`,
+          };
+
+  // One timer at a time: the bidding window, then the current turn's clock.
+  const timerDeadline =
+    view.phase === "dealing" || view.phase === "post-deal-bidding"
+      ? round?.biddingDeadline
+      : view.phase === "playing"
+        ? (turnDeadline ?? undefined)
+        : undefined;
+
+  // The leader's buried bottom: a pile on the felt that expands on click,
+  // plus a sidebar tab with the points tucked away. Leader-only knowledge.
+  const buried = view.phase === "playing" ? view.you.buried : undefined;
+  const [showBuried, setShowBuried] = useState(false);
+  useEffect(() => {
+    if (buried === undefined) setShowBuried(false);
+  }, [buried === undefined]);
+
+  const youSeat = view.seats.find((seat) => seat.playerId === view.you.playerId);
+  const bidFor = (seatIndex: number) =>
+    (view.phase === "dealing" || view.phase === "post-deal-bidding") &&
+    round?.currentBid?.seat === seatIndex
+      ? round.currentBid
+      : undefined;
 
   return (
     <main className="game-shell">
-      <header className="table-topbar">
+      <aside className="side-panel">
         <div className="brand-lockup">
           <span className="brand-mark">升</span>
           <span>
@@ -196,6 +244,8 @@ export function GameTable({
             <small>Room {view.roomId}</small>
           </span>
         </div>
+
+        {/* Every readout is a half-width tile, including timer and bottom. */}
         <div className="round-pills">
           <span>
             <small>LEVEL / 级</small>
@@ -203,95 +253,185 @@ export function GameTable({
           </span>
           <span>
             <small>TRUMP / 主</small>
-            <strong className="capitalize">{trumpLabel}</strong>
+            <strong
+              className={trumpDisplay.red ? "is-red-suit" : ""}
+              aria-label={trumpDisplay.label}
+            >
+              {trumpDisplay.glyph}
+            </strong>
           </span>
           <span>
-            <small>ATTACKERS / 分</small>
+            <small>POINTS / 分</small>
             <strong>
               {(round?.attackerPoints ?? 0) + (round?.throwPenaltyAdjustment ?? 0)}
             </strong>
           </span>
+          {timerDeadline !== undefined && (
+            <span className="timer-pill">
+              <small>TIMER / 计时</small>
+              <Countdown deadline={timerDeadline} now={serverNow} />
+            </span>
+          )}
+          {buried && (
+            <button
+              type="button"
+              className={`bottom-tab ${showBuried ? "is-open" : ""}`}
+              onClick={() => setShowBuried((open) => !open)}
+            >
+              <small>BOTTOM / 底牌</small>
+              <strong>{sumCardPoints(buried)} pts</strong>
+            </button>
+          )}
         </div>
-        <div className="topbar-actions">
-          <button
-            type="button"
-            className="icon-button"
-            title="Copy invite link"
-            onClick={() => void navigator.clipboard.writeText(window.location.href)}
-          >
-            ↗
-          </button>
+
+        {sideSlot}
+
+        <div className="side-actions">
+          <ThemeSwitcher />
           <LeaveButton onLeave={onLeave} />
         </div>
-      </header>
+      </aside>
 
-      <AnimatePresence>
-        {round?.lastThrow && dismissedThrow !== throwKey && (
-          <motion.button
-            type="button"
-            className={`throw-banner throw-${round.lastThrow.kind}`}
-            onClick={() => setDismissedThrow(throwKey)}
-            initial={{ opacity: 0, y: -12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-          >
-            <strong>
-              {round.lastThrow.kind === "failed" ? "Throw failed" : "Throw succeeds"}
-            </strong>
-            <span>{round.lastThrow.explanation}</span>
-            {round.lastThrow.pointDeltaToAttackers !== 0 && (
-              <b>
-                {round.lastThrow.pointDeltaToAttackers > 0 ? "+" : ""}
-                {round.lastThrow.pointDeltaToAttackers} points
-              </b>
-            )}
-            <i>×</i>
-          </motion.button>
-        )}
-      </AnimatePresence>
+      <section className="board">
+        <AnimatePresence>
+          {round?.lastThrow && dismissedThrow !== throwKey && (
+            <motion.button
+              type="button"
+              className={`throw-banner throw-${round.lastThrow.kind}`}
+              onClick={() => setDismissedThrow(throwKey)}
+              initial={{ opacity: 0, y: -12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+            >
+              <strong>
+                {round.lastThrow.kind === "failed"
+                  ? "Throw failed"
+                  : "Throw succeeds"}
+              </strong>
+              <span>{round.lastThrow.explanation}</span>
+              {round.lastThrow.pointDeltaToAttackers !== 0 && (
+                <b>
+                  {round.lastThrow.pointDeltaToAttackers > 0 ? "+" : ""}
+                  {round.lastThrow.pointDeltaToAttackers} points
+                </b>
+              )}
+              <i>×</i>
+            </motion.button>
+          )}
+        </AnimatePresence>
 
-      <LayoutGroup>
-        <section className="table-stage">
-          <div className="felt-table">
-            <div className="felt-ring" />
-            {view.seats.map((seat) => (
-              <TableSeat
-                key={seat.seat}
-                seat={seat}
-                position={relativeSeatPosition(seat.seat, view.you.seat)}
-                currentTurn={round?.currentTurnSeat === seat.seat}
-                isYou={seat.playerId === view.you.playerId}
-                bid={
-                  (view.phase === "dealing" || view.phase === "post-deal-bidding") &&
-                  round?.currentBid?.seat === seat.seat
-                    ? round.currentBid
-                    : undefined
-                }
-              />
-            ))}
-            <TrickCenter
-              view={view}
-              turnDeadline={turnDeadline}
-              serverNow={serverNow}
-            />
-          </div>
-        </section>
+        <LayoutGroup>
+          <section className="table-stage">
+            <div className="felt-table">
+              <div className="felt-ring" />
+              {view.seats.map((seat) =>
+                seat.playerId === view.you.playerId ? null : (
+                  <TableSeat
+                    key={seat.seat}
+                    seat={seat}
+                    position={relativeSeatPosition(seat.seat, view.you.seat)}
+                    currentTurn={round?.currentTurnSeat === seat.seat}
+                    isYou={false}
+                    isLeader={round?.leaderSeat === seat.seat}
+                    handTotal={fullHandSize}
+                    bid={bidFor(seat.seat)}
+                  />
+                ),
+              )}
+              {/* Your seat sits on a row with the action buttons flanking it:
+                  Clear to the left, the primary action to the right. */}
+              {youSeat && (
+                <div className="south-cluster">
+                  <div className="south-slot south-left">
+                    {selected.size > 0 && (
+                      <button
+                        type="button"
+                        className="button button-ghost"
+                        onClick={clear}
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                  <TableSeat
+                    seat={youSeat}
+                    position="south"
+                    currentTurn={round?.currentTurnSeat === youSeat.seat}
+                    isYou
+                    isLeader={round?.leaderSeat === youSeat.seat}
+                    handTotal={fullHandSize}
+                    bid={bidFor(youSeat.seat)}
+                  />
+                  <div className="south-slot south-right">
+                    <HandActions
+                      selectedCards={selectedCards}
+                      selectionKind={selectionKind}
+                      actions={actions}
+                      bottomSize={view.ruleset.bottomSize}
+                      trump={round?.trumpSpec}
+                      submit={submit}
+                    />
+                  </div>
+                </div>
+              )}
+              <TrickCenter view={view} />
+              {buried && (
+                <button
+                  type="button"
+                  className="buried-pile"
+                  aria-expanded={showBuried}
+                  title="Your buried bottom"
+                  onClick={() => setShowBuried((open) => !open)}
+                >
+                  {Array.from({ length: 3 }, (_, index) => (
+                    <CardBack key={index} compact />
+                  ))}
+                  <span className="card-count">底</span>
+                </button>
+              )}
+              <AnimatePresence>
+                {buried && showBuried && (
+                  <motion.div
+                    className="buried-panel"
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Hide buried bottom"
+                    onClick={() => setShowBuried(false)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === "Escape") {
+                        setShowBuried(false);
+                      }
+                    }}
+                    initial={{ opacity: 0, y: 14, scale: 0.92 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    transition={{ type: "spring", stiffness: 380, damping: 28 }}
+                  >
+                    <small>
+                      YOUR BOTTOM · {buried.length} cards · {sumCardPoints(buried)}{" "}
+                      pts (multiplier applies if attackers take the last trick)
+                    </small>
+                    <div className="buried-panel-cards">
+                      {buried.map((card) => (
+                        <PlayingCard key={card.id} card={card} compact />
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </section>
 
-        <HandDock
-          cards={cards}
-          selected={selected}
-          selectedCards={selectedCards}
-          hinted={hinted}
-          selectionKind={selectionKind}
-          onToggle={toggle}
-          onClear={clear}
-          actions={actions}
-          bottomSize={view.ruleset.bottomSize}
-          submit={submit}
-        />
-      </LayoutGroup>
+          <HandDock
+            cards={cards}
+            selected={selected}
+            hinted={hinted}
+            onToggle={toggle}
+          />
+        </LayoutGroup>
 
-      <RoundSummaryModal view={view} actions={actions} submit={submit} />
+        <RoundSummaryModal view={view} actions={actions} submit={submit} />
+      </section>
     </main>
   );
 }

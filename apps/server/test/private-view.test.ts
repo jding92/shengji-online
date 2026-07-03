@@ -75,13 +75,17 @@ describe("private views", () => {
     expect(derivePrivateView(state, "p0").publicRound?.bottomCount).toBe(8);
   });
 
-  it("keeps a buried bottom private until round scoring", () => {
+  it("shows a buried bottom only to the leader until round scoring", () => {
     const state = dealtState();
     const buried = [...state.round!.bottom];
     state.round!.bottom = [];
     state.round!.buriedBottom = buried;
+    state.leaderSeat = 0;
     state.phase = "playing";
-    for (let seat = 0; seat < 4; seat += 1) {
+    // The leader buried these from their own hand, so their view echoes them.
+    const leaderView = derivePrivateView(state, "p0");
+    expect(leaderView.you.buried?.map(({ id }) => id)).toEqual(buried);
+    for (let seat = 1; seat < 4; seat += 1) {
       const serialized = JSON.stringify(derivePrivateView(state, `p${seat}`));
       for (const cardId of buried) expect(serialized).not.toContain(cardId);
     }
