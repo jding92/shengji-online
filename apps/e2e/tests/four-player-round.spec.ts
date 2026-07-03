@@ -12,6 +12,12 @@ async function clickCard(card: Locator): Promise<void> {
   await card.evaluate((element: HTMLButtonElement) => element.click());
 }
 
+function playButton(page: Page): Locator {
+  return page.locator(".hand-actions").getByRole("button", {
+    name: /^Play(?:\s|$)/,
+  });
+}
+
 test("four players join, bid, bury, and complete a legal trick", async ({
   browser,
   request,
@@ -70,7 +76,7 @@ test("four players join, bid, bury, and complete a legal trick", async ({
       await clickCard(bidderCards.nth(index));
     }
     await bidder.page.getByRole("button", { name: "Bury 8 / 8" }).click();
-    await expect(bidder.page.getByRole("button", { name: /^Play/ })).toBeVisible();
+    await expect(playButton(bidder.page)).toBeVisible();
 
     const trumpSuit = bidLabel.split(" of ")[1]!;
     const leadCards = bidder.page.locator(".hand-scroll .playing-card");
@@ -87,12 +93,12 @@ test("four players join, bid, bury, and complete a legal trick", async ({
     }
     expect(leadIndex).toBeGreaterThanOrEqual(0);
     await clickCard(leadCards.nth(leadIndex));
-    await bidder.page.getByRole("button", { name: /^Play/ }).click();
+    await playButton(bidder.page).click();
 
     for (let offset = 1; offset < 4; offset += 1) {
       const seat = (bidderSeat + offset) % 4;
       const page = players[seat]!.page;
-      await expect(page.getByRole("button", { name: /^Play/ })).toBeVisible();
+      await expect(playButton(page)).toBeVisible();
       const hand = page.locator(".hand-scroll .playing-card");
       let choice = 0;
       for (let index = 0; index < (await hand.count()); index += 1) {
@@ -104,7 +110,7 @@ test("four players join, bid, bury, and complete a legal trick", async ({
         }
       }
       await clickCard(hand.nth(choice));
-      await page.getByRole("button", { name: /^Play/ }).click();
+      await playButton(page).click();
     }
 
     for (const { page } of players) {
