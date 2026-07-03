@@ -1,7 +1,9 @@
 "use client";
 
-import type { PrivateGameView } from "@shengji/protocol";
+import type { BotDifficulty, PrivateGameView } from "@shengji/protocol";
 import { AnimatePresence, motion } from "motion/react";
+import { useState } from "react";
+import { replaceWithBot } from "../lib/bot-api";
 import { cardFaceLabel, type TablePosition } from "../lib/cards";
 import { teamClassForSeat, teamLabelForSeat } from "../lib/strings";
 import { CardBack } from "./card";
@@ -59,6 +61,7 @@ export function TableSeat({
   isLeader,
   handTotal,
   bid,
+  roomId,
 }: {
   seat: PrivateGameView["seats"][number];
   position: TablePosition;
@@ -70,7 +73,30 @@ export function TableSeat({
   handTotal: number;
   /** This seat's standing trump bid, shown as a badge until finalization. */
   bid?: CurrentBid | undefined;
+  roomId: string;
 }) {
+  const [showTakeover, setShowTakeover] = useState(false);
+  const [difficulty, setDifficulty] = useState<BotDifficulty>("intermediate");
+  const [replacing, setReplacing] = useState(false);
+  const [replaceError, setReplaceError] = useState<string | null>(null);
+  const canReplace = !isYou && seat.playerId !== null && !seat.connected && !seat.isBot;
+
+  async function takeOver(): Promise<void> {
+    if (seat.playerId === null) return;
+    setReplacing(true);
+    setReplaceError(null);
+    try {
+      await replaceWithBot(roomId, seat.playerId, difficulty);
+      setShowTakeover(false);
+    } catch (cause) {
+      setReplaceError(
+        cause instanceof Error ? cause.message : "Could not replace player",
+      );
+    } finally {
+      setReplacing(false);
+    }
+  }
+
   return (
     <div
       className={`table-seat seat-${position} ${teamClassForSeat(seat.seat)} ${currentTurn ? "is-turn" : ""}`}
@@ -94,6 +120,14 @@ export function TableSeat({
                 庄
               </span>
             )}
+            {seat.isBot && (
+              <span
+                className="bot-badge"
+                title={`Bot · ${seat.botDifficulty ?? "intermediate"}`}
+              >
+                BOT
+              </span>
+            )}
           </strong>
           <small>
             {seat.rank === null
@@ -112,8 +146,48 @@ export function TableSeat({
             {seat.cardCount} / {handTotal}
           </motion.span>
         )}
-        {!seat.connected && seat.playerId !== null && <i className="offline-dot" />}
+        {!seat.connected && seat.playerId !== null && !seat.isBot && (
+          <i className="offline-dot" />
+        )}
       </div>
+      {canReplace && (
+        <div className="takeover-control">
+          {showTakeover ? (
+            <>
+              <select
+                aria-label={`Replacement bot difficulty for ${seat.name ?? "player"}`}
+                value={difficulty}
+                disabled={replacing}
+                onChange={(event) => setDifficulty(event.target.value as BotDifficulty)}
+              >
+                <option value="beginner">Beginner</option>
+                <option value="intermediate">Intermediate</option>
+                <option value="advanced">Advanced</option>
+                <option value="expert">Expert</option>
+              </select>
+              <button
+                type="button"
+                disabled={replacing}
+                onClick={() => void takeOver()}
+              >
+                {replacing ? "Replacing…" : "Confirm bot"}
+              </button>
+              <button
+                type="button"
+                disabled={replacing}
+                onClick={() => setShowTakeover(false)}
+              >
+                Cancel
+              </button>
+            </>
+          ) : (
+            <button type="button" onClick={() => setShowTakeover(true)}>
+              Replace with bot
+            </button>
+          )}
+          {replaceError && <small>{replaceError}</small>}
+        </div>
+      )}
       <AnimatePresence>
         {bid && (
           <motion.span

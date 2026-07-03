@@ -6,7 +6,7 @@ import type {
   WireClientCommand,
 } from "@shengji/protocol";
 import { AnimatePresence, LayoutGroup, motion } from "motion/react";
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   cardFaceKey,
   getEffectiveSuit,
@@ -40,8 +40,6 @@ type GameTableProps = {
   onLeave: () => void;
   turnDeadline: string | null;
   serverNow: () => number;
-  /** Extra sidebar content, e.g. the practice-mode player switcher. */
-  sideSlot?: ReactNode;
 };
 
 export function GameTable({
@@ -50,7 +48,6 @@ export function GameTable({
   onLeave,
   turnDeadline,
   serverNow,
-  sideSlot,
 }: GameTableProps) {
   const round = view.publicRound;
   const actions = useMemo(() => new Set(view.legalActions), [view.legalActions]);
@@ -284,8 +281,6 @@ export function GameTable({
           )}
         </div>
 
-        {sideSlot}
-
         <div className="side-actions">
           <ThemeSwitcher />
           <LeaveButton onLeave={onLeave} />
@@ -333,6 +328,7 @@ export function GameTable({
                     isLeader={round?.leaderSeat === seat.seat}
                     handTotal={fullHandSize}
                     bid={bidFor(seat.seat)}
+                    roomId={view.roomId}
                   />
                 ),
               )}
@@ -359,6 +355,7 @@ export function GameTable({
                     isLeader={round?.leaderSeat === youSeat.seat}
                     handTotal={fullHandSize}
                     bid={bidFor(youSeat.seat)}
+                    roomId={view.roomId}
                   />
                   <div className="south-slot south-right">
                     <HandActions

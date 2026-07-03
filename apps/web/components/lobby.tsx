@@ -1,7 +1,12 @@
 "use client";
 
-import type { PrivateGameView, WireClientCommand } from "@shengji/protocol";
+import type {
+  BotDifficulty,
+  PrivateGameView,
+  WireClientCommand,
+} from "@shengji/protocol";
 import { useState } from "react";
+import { addBot, removeBot } from "../lib/bot-api";
 import { teamLabelForSeat } from "../lib/strings";
 import { LeaveButton } from "./leave-button";
 
@@ -11,8 +16,19 @@ type LobbyProps = {
   onLeave: () => void;
 };
 
+function difficultyLabel(difficulty: BotDifficulty | undefined): string {
+  return difficulty === undefined
+    ? "Bot"
+    : `Bot · ${difficulty.charAt(0).toUpperCase()}${difficulty.slice(1)}`;
+}
+
 export function Lobby({ view, sendCommand, onLeave }: LobbyProps) {
   const [copied, setCopied] = useState(false);
+  const [difficultyBySeat, setDifficultyBySeat] = useState<
+    Record<number, BotDifficulty>
+  >({});
+  const [pendingBot, setPendingBot] = useState<string | null>(null);
+  const [botError, setBotError] = useState<string | null>(null);
   const occupied = view.seats.filter(({ playerId }) => playerId !== null).length;
   const you = view.seats.find(({ playerId }) => playerId === view.you.playerId);
 
@@ -20,6 +36,18 @@ export function Lobby({ view, sendCommand, onLeave }: LobbyProps) {
     await navigator.clipboard.writeText(window.location.href);
     setCopied(true);
     setTimeout(() => setCopied(false), 1_600);
+  }
+
+  async function changeBot(key: string, action: () => Promise<void>): Promise<void> {
+    setPendingBot(key);
+    setBotError(null);
+    try {
+      await action();
+    } catch (cause) {
+      setBotError(cause instanceof Error ? cause.message : "Could not update the bot");
+    } finally {
+      setPendingBot(null);
+    }
   }
 
   return (
@@ -55,31 +83,84 @@ export function Lobby({ view, sendCommand, onLeave }: LobbyProps) {
         <div className="seat-picker">
           {view.seats.map((seat) => {
             const isYou = seat.playerId === view.you.playerId;
+            const difficulty = difficultyBySeat[seat.seat] ?? "intermediate";
             return (
-              <button
-                key={seat.seat}
-                type="button"
-                className={`lobby-seat ${isYou ? "is-you" : ""}`}
-                disabled={seat.playerId !== null && !isYou}
-                onClick={() => sendCommand({ type: "SIT", seat: seat.seat })}
-              >
-                <span className="seat-number">0{seat.seat + 1}</span>
-                <span className="seat-avatar">
-                  {seat.name?.slice(0, 1).toUpperCase() ?? "+"}
-                </span>
-                <strong>{seat.name ?? "Open seat"}</strong>
-                <small>
-                  {isYou
-                    ? "You"
-                    : seat.playerId === null
-                      ? "Tap to sit"
-                      : `Team ${teamLabelForSeat(seat.seat).toLowerCase()}`}
-                </small>
-                {seat.ready && <span className="ready-stamp">READY</span>}
-              </button>
+              <div key={seat.seat} className={`lobby-seat ${isYou ? "is-you" : ""}`}>
+                <button
+                  type="button"
+                  className="lobby-seat-main"
+                  disabled={seat.playerId !== null && !isYou}
+                  onClick={() => sendCommand({ type: "SIT", seat: seat.seat })}
+                >
+                  <span className="seat-number">0{seat.seat + 1}</span>
+                  <span className="seat-avatar">
+                    {seat.name?.slice(0, 1).toUpperCase() ?? "+"}
+                  </span>
+                  <strong>{seat.name ?? "Open seat"}</strong>
+                  <small>
+                    {isYou
+                      ? "You"
+                      : seat.isBot
+                        ? difficultyLabel(seat.botDifficulty)
+                        : seat.playerId === null
+                          ? "Tap to sit"
+                          : `Team ${teamLabelForSeat(seat.seat).toLowerCase()}`}
+                  </small>
+                  {seat.isBot && <span className="bot-badge">BOT</span>}
+                  {seat.ready && <span className="ready-stamp">READY</span>}
+                </button>
+                {seat.isBot && seat.playerId !== null && (
+                  <button
+                    type="button"
+                    className="remove-bot"
+                    aria-label={`Remove ${seat.name ?? "bot"}`}
+                    disabled={pendingBot === `remove:${seat.playerId}`}
+                    onClick={() =>
+                      void changeBot(`remove:${seat.playerId}`, () =>
+                        removeBot(view.roomId, seat.playerId!),
+                      )
+                    }
+                  >
+                    ×
+                  </button>
+                )}
+                {seat.playerId === null && (
+                  <div className="add-bot-control">
+                    <select
+                      aria-label={`Bot difficulty for seat ${seat.seat + 1}`}
+                      value={difficulty}
+                      disabled={pendingBot === `add:${seat.seat}`}
+                      onChange={(event) =>
+                        setDifficultyBySeat((current) => ({
+                          ...current,
+                          [seat.seat]: event.target.value as BotDifficulty,
+                        }))
+                      }
+                    >
+                      <option value="beginner">Beginner</option>
+                      <option value="intermediate">Intermediate</option>
+                      <option value="advanced">Advanced</option>
+                      <option value="expert">Expert</option>
+                    </select>
+                    <button
+                      type="button"
+                      disabled={pendingBot === `add:${seat.seat}`}
+                      onClick={() =>
+                        void changeBot(`add:${seat.seat}`, () =>
+                          addBot(view.roomId, seat.seat, difficulty),
+                        )
+                      }
+                    >
+                      {pendingBot === `add:${seat.seat}` ? "Adding…" : "Add bot"}
+                    </button>
+                  </div>
+                )}
+              </div>
             );
           })}
         </div>
+
+        {botError && <p className="inline-error">{botError}</p>}
 
         <footer className="lobby-footer">
           <div>

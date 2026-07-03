@@ -738,41 +738,6 @@ html[data-theme="retro"] .countdown.is-urgent {
   color: var(--danger-bright);
   animation: retro-pulse 0.8s infinite;
 }
-html[data-theme="retro"] .practice-bar {
-  border: 2px solid var(--edge);
-  border-radius: 6px;
-  background: var(--float-bg);
-  box-shadow:
-    inset 1px 1px 0 var(--bevel-light),
-    inset -1px -1px 0 var(--bevel-dark),
-    4px 4px 0 var(--hard-shadow);
-}
-html[data-theme="retro"] .practice-label {
-  color: var(--gold);
-  font-family: var(--font-pixel-stack);
-  font-size: 0.48rem;
-  letter-spacing: 0.14em;
-}
-html[data-theme="retro"] .practice-tab {
-  border: 1px solid transparent;
-  border-radius: 4px;
-  background: transparent;
-  color: var(--muted);
-  font-size: 0.68rem;
-  font-weight: 750;
-}
-html[data-theme="retro"] .practice-tab.is-active {
-  border-color: var(--edge);
-  background: var(--gold);
-  color: var(--on-gold);
-  box-shadow: 1px 1px 0 var(--hard-shadow);
-}
-html[data-theme="retro"] .practice-tab.is-turn {
-  color: var(--accent-bright);
-}
-html[data-theme="retro"] .practice-tab.is-active.is-turn {
-  color: var(--on-gold);
-}
 html[data-theme="retro"] .playing-card.is-hinted {
   box-shadow:
     0 0 0 2px var(--gold),
@@ -1056,8 +1021,5 @@ html[data-theme="retro"] .summary-score strong {
   }
   html[data-theme="retro"] .menu-title {
     font-size: 2.4rem;
-  }
-  html[data-theme="retro"] .practice-tab {
-    font-size: 0.6rem;
   }
 }

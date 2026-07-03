@@ -13,6 +13,7 @@ import {
   TOAST_DISMISS_MS,
 } from "../lib/constants";
 import { safeStorage } from "../lib/safe-storage";
+import { sessionKey } from "../lib/session";
 
 export type ConnectionStatus =
   | "join-required"
@@ -20,12 +21,6 @@ export type ConnectionStatus =
   | "connected"
   | "reconnecting"
   | "offline";
-
-function sessionKey(roomId: string, slot?: string): string {
-  return slot === undefined
-    ? `shengji:session:${roomId}`
-    : `shengji:session:${roomId}:${slot}`;
-}
 
 function socketUrl(roomId: string, token: string): string {
   const configured = process.env.NEXT_PUBLIC_WS_URL;
@@ -38,7 +33,7 @@ function socketUrl(roomId: string, token: string): string {
   return url.toString();
 }
 
-export function useGameRoom(roomId: string, sessionSlot?: string) {
+export function useGameRoom(roomId: string) {
   const [view, setView] = useState<PrivateGameView | null>(null);
   const [status, setStatus] = useState<ConnectionStatus>("connecting");
   const [error, setError] = useState<string | null>(null);
@@ -110,7 +105,7 @@ export function useGameRoom(roomId: string, sessionSlot?: string) {
   );
 
   useEffect(() => {
-    const stored = safeStorage.get(sessionKey(roomId, sessionSlot));
+    const stored = safeStorage.get(sessionKey(roomId));
     if (stored === null) setStatus("join-required");
     else connect(stored);
     return () => {
@@ -118,7 +113,7 @@ export function useGameRoom(roomId: string, sessionSlot?: string) {
       if (retryRef.current !== null) clearTimeout(retryRef.current);
       socketRef.current?.close(1000, "Leaving page");
     };
-  }, [connect, roomId, sessionSlot]);
+  }, [connect, roomId]);
 
   const join = useCallback(
     async (name: string) => {
@@ -132,17 +127,17 @@ export function useGameRoom(roomId: string, sessionSlot?: string) {
       if (!response.ok || body.playerToken === undefined) {
         throw new Error(body.error ?? "Could not join room");
       }
-      safeStorage.set(sessionKey(roomId, sessionSlot), body.playerToken);
+      safeStorage.set(sessionKey(roomId), body.playerToken);
       connect(body.playerToken);
     },
-    [connect, roomId, sessionSlot],
+    [connect, roomId],
   );
 
   const sendCommand = useCallback(
     (command: WireClientCommand) => {
       const socket = socketRef.current;
       const current = viewRef.current;
-      const token = safeStorage.get(sessionKey(roomId, sessionSlot));
+      const token = safeStorage.get(sessionKey(roomId));
       if (socket?.readyState !== WebSocket.OPEN || current === null || token === null) {
         setError("You are not connected yet.");
         return false;
@@ -159,17 +154,17 @@ export function useGameRoom(roomId: string, sessionSlot?: string) {
       );
       return true;
     },
-    [roomId, sessionSlot],
+    [roomId],
   );
 
   const leaveSession = useCallback(() => {
     intentionalCloseRef.current = true;
     socketRef.current?.close(1000, "Forget this session");
-    safeStorage.remove(sessionKey(roomId, sessionSlot));
+    safeStorage.remove(sessionKey(roomId));
     viewRef.current = null;
     setView(null);
     window.location.href = "/";
-  }, [roomId, sessionSlot]);
+  }, [roomId]);
 
   const serverNow = useCallback(() => Date.now() + serverOffsetRef.current, []);
 

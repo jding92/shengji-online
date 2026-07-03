@@ -9,23 +9,39 @@ import { Lobby } from "./lobby";
 /** Announces seat connection changes ("Ada disconnected") as passing notices. */
 function useConnectionNotices(
   seats:
-    | { playerId: string | null; name: string | null; connected: boolean }[]
+    | {
+        playerId: string | null;
+        name: string | null;
+        connected: boolean;
+        isBot: boolean;
+      }[]
     | undefined,
 ) {
   const [notice, setNotice] = useState<string | null>(null);
-  const previous = useRef(new Map<string, boolean>());
+  const previous = useRef(new Map<string, { connected: boolean; isBot: boolean }>());
 
   useEffect(() => {
     if (seats === undefined) return;
     for (const seat of seats) {
       if (seat.playerId === null) continue;
-      const wasConnected = previous.current.get(seat.playerId);
-      if (wasConnected !== undefined && wasConnected !== seat.connected) {
+      const before = previous.current.get(seat.playerId);
+      if (before !== undefined && before.isBot !== seat.isBot) {
         setNotice(
-          `${seat.name ?? "A player"} ${seat.connected ? "reconnected" : "disconnected"}`,
+          `${seat.name ?? "A player"} ${
+            seat.isBot ? "is now controlled by a bot" : "reclaimed their seat"
+          }`,
+        );
+      } else if (before !== undefined && before.connected !== seat.connected) {
+        setNotice(
+          `${seat.name ?? "A player"} ${
+            seat.connected ? "reconnected" : "disconnected"
+          }`,
         );
       }
-      previous.current.set(seat.playerId, seat.connected);
+      previous.current.set(seat.playerId, {
+        connected: seat.connected,
+        isBot: seat.isBot,
+      });
     }
   }, [seats]);
 
@@ -53,7 +69,20 @@ export function RoomClient({ roomId }: { roomId: string }) {
   const [name, setName] = useState("");
   const [joining, setJoining] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
+  const autoSitAttempted = useRef(false);
   const { notice, clearNotice } = useConnectionNotices(view?.seats);
+
+  useEffect(() => {
+    if (view?.phase !== "lobby" || view.you.seat !== null || autoSitAttempted.current) {
+      return;
+    }
+    const occupied = view.seats.filter(({ playerId }) => playerId !== null);
+    if (occupied.length === 0 || occupied.some(({ isBot }) => !isBot)) return;
+    const open = view.seats.find(({ playerId }) => playerId === null);
+    if (open !== undefined && sendCommand({ type: "SIT", seat: open.seat })) {
+      autoSitAttempted.current = true;
+    }
+  }, [sendCommand, view]);
 
   // Every toast auto-dismisses; all remain click-dismissable.
   useEffect(() => {

@@ -663,38 +663,6 @@ html[data-theme="default"] .countdown.is-urgent {
   color: var(--danger-bright);
   animation: default-bob 0.8s infinite;
 }
-html[data-theme="default"] .practice-bar {
-  border: 2px solid var(--panel-edge);
-  border-radius: 10px;
-  background: var(--panel);
-  box-shadow: 0 4px 0 var(--edge-shadow);
-}
-html[data-theme="default"] .practice-label {
-  color: var(--gold);
-  font-family: var(--font-game);
-  font-size: 0.72rem;
-  letter-spacing: 0.1em;
-}
-html[data-theme="default"] .practice-tab {
-  border: 0;
-  border-radius: 7px;
-  background: transparent;
-  color: var(--muted);
-  font-family: var(--font-game);
-  font-size: 0.85rem;
-}
-html[data-theme="default"] .practice-tab.is-active {
-  background: var(--orange);
-  color: #fff;
-  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
-  box-shadow: 0 2px 0 var(--orange-deep);
-}
-html[data-theme="default"] .practice-tab.is-turn {
-  color: var(--accent-bright);
-}
-html[data-theme="default"] .practice-tab.is-active.is-turn {
-  color: #fff;
-}
 html[data-theme="default"] .playing-card.is-hinted {
   box-shadow:
     0 0 0 2px var(--gold),
