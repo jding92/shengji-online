@@ -64,7 +64,7 @@ export function selectForcedBury(
  * allocation order used by the legality profile so later components see the
  * same remaining cards.
  */
-function structuralMatch(
+export function structuralMatch(
   suitCards: readonly CardInstance[],
   ledFormat: TrickFormat,
   trump: TrumpSpec,
