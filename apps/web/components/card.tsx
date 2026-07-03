@@ -79,7 +79,9 @@ export function PlayingCard({
         <strong>{display.rank}</strong>
         <span>{display.suit}</span>
       </span>
-      <span className="card-center">{display.isJoker ? "JOKER" : display.suit}</span>
+      <span className={`card-center ${display.isJoker ? "is-joker-center" : ""}`}>
+        {display.isJoker ? "JOKER" : display.suit}
+      </span>
       {display.isJoker && <span className="joker-script">{display.rank}王</span>}
     </motion.button>
   );

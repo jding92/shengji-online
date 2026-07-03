@@ -5,7 +5,6 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { cardFaceLabel, relativeSeatPosition, type TablePosition } from "../lib/cards";
 import { TRICK_SWEEP_MS } from "../lib/constants";
-import { Countdown } from "./countdown";
 import { PlayingCard } from "./card";
 
 type PublicTrick = NonNullable<
@@ -56,11 +55,7 @@ function useTrickSweep(view: PrivateGameView): Sweep | null {
 }
 
 /** The single centered status message for the current phase, keyed for exits. */
-function phaseMessage(
-  view: PrivateGameView,
-  turnDeadline: string | null,
-  serverNow: () => number,
-): { key: string; node: ReactNode } | null {
+function phaseMessage(view: PrivateGameView): { key: string; node: ReactNode } | null {
   const round = view.publicRound;
   if (view.phase === "dealing") {
     const bid = round?.currentBid;
@@ -88,7 +83,7 @@ function phaseMessage(
       key: "bidding",
       node: (
         <div className="phase-message bid-message">
-          <Countdown deadline={round.biddingDeadline} now={serverNow} />
+          <span className="deal-spinner">主</span>
           <strong>{round.currentBid ? "Raise or pass" : "Declare trump"}</strong>
           <small>
             {round.currentBid
@@ -125,9 +120,6 @@ function phaseMessage(
         <div className="table-watermark">
           <span>升</span>
           <small>{yourLead ? "Your lead" : "Waiting for lead"}</small>
-          {yourLead && (
-            <Countdown deadline={turnDeadline ?? undefined} now={serverNow} />
-          )}
         </div>
       ),
     };
@@ -135,17 +127,9 @@ function phaseMessage(
   return null;
 }
 
-export function TrickCenter({
-  view,
-  turnDeadline,
-  serverNow,
-}: {
-  view: PrivateGameView;
-  turnDeadline: string | null;
-  serverNow: () => number;
-}) {
+export function TrickCenter({ view }: { view: PrivateGameView }) {
   const round = view.publicRound;
-  const message = phaseMessage(view, turnDeadline, serverNow);
+  const message = phaseMessage(view);
   const sweep = useTrickSweep(view);
   const reducedMotion = useReducedMotion() ?? false;
   const sweepVector =

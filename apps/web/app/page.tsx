@@ -3,6 +3,7 @@
 import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { ThemeSwitcher } from "../components/theme-switcher";
 
 export default function HomePage() {
   const router = useRouter();
@@ -105,6 +106,8 @@ export default function HomePage() {
         </div>
 
         {error && <p className="inline-error">{error}</p>}
+
+        <ThemeSwitcher />
       </motion.section>
     </main>
   );

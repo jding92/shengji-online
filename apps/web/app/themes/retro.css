@@ -1,0 +1,1067 @@
+/*
+ * "Retro" skin: the bright kelly-green baize of classic 拖拉机 desktop
+ * clients, chunky beveled panels with hard pixel shadows, a hard-pixel
+ * display face, and gold arcade-logo lettering. No blur — every edge is
+ * crisp and slightly 3D.
+ */
+html[data-theme="retro"] {
+  /* Type */
+  --font-pixel-stack: var(--font-pixel), "Kaiti SC", "STKaiti", serif;
+
+  /* Text */
+  --ink: #f4faee;
+  --text-bright: #fdfef4;
+  --text-soft: #d4ecd6;
+  --muted: #a9d4b1;
+  --faint: #7fb38b;
+
+  /* Page and panel surfaces */
+  --night: #0a3d20;
+  --bg-hi: #10522c;
+  --bg-lo: #083319;
+  --shell-hi: #0d4724;
+  --shell-lo: #072b15;
+  --glass-hi: #0f4f29;
+  --glass-lo: #0a3a1e;
+  --veil: rgba(6, 40, 21, 0.94);
+  --float-bg: #0d4826;
+  --dock-hi: #0c4222;
+  --dock-lo: #062712;
+  --summary-hi: #105530;
+  --summary-lo: #093a1e;
+  --badge-ink: #10310a;
+  --overlay: rgba(2, 20, 10, 0.78);
+  --banner-bg: #0d4a27;
+
+  /* Bevel edges: light top-left, dark bottom-right — the retro 3D look */
+  --edge: #052a14;
+  --bevel-light: rgba(255, 255, 255, 0.22);
+  --bevel-dark: rgba(0, 0, 0, 0.45);
+  --hard-shadow: rgba(0, 0, 0, 0.4);
+
+  /* Primary accent: signal red, pops hard on green felt */
+  --accent: #e8382b;
+  --accent-bright: #ff5b4a;
+  --accent-deep: #c22417;
+  --on-accent: #fff4ec;
+
+  /* Gold accent: arcade marquee yellow */
+  --gold: #ffd23f;
+  --gold-hi: #ffe37a;
+  --gold-deep: #dd9d13;
+  --on-gold: #3a2404;
+  --gold-line: rgba(255, 210, 63, 0.4);
+  --gold-tint: rgba(255, 210, 63, 0.16);
+
+  /* Connectivity */
+  --ok: #6fe08a;
+
+  /* Danger / warnings */
+  --danger: #ff5b4a;
+  --danger-bright: #ff8a7a;
+  --danger-soft: #ffe0d8;
+  --danger-muted: #e8a89c;
+  --danger-panel: #4a180f;
+  --danger-panel-strong: #571b10;
+
+  /* Table felt */
+  --felt: #1c8a49;
+  --felt-deep: #157038;
+  --felt-glow: rgba(160, 255, 190, 0.14);
+  --felt-speckle: rgba(255, 255, 255, 0.015);
+  --felt-ring-line: rgba(255, 240, 190, 0.22);
+  --table-rim: #b8862b;
+  --table-rim-hi: #e0b256;
+  --table-rim-lo: #7d5a17;
+  --watermark: rgba(230, 255, 235, 0.12);
+
+  /* Card faces and backs — classic red/black deck, blue lattice backs */
+  --card-face-hi: #ffffff;
+  --card-face-lo: #f1f0e6;
+  --card-ink: #17130e;
+  --card-red: #d1231b;
+  --card-diamond: #d1231b;
+  --card-club: #17130e;
+  --card-spade: #17130e;
+  --card-joker-small: #17130e;
+  --card-joker-big: #d1231b;
+  --card-back-hi: #3a5cc4;
+  --card-back-lo: #24418f;
+  --card-back-border: #f2f5ff;
+  --card-back-ink: rgba(240, 246, 255, 0.92);
+  --card-back-line: rgba(240, 246, 255, 0.55);
+
+  --focus-ring: var(--gold);
+  --dur-fast: 120ms;
+
+  background: var(--night);
+  color: var(--ink);
+}
+
+/* Tiled two-tone diamond weave, like the patterned border of old clients. */
+html[data-theme="retro"] body,
+html[data-theme="retro"] .game-shell {
+  background:
+    repeating-linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.02) 0 14px,
+      transparent 14px 28px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      rgba(0, 0, 0, 0.06) 0 14px,
+      transparent 14px 28px
+    ),
+    linear-gradient(180deg, var(--bg-hi), var(--bg-lo));
+}
+
+html[data-theme="retro"] .game-shell {
+  background:
+    repeating-linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.02) 0 14px,
+      transparent 14px 28px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      rgba(0, 0, 0, 0.06) 0 14px,
+      transparent 14px 28px
+    ),
+    linear-gradient(180deg, var(--shell-hi), var(--shell-lo));
+}
+
+/* Chunky beveled arcade buttons: hard offset shadow, press-down on click. */
+html[data-theme="retro"] .button {
+  border: 2px solid var(--edge);
+  border-radius: 8px;
+  color: var(--ink);
+  font-family: var(--font-pixel-stack);
+  font-size: 0.6rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  box-shadow:
+    inset 2px 2px 0 var(--bevel-light),
+    inset -2px -2px 0 var(--bevel-dark),
+    3px 3px 0 var(--hard-shadow);
+  transition:
+    transform var(--dur-fast) ease,
+    box-shadow var(--dur-fast) ease,
+    filter var(--dur-fast) ease;
+}
+
+html[data-theme="retro"] .button:not(:disabled):hover {
+  filter: brightness(1.1);
+}
+
+html[data-theme="retro"] .button:not(:disabled):active {
+  transform: translate(2px, 2px);
+  box-shadow:
+    inset 2px 2px 0 var(--bevel-light),
+    inset -2px -2px 0 var(--bevel-dark),
+    1px 1px 0 var(--hard-shadow);
+}
+
+html[data-theme="retro"] .button-primary {
+  background: linear-gradient(180deg, var(--gold-hi), var(--gold-deep));
+  color: var(--on-gold);
+}
+
+html[data-theme="retro"] .button-gold {
+  background: linear-gradient(180deg, var(--accent-bright), var(--accent-deep));
+  color: var(--on-accent);
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.35);
+}
+
+html[data-theme="retro"] .button-ghost {
+  background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
+  color: var(--text-soft);
+}
+
+html[data-theme="retro"] .button-large {
+  font-size: 0.68rem;
+}
+
+html[data-theme="retro"] .eyebrow {
+  color: var(--gold);
+  font-family: var(--font-pixel-stack);
+  font-size: 0.55rem;
+  letter-spacing: 0.14em;
+}
+
+html[data-theme="retro"] .brand-lockup strong {
+  font-family: var(--font-pixel-stack);
+  font-size: 0.72rem;
+  color: var(--gold);
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.45);
+}
+
+html[data-theme="retro"] .brand-lockup small {
+  color: var(--muted);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+}
+
+html[data-theme="retro"] .brand-mark {
+  border: 2px solid var(--edge);
+  border-radius: 8px;
+  background: linear-gradient(180deg, var(--accent-bright), var(--accent-deep));
+  box-shadow:
+    inset 2px 2px 0 var(--bevel-light),
+    inset -2px -2px 0 var(--bevel-dark);
+  color: var(--gold);
+  font-family: Georgia, serif;
+  font-size: 1.2rem;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.4);
+}
+
+html[data-theme="retro"] .brand-mark.large {
+  font-size: 1.7rem;
+}
+
+/* Solid beveled panel — no glass, no blur. */
+html[data-theme="retro"] .glass-panel {
+  border: 2px solid var(--edge);
+  border-radius: 10px;
+  background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
+  box-shadow:
+    inset 2px 2px 0 var(--bevel-light),
+    inset -2px -2px 0 var(--bevel-dark),
+    8px 8px 0 var(--hard-shadow);
+}
+
+/* Ambient blobs don't fit the crisp retro look; the markup stays put. */
+html[data-theme="retro"] .ambient-orb {
+  display: none;
+}
+
+html[data-theme="retro"] .menu-card {
+  border: 2px solid var(--edge);
+  border-radius: 10px;
+  background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
+  box-shadow:
+    inset 2px 2px 0 var(--bevel-light),
+    inset -2px -2px 0 var(--bevel-dark),
+    10px 10px 0 var(--hard-shadow);
+}
+
+/* Gold marquee frame line inside the cabinet. */
+html[data-theme="retro"] .menu-card::before {
+  content: "";
+  position: absolute;
+  inset: 9px;
+  border: 1px solid var(--gold-line);
+  border-radius: 6px;
+  pointer-events: none;
+}
+
+html[data-theme="retro"] .menu-mark {
+  border: 2px solid var(--edge);
+  border-radius: 10px;
+  background: linear-gradient(180deg, var(--accent-bright), var(--accent-deep));
+  box-shadow:
+    inset 2px 2px 0 var(--bevel-light),
+    inset -2px -2px 0 var(--bevel-dark),
+    4px 4px 0 var(--hard-shadow);
+  color: var(--gold);
+  font-family: Georgia, serif;
+  font-size: 3rem;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.45);
+}
+
+/* Arcade-logo lettering: gold fill, dark red outline, hard drop. */
+html[data-theme="retro"] .menu-title {
+  font-family: var(--font-pixel-stack);
+  font-size: 3.2rem;
+  font-weight: 400;
+  color: var(--gold);
+  text-shadow:
+    -2px 0 0 #7c1a10,
+    2px 0 0 #7c1a10,
+    0 -2px 0 #7c1a10,
+    0 2px 0 #7c1a10,
+    -2px -2px 0 #7c1a10,
+    2px -2px 0 #7c1a10,
+    -2px 2px 0 #7c1a10,
+    2px 2px 0 #7c1a10,
+    5px 5px 0 rgba(0, 0, 0, 0.45);
+}
+
+html[data-theme="retro"] .menu-subtitle {
+  color: var(--text-soft);
+  font-family: var(--font-pixel-stack);
+  font-size: 0.62rem;
+  letter-spacing: 0.42em;
+  text-indent: 0.42em;
+}
+
+html[data-theme="retro"] .menu-join {
+  border: 2px solid var(--edge);
+  border-radius: 8px;
+  background: var(--dock-lo);
+  box-shadow:
+    inset 2px 2px 0 rgba(0, 0, 0, 0.35),
+    inset -2px -2px 0 rgba(255, 255, 255, 0.06);
+}
+
+html[data-theme="retro"] .menu-join input {
+  color: var(--gold);
+  font-family: var(--font-pixel-stack);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+html[data-theme="retro"] .menu-join input::placeholder {
+  color: var(--faint);
+}
+
+html[data-theme="retro"] .menu-join .button {
+  border-radius: 6px;
+}
+
+html[data-theme="retro"] .inline-error {
+  color: var(--danger-bright);
+  font-size: 0.8rem;
+}
+
+html[data-theme="retro"] .theme-picker {
+  color: var(--faint);
+  font-family: var(--font-pixel-stack);
+  font-size: 0.48rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+html[data-theme="retro"] .theme-chip {
+  border: 1px solid var(--edge);
+  border-radius: 5px;
+  background: var(--dock-lo);
+  color: var(--muted);
+  font-family: var(--font-pixel-stack);
+  font-size: 0.5rem;
+  text-transform: uppercase;
+}
+
+html[data-theme="retro"] .theme-chip.is-active {
+  background: var(--gold);
+  color: var(--on-gold);
+  box-shadow: 1px 1px 0 var(--hard-shadow);
+}
+
+/* Join and lobby */
+html[data-theme="retro"] .join-shell > strong {
+  font-family: var(--font-pixel-stack);
+  font-size: 0.78rem;
+  color: var(--gold);
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.4);
+}
+html[data-theme="retro"] .join-shell > small {
+  color: var(--muted);
+}
+html[data-theme="retro"] .join-card h1 {
+  font-family: var(--font-pixel-stack);
+  font-size: 1.3rem;
+  font-weight: 400;
+  color: var(--gold);
+  text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.4);
+}
+html[data-theme="retro"] .join-card > p:not(.eyebrow) {
+  color: var(--muted);
+}
+html[data-theme="retro"] .join-card label {
+  color: var(--gold);
+  font-family: var(--font-pixel-stack);
+  font-size: 0.55rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+html[data-theme="retro"] .join-card input {
+  border: 2px solid var(--edge);
+  border-radius: 8px;
+  background: var(--dock-lo);
+  box-shadow:
+    inset 2px 2px 0 rgba(0, 0, 0, 0.35),
+    inset -2px -2px 0 rgba(255, 255, 255, 0.06);
+  color: var(--ink);
+}
+
+html[data-theme="retro"] .loading-mark {
+  border: 2px solid var(--edge);
+  border-radius: 10px;
+  background: linear-gradient(180deg, var(--accent-bright), var(--accent-deep));
+  box-shadow:
+    inset 2px 2px 0 var(--bevel-light),
+    inset -2px -2px 0 var(--bevel-dark),
+    4px 4px 0 var(--hard-shadow);
+  color: var(--gold);
+  font-family: Georgia, serif;
+  font-size: 2rem;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.45);
+  animation: retro-pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes retro-pulse {
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+html[data-theme="retro"] .lobby-heading h1 {
+  font-family: var(--font-pixel-stack);
+  font-size: clamp(1.1rem, 2.6vw, 1.9rem);
+  font-weight: 400;
+  color: var(--gold);
+  text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.4);
+}
+html[data-theme="retro"] .lobby-heading p {
+  color: var(--muted);
+}
+html[data-theme="retro"] .rules-ribbon {
+  color: var(--muted);
+  font-family: var(--font-pixel-stack);
+  font-size: 0.52rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+html[data-theme="retro"] .rules-ribbon i {
+  width: 5px;
+  height: 5px;
+  background: var(--gold);
+}
+html[data-theme="retro"] .lobby-seat {
+  border: 2px solid var(--edge);
+  border-radius: 8px;
+  background: linear-gradient(180deg, var(--felt), var(--felt-deep));
+  box-shadow:
+    inset 2px 2px 0 var(--bevel-light),
+    inset -2px -2px 0 var(--bevel-dark);
+  color: var(--ink);
+  transition: filter var(--dur-fast) ease;
+}
+html[data-theme="retro"] .lobby-seat:not(:disabled):hover,
+html[data-theme="retro"] .lobby-seat.is-you {
+  filter: brightness(1.12);
+  box-shadow:
+    inset 2px 2px 0 var(--bevel-light),
+    inset -2px -2px 0 var(--bevel-dark),
+    0 0 0 2px var(--gold);
+}
+html[data-theme="retro"] .seat-number {
+  color: rgba(255, 255, 255, 0.4);
+  font-family: var(--font-pixel-stack);
+  font-size: 0.55rem;
+}
+html[data-theme="retro"] .seat-avatar {
+  border: 2px solid var(--edge);
+  border-radius: 8px;
+  background: linear-gradient(180deg, var(--card-face-hi), var(--card-face-lo));
+  box-shadow: 2px 2px 0 var(--hard-shadow);
+  color: var(--card-red);
+  font-family: Georgia, serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+html[data-theme="retro"] .lobby-seat strong {
+  font-family: var(--font-pixel-stack);
+  font-size: 0.62rem;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.4);
+}
+html[data-theme="retro"] .lobby-seat small {
+  color: var(--text-soft);
+}
+html[data-theme="retro"] .ready-stamp {
+  border: 2px solid var(--gold);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--gold);
+  font-family: var(--font-pixel-stack);
+  font-size: 0.48rem;
+}
+html[data-theme="retro"] .lobby-footer strong {
+  font-family: var(--font-pixel-stack);
+  font-size: 0.62rem;
+  color: var(--gold);
+}
+html[data-theme="retro"] .lobby-footer span {
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
+/* Table */
+html[data-theme="retro"] .side-panel {
+  border-right: 2px solid var(--edge);
+  background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
+  box-shadow:
+    inset 2px 0 0 var(--bevel-light),
+    3px 0 0 var(--hard-shadow);
+}
+@media (max-width: 960px) {
+  html[data-theme="retro"] .side-panel {
+    border-right: 0;
+    border-bottom: 2px solid var(--edge);
+    box-shadow:
+      inset 0 2px 0 var(--bevel-light),
+      0 3px 0 var(--hard-shadow);
+  }
+}
+html[data-theme="retro"] .bottom-tab {
+  border: 2px solid var(--edge);
+  border-radius: 6px;
+  background: var(--dock-lo);
+  box-shadow:
+    inset 1px 1px 0 rgba(0, 0, 0, 0.4),
+    inset -1px -1px 0 rgba(255, 255, 255, 0.06);
+}
+html[data-theme="retro"] .bottom-tab small {
+  color: var(--faint);
+  font-family: var(--font-pixel-stack);
+  font-size: 0.42rem;
+  letter-spacing: 0.1em;
+}
+html[data-theme="retro"] .bottom-tab strong {
+  color: var(--gold);
+  font-family: var(--font-pixel-stack);
+  font-size: 0.62rem;
+}
+html[data-theme="retro"] .bottom-tab.is-open {
+  border-color: var(--gold);
+}
+html[data-theme="retro"] .buried-panel {
+  border: 2px solid var(--edge);
+  border-radius: 8px;
+  background: linear-gradient(180deg, var(--summary-hi), var(--summary-lo));
+  box-shadow:
+    inset 2px 2px 0 var(--bevel-light),
+    inset -2px -2px 0 var(--bevel-dark),
+    6px 6px 0 var(--hard-shadow);
+}
+html[data-theme="retro"] .buried-panel small {
+  color: var(--gold);
+  font-family: var(--font-pixel-stack);
+  font-size: 0.46rem;
+  letter-spacing: 0.08em;
+}
+html[data-theme="retro"] .round-pills > span {
+  border: 2px solid var(--edge);
+  border-radius: 6px;
+  background: var(--dock-lo);
+  box-shadow:
+    inset 1px 1px 0 rgba(0, 0, 0, 0.4),
+    inset -1px -1px 0 rgba(255, 255, 255, 0.06);
+}
+html[data-theme="retro"] .round-pills small {
+  color: var(--faint);
+  font-family: var(--font-pixel-stack);
+  font-size: 0.42rem;
+  letter-spacing: 0.1em;
+}
+html[data-theme="retro"] .round-pills strong {
+  color: var(--gold);
+  font-family: var(--font-pixel-stack);
+  font-size: 0.62rem;
+}
+html[data-theme="retro"] .icon-button {
+  border: 2px solid var(--edge);
+  border-radius: 6px;
+  background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
+  box-shadow:
+    inset 1px 1px 0 var(--bevel-light),
+    inset -1px -1px 0 var(--bevel-dark),
+    2px 2px 0 var(--hard-shadow);
+  color: var(--ink);
+}
+html[data-theme="retro"] .icon-button:not(:disabled):active {
+  transform: translate(1px, 1px);
+  box-shadow:
+    inset 1px 1px 0 var(--bevel-light),
+    inset -1px -1px 0 var(--bevel-dark),
+    1px 1px 0 var(--hard-shadow);
+}
+html[data-theme="retro"] .throw-banner {
+  border: 2px solid var(--gold);
+  border-radius: 6px;
+  background: var(--banner-bg);
+  color: var(--text-bright);
+  box-shadow: 4px 4px 0 var(--hard-shadow);
+  font-size: 0.66rem;
+}
+html[data-theme="retro"] .throw-banner strong {
+  font-family: var(--font-pixel-stack);
+  font-size: 0.52rem;
+  color: var(--gold);
+}
+html[data-theme="retro"] .throw-banner span {
+  color: var(--text-soft);
+}
+html[data-theme="retro"] .throw-banner b {
+  color: var(--gold);
+}
+html[data-theme="retro"] .throw-banner i {
+  color: var(--muted);
+}
+html[data-theme="retro"] .throw-failed {
+  border-color: var(--danger);
+  background: var(--danger-panel-strong);
+}
+/* Full rectangular baize with a wooden-gold rim — the whole stage is table. */
+/* The whole board is the felt — play area and hand share one surface. */
+html[data-theme="retro"] .board {
+  margin: 10px 10px 0;
+  border: 7px solid var(--table-rim);
+  border-bottom: 0;
+  border-radius: 14px 14px 0 0;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 3px,
+      var(--felt-speckle) 3px 4px
+    ),
+    linear-gradient(180deg, var(--felt), var(--felt-deep));
+  box-shadow:
+    inset 3px 3px 0 var(--table-rim-hi),
+    inset -3px 0 0 var(--table-rim-lo),
+    inset 0 0 70px rgba(0, 0, 0, 0.35);
+}
+html[data-theme="retro"] .hand-dock {
+  background: transparent;
+  box-shadow: none;
+}
+/* Inner pinstripe frame instead of an ellipse ring. */
+html[data-theme="retro"] .felt-ring {
+  inset: 14px;
+  border: 1px dashed var(--felt-ring-line);
+  border-radius: 8px;
+}
+/* Player nameplates: little beveled plaques like the old avatar frames. */
+html[data-theme="retro"] .player-chip {
+  border: 2px solid var(--edge);
+  border-radius: 6px;
+  background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
+  box-shadow:
+    inset 1px 1px 0 var(--bevel-light),
+    inset -1px -1px 0 var(--bevel-dark),
+    3px 3px 0 var(--hard-shadow);
+  transition: 150ms;
+}
+/* Turn cue is a gold ring OUTSIDE the plate; the team-color border stays. */
+html[data-theme="retro"] .is-turn .player-chip {
+  box-shadow:
+    inset 1px 1px 0 var(--bevel-light),
+    inset -1px -1px 0 var(--bevel-dark),
+    3px 3px 0 var(--hard-shadow),
+    0 0 0 2px var(--gold),
+    0 0 22px var(--gold-tint);
+}
+html[data-theme="retro"] .seat-count {
+  color: var(--gold);
+  font-family: var(--font-pixel-stack);
+  font-size: 0.5rem;
+}
+html[data-theme="retro"] .leader-badge {
+  border: 1px solid var(--edge);
+  border-radius: 4px;
+  background: var(--gold);
+  box-shadow: 1px 1px 0 var(--hard-shadow);
+  color: var(--on-gold);
+  font-family: Georgia, serif;
+  font-size: 0.62rem;
+  font-weight: 700;
+}
+html[data-theme="retro"] .player-avatar {
+  border: 1px solid var(--edge);
+  border-radius: 5px;
+  background: linear-gradient(180deg, var(--card-face-hi), var(--card-face-lo));
+  color: var(--card-red);
+  font-family: Georgia, serif;
+  font-weight: 700;
+}
+html[data-theme="retro"] .player-chip strong {
+  font-family: var(--font-pixel-stack);
+  font-size: 0.52rem;
+}
+html[data-theme="retro"] .player-chip small {
+  color: var(--muted);
+  font-size: 0.51rem;
+}
+html[data-theme="retro"] .offline-dot {
+  width: 7px;
+  height: 7px;
+  border: 1px solid var(--edge);
+  background: var(--danger);
+}
+html[data-theme="retro"] .card-count {
+  border: 1px solid var(--edge);
+  border-radius: 5px;
+  background: var(--gold);
+  box-shadow: 1px 1px 0 var(--hard-shadow);
+  color: var(--badge-ink);
+  font-family: var(--font-pixel-stack);
+  font-size: 0.48rem;
+}
+html[data-theme="retro"] .phase-message {
+  color: var(--text-bright);
+}
+html[data-theme="retro"] .phase-message strong {
+  font-family: var(--font-pixel-stack);
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--gold);
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.4);
+}
+html[data-theme="retro"] .phase-message small {
+  color: var(--text-soft);
+  font-size: 0.66rem;
+}
+html[data-theme="retro"] .deal-spinner,
+html[data-theme="retro"] .bottom-icon {
+  border: 2px solid var(--edge);
+  border-radius: 8px;
+  background: linear-gradient(180deg, var(--accent-bright), var(--accent-deep));
+  box-shadow:
+    inset 1px 1px 0 var(--bevel-light),
+    inset -1px -1px 0 var(--bevel-dark),
+    3px 3px 0 var(--hard-shadow);
+  color: var(--gold);
+  font-family: Georgia, serif;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.4);
+  animation: retro-pulse 1.5s infinite;
+}
+html[data-theme="retro"] .countdown {
+  border: 2px solid var(--edge);
+  border-radius: 8px;
+  background: var(--dock-lo);
+  box-shadow:
+    inset 1px 1px 0 rgba(0, 0, 0, 0.4),
+    3px 3px 0 var(--hard-shadow);
+  color: var(--gold);
+  font-family: var(--font-pixel-stack);
+  font-size: 0.95rem;
+}
+html[data-theme="retro"] .countdown.is-urgent {
+  border-color: var(--danger);
+  color: var(--danger-bright);
+  animation: retro-pulse 0.8s infinite;
+}
+html[data-theme="retro"] .practice-bar {
+  border: 2px solid var(--edge);
+  border-radius: 6px;
+  background: var(--float-bg);
+  box-shadow:
+    inset 1px 1px 0 var(--bevel-light),
+    inset -1px -1px 0 var(--bevel-dark),
+    4px 4px 0 var(--hard-shadow);
+}
+html[data-theme="retro"] .practice-label {
+  color: var(--gold);
+  font-family: var(--font-pixel-stack);
+  font-size: 0.48rem;
+  letter-spacing: 0.14em;
+}
+html[data-theme="retro"] .practice-tab {
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 750;
+}
+html[data-theme="retro"] .practice-tab.is-active {
+  border-color: var(--edge);
+  background: var(--gold);
+  color: var(--on-gold);
+  box-shadow: 1px 1px 0 var(--hard-shadow);
+}
+html[data-theme="retro"] .practice-tab.is-turn {
+  color: var(--accent-bright);
+}
+html[data-theme="retro"] .practice-tab.is-active.is-turn {
+  color: var(--on-gold);
+}
+html[data-theme="retro"] .playing-card.is-hinted {
+  box-shadow:
+    0 0 0 2px var(--gold),
+    0 0 16px var(--gold-tint),
+    4px 4px 0 var(--hard-shadow);
+}
+html[data-theme="retro"] .throw-warning {
+  border: 2px solid var(--edge);
+  border-radius: 6px;
+  background: var(--float-bg);
+  box-shadow: 4px 4px 0 var(--hard-shadow);
+  color: var(--gold);
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+html[data-theme="retro"] .bid-badge {
+  border: 2px solid var(--edge);
+  border-radius: 5px;
+  background: var(--gold);
+  color: var(--on-gold);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  box-shadow: 3px 3px 0 var(--hard-shadow);
+}
+html[data-theme="retro"] .center-play > span {
+  color: rgba(255, 255, 255, 0.55);
+  font-family: var(--font-pixel-stack);
+  font-size: 0.42rem;
+}
+html[data-theme="retro"] .table-watermark {
+  color: var(--watermark);
+}
+html[data-theme="retro"] .table-watermark span {
+  font-family: Georgia, serif;
+  font-size: 5rem;
+  text-shadow:
+    2px 2px 0 rgba(0, 0, 0, 0.12),
+    -1px -1px 0 rgba(255, 255, 255, 0.08);
+}
+html[data-theme="retro"] .table-watermark small {
+  color: var(--text-soft);
+  font-family: var(--font-pixel-stack);
+  font-size: 0.5rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+html[data-theme="retro"] .hand-meta-label {
+  color: var(--faint);
+  font-family: var(--font-pixel-stack);
+  font-size: 0.46rem;
+  letter-spacing: 0.1em;
+}
+html[data-theme="retro"] .hand-meta-label b {
+  color: var(--gold);
+}
+
+/* Cards: crisp white faces, thin dark border, hard offset shadow. */
+html[data-theme="retro"] .playing-card {
+  border: 1px solid #2a2620;
+  border-radius: 6px;
+  background: linear-gradient(165deg, var(--card-face-hi), var(--card-face-lo));
+  box-shadow: 3px 3px 0 var(--hard-shadow);
+  color: var(--card-ink);
+}
+html[data-theme="retro"] .playing-card.is-selected {
+  box-shadow:
+    0 0 0 3px var(--accent-bright),
+    5px 5px 0 var(--hard-shadow);
+}
+html[data-theme="retro"] .card-corner {
+  font-family: Georgia, serif;
+  font-weight: 700;
+}
+html[data-theme="retro"] .card-corner strong {
+  font-size: 0.92rem;
+}
+html[data-theme="retro"] .card-corner span {
+  font-size: 0.8rem;
+}
+html[data-theme="retro"] .card-center {
+  font-family: Georgia, serif;
+  font-size: 1.6rem;
+  opacity: 0.9;
+}
+/* "JOKER" is a word, not a glyph — sized to fit inside the card face. */
+html[data-theme="retro"] .card-center.is-joker-center {
+  font-size: 0.78rem;
+}
+html[data-theme="retro"] .joker-script {
+  font-family: Georgia, serif;
+  font-size: 0.75rem;
+}
+html[data-theme="retro"] .card-hearts {
+  color: var(--card-red);
+}
+html[data-theme="retro"] .card-diamonds {
+  color: var(--card-diamond);
+}
+html[data-theme="retro"] .card-clubs {
+  color: var(--card-club);
+}
+html[data-theme="retro"] .card-spades {
+  color: var(--card-spade);
+}
+html[data-theme="retro"] .card-small {
+  color: var(--card-joker-small);
+}
+html[data-theme="retro"] .card-big {
+  color: var(--card-joker-big);
+}
+html[data-theme="retro"] .playing-card.is-compact,
+html[data-theme="retro"] .card-back.is-compact {
+  border-radius: 5px;
+}
+html[data-theme="retro"] .playing-card.is-compact .card-center {
+  font-size: 1rem;
+}
+/* Blue lattice backs with a white frame — straight off the old clients. */
+html[data-theme="retro"] .card-back {
+  border: 3px solid var(--card-back-border);
+  border-radius: 6px;
+  background:
+    repeating-linear-gradient(
+      45deg,
+      transparent 0 4px,
+      rgba(255, 255, 255, 0.14) 4px 5px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      transparent 0 4px,
+      rgba(255, 255, 255, 0.14) 4px 5px
+    ),
+    linear-gradient(180deg, var(--card-back-hi), var(--card-back-lo));
+  box-shadow: 2px 2px 0 var(--hard-shadow);
+  color: var(--card-back-ink);
+  font-family: Georgia, serif;
+}
+html[data-theme="retro"] .card-back::after {
+  position: absolute;
+  inset: 3px;
+  border: 1px solid var(--card-back-line);
+  border-radius: 3px;
+  content: "";
+}
+html[data-theme="retro"] .card-back > span {
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.4);
+}
+
+/* Overlays and status */
+html[data-theme="retro"] .connection-pill {
+  border: 2px solid var(--edge);
+  border-radius: 5px;
+  background: var(--veil);
+  color: var(--muted);
+  font-family: var(--font-pixel-stack);
+  font-size: 0.45rem;
+  box-shadow: 2px 2px 0 var(--hard-shadow);
+}
+html[data-theme="retro"] .connection-pill i {
+  width: 7px;
+  height: 7px;
+  background: var(--gold);
+}
+html[data-theme="retro"] .connection-connected i {
+  background: var(--ok);
+  box-shadow: 0 0 8px var(--ok);
+}
+html[data-theme="retro"] .connection-offline i {
+  background: var(--danger);
+}
+html[data-theme="retro"] .notice-toast {
+  border: 2px solid var(--edge);
+  border-radius: 6px;
+  background: var(--float-bg);
+  color: var(--text-soft);
+  font-size: 0.72rem;
+  box-shadow:
+    inset 1px 1px 0 var(--bevel-light),
+    4px 4px 0 var(--hard-shadow);
+}
+html[data-theme="retro"] .notice-toast i {
+  color: var(--muted);
+}
+html[data-theme="retro"] .leave-button.is-confirming {
+  border-color: var(--danger);
+  color: var(--danger-bright);
+}
+html[data-theme="retro"] .clear-selection {
+  color: var(--gold);
+  font-family: var(--font-pixel-stack);
+  font-size: 0.46rem;
+  letter-spacing: 0.1em;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+html[data-theme="retro"] .error-toast {
+  border: 2px solid var(--danger);
+  border-radius: 8px;
+  background: var(--danger-panel);
+  color: var(--danger-soft);
+  box-shadow: 5px 5px 0 var(--hard-shadow);
+}
+html[data-theme="retro"] .error-toast strong {
+  font-family: var(--font-pixel-stack);
+  font-size: 0.55rem;
+}
+html[data-theme="retro"] .error-toast span {
+  color: var(--danger-muted);
+  font-size: 0.72rem;
+}
+html[data-theme="retro"] .modal-scrim {
+  background: var(--overlay);
+}
+html[data-theme="retro"] .bottom-reveal small {
+  color: var(--gold);
+  font-family: var(--font-pixel-stack);
+  font-size: 0.48rem;
+  letter-spacing: 0.1em;
+}
+html[data-theme="retro"] .victory-mark {
+  color: var(--gold);
+  font-family: Georgia, serif;
+  font-size: 4.4rem;
+  text-shadow:
+    -2px 0 0 #7c1a10,
+    2px 0 0 #7c1a10,
+    0 -2px 0 #7c1a10,
+    0 2px 0 #7c1a10,
+    4px 4px 0 rgba(0, 0, 0, 0.45);
+}
+html[data-theme="retro"] .round-summary {
+  border: 2px solid var(--edge);
+  border-radius: 10px;
+  background: linear-gradient(180deg, var(--summary-hi), var(--summary-lo));
+  box-shadow:
+    inset 2px 2px 0 var(--bevel-light),
+    inset -2px -2px 0 var(--bevel-dark),
+    10px 10px 0 var(--hard-shadow);
+}
+html[data-theme="retro"] .round-summary h2 {
+  font-family: var(--font-pixel-stack);
+  font-size: 1.15rem;
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--gold);
+  text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.4);
+}
+html[data-theme="retro"] .round-summary > p:not(.eyebrow) {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+html[data-theme="retro"] .summary-score {
+  border: 2px solid var(--edge);
+  border-radius: 8px;
+  background: var(--dock-lo);
+  box-shadow: inset 1px 1px 0 rgba(0, 0, 0, 0.4);
+}
+html[data-theme="retro"] .summary-score span + span {
+  border-left: 2px solid var(--edge);
+}
+html[data-theme="retro"] .summary-score small {
+  color: var(--muted);
+  font-family: var(--font-pixel-stack);
+  font-size: 0.44rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+html[data-theme="retro"] .summary-score strong {
+  color: var(--gold);
+  font-family: var(--font-pixel-stack);
+  font-size: 1.4rem;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.4);
+}
+
+@media (max-width: 620px) {
+  html[data-theme="retro"] .board {
+    margin: 0;
+    border-width: 4px;
+    border-radius: 0;
+  }
+  html[data-theme="retro"] .menu-title {
+    font-size: 2.4rem;
+  }
+  html[data-theme="retro"] .practice-tab {
+    font-size: 0.6rem;
+  }
+}

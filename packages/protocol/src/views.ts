@@ -52,6 +52,12 @@ export type PrivateGameView = {
     seat: number | null;
     hand: CardInstance[];
     teamId?: TeamId;
+    /**
+     * The cards you buried in the bottom — present only for the leader, who
+     * already knows them. Other players never receive them (bottomReveal at
+     * round scoring is the public disclosure).
+     */
+    buried?: CardInstance[];
   };
   seats: SeatView[];
   publicRound?: {
