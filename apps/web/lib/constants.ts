@@ -12,3 +12,7 @@ export const NOTICE_DISMISS_MS = 5_000;
 export const LEAVE_CONFIRM_MS = 3_000;
 /** How long a completed trick lingers while sweeping to the winner. */
 export const TRICK_SWEEP_MS = 700;
+/** How long the throw result banner stays before auto-dismissing. */
+export const THROW_BANNER_MS = 8_000;
+/** How long error toasts stay before auto-dismissing. */
+export const TOAST_DISMISS_MS = 8_000;
