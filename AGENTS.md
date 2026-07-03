@@ -1,0 +1,310 @@
+# Agent guide
+
+This file is a map of the implementation as it exists now. Verify behavior in
+source and executable tests before trusting comments or prose under `docs/`;
+some older explanations can lag behind the code.
+
+## Product boundary
+
+The shipped experience is `shengji-4p-2d-fixed-v1`: four players, two decks,
+fixed teams `[0, 2]` and `[1, 3]`, and one private friend room. The six-player
+ruleset is an engine/schema fixture only. The server always clones the
+four-player preset when it creates a room, and several web layout helpers
+assume exactly four seats.
+
+Practice mode is not a separate engine mode and has no bots. It creates a
+normal room, opens four independent sessions/WebSockets in one browser, and
+lets the user switch which private view is active.
+
+There is no player-removal command. “Leave” closes the socket and forgets the
+local resume token; it does not free the joined player or seat. New joins are
+allowed only in the lobby, up to the configured player count.
+
+## Workspace and dependency direction
+
+| Path                    | Owns                                                                       | Notes                                                                     |
+| ----------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `packages/engine/src`   | All authoritative game behavior                                            | Pure TypeScript; receives timestamps and random seeds from callers        |
+| `packages/protocol/src` | Wire command schema and shared envelope/view types                         | Depends on the engine's public types                                      |
+| `apps/server/src`       | Transport, serialization, timers, persistence, authentication, projections | Depends on built engine and protocol packages                             |
+| `apps/web`              | Presentation and client transport                                          | Uses protocol types and selected engine helpers only for previews/sorting |
+| `apps/e2e`              | Browser-level flow                                                         | Starts server and web itself                                              |
+
+Important engine entry points:
+
+- `state/model.ts` defines phases, full authoritative state, client commands,
+  and durable events.
+- `state/commands.ts` validates intent and produces events. It also owns deal
+  steps, bidding finalization, round completion, rank/team progression, and
+  automatic next-round events.
+- `state/reducer.ts` is the deterministic event reducer. Every applied event
+  increments `revision`.
+- `state/autoplay.ts` selects timeout actions, then sends them through the same
+  command validator used for human actions.
+- `tricks/formats.ts`, `tricks/legality.ts`, and `tricks/winner.ts` own trick
+  structure, follow obligations, eligibility, and winners.
+- `throws/throws.ts`, `bidding/bidding.ts`, `trump/trump.ts`, and
+  `scoring/*` own their respective rule domains.
+- `rulesets/schema.ts` validates structural ruleset invariants;
+  `rulesets/four-player-two-deck.ts` contains the supported values.
+
+Important server entry points:
+
+- `index.ts` creates Fastify, REST routes, WebSocket upgrade handling, and
+  shutdown hooks.
+- `room-manager.ts` creates/restores rooms, issues and hashes resume tokens,
+  and authenticates WebSocket upgrades.
+- `room.ts` serializes all mutations for one room, owns timers, commits event
+  batches, and broadcasts player-specific snapshots.
+- `persistence/sqlite-store.ts` owns the SQLite schema and transaction boundary.
+- `private-views/derive-private-view.ts` is the only full-state-to-client
+  projection.
+
+Important web entry points:
+
+- `hooks/use-game-room.ts` owns session storage, REST join, WebSocket
+  reconnect/backoff, revisioned command envelopes, and server-time offset.
+- `components/room-client.tsx` switches among join, lobby, and game views.
+- `components/practice-room-client.tsx` runs the four local practice sessions.
+- `components/game-table.tsx` sorts the private hand and computes visual hints;
+  `hand-dock.tsx` emits commands.
+- `app/page.tsx` creates/joins rooms. `next.config.ts` proxies only `/api/*`;
+  WebSockets connect separately.
+
+## Runtime flow and trust boundaries
+
+1. `POST /api/rooms` creates a six-character room code, clones the supported
+   ruleset, applies bidding-window environment overrides, and persists revision 0.
+2. `POST /api/rooms/:roomId/join` either creates a lobby player and a 32-byte
+   resume token or resumes a session by token. Only the SHA-256 token hash is
+   stored.
+3. `/ws?roomId=...&token=...` authenticates during HTTP upgrade. A connection
+   immediately receives its own `SNAPSHOT`.
+4. The client sends a Zod-validated protocol-v1 envelope with a unique
+   `requestId`, its last `expectedRevision`, and one command.
+5. `Room.serialize` puts commands and timer callbacks on the same promise
+   queue. Outside `dealing`, a stale revision is rejected and followed by a
+   fresh snapshot. During `dealing`, stale revisions are accepted so rapid deal
+   events cannot make bidding impossible; the live state still fully
+   revalidates the bid.
+6. `validateCommand` returns engine events. `replayEvents` computes the next
+   state, and `SqliteStore.appendEvents` inserts every event plus the latest
+   snapshot in one `BEGIN IMMEDIATE` transaction guarded by the previous
+   revision.
+7. The room broadcasts a newly derived `PrivateGameView` to every socket,
+   deriving it separately for each player.
+
+The `EVENTS` server envelope is declared but is not currently emitted. State
+changes broadcast complete private `SNAPSHOT`s. Never send raw `GameState` or
+raw engine events to a browser: deals, hands, bottom cards, and seeds can contain
+hidden information.
+
+Request-id deduplication is per player and in memory. It prevents duplicate
+application within a running `Room`, but the cache is not restored after a
+server restart.
+
+## State lifecycle and timers
+
+```text
+lobby
+  -> dealing
+  -> post-deal-bidding
+  -> bottom-exchange
+  -> playing
+  -> round-scoring
+  -> dealing (next round) or game-over
+```
+
+- All seats must be occupied and ready before the last `READY` starts round 1.
+- Dealing emits one `CARD_DEALT` per interval. Bids are legal during this
+  phase. When 8 cards remain, `DEAL_FINISHED` moves them to the bottom and
+  starts the post-deal deadline.
+- The preset gives the first post-deal window 30 seconds. Each valid post-deal
+  bid replaces it with a 15-second response window. `PASS_BID` records the seat
+  but does not end bidding early.
+- With no bid, the same round number is redealt with a new server UUID. After
+  two redeals, trump is forced from the first bottom card; a joker forces
+  no-trump. The first forced leader is seat 0.
+- The round leader picks up the bottom, buries exactly 8 distinct owned cards,
+  and leads the first trick.
+- Connected actors have 60 seconds and disconnected actors 10 seconds for
+  bottom exchange, trick play, and starting the next round. Timeout values live
+  in the room's ruleset snapshot. Forced buries/plays use the normal validator.
+- Bidding deadlines are persisted in round state. Deal and turn deadlines are
+  not persisted; a restored room schedules a fresh interval/window.
+- After every state change `Room.rescheduleTimers` clears old timers. It also
+  self-heals a recovered `playing` state with empty hands by deriving the
+  missing round-end events.
+- A player is marked disconnected only when all of that player's sockets close.
+
+## Rules that are easy to break
+
+### Cards, trump, and structures
+
+- Two decks produce 108 unique physical card instances. Identity is the `id`;
+  tuple identity is printed face (`cardFaceKey`), not just effective rank.
+- Each player receives 25 cards and 8 remain in the bottom.
+- Jokers and all level-rank cards are trump. With a suit contract, ordinary
+  cards in that suit are also trump.
+- In a suit contract, strength is big joker, small joker, primary level card,
+  secondary level cards, then ordinary trump. Secondary level cards from
+  different suits have equal strength but do not form a tuple together.
+- Removing the level rank closes the ordinary rank sequence for tractor
+  adjacency. Trump rank groups then continue through secondary level, primary
+  level, small joker, and big joker.
+- A normal lead must be a single, one identical-face tuple, or a consecutive
+  same-size tractor, all in one effective suit. A throw must contain multiple
+  canonical components in one effective suit.
+
+### Bidding and following
+
+- A bid is one or more identical level cards, or at least two identical small
+  or big jokers. Bids compare card count first, then tier
+  `level-card < small-joker < big-joker`.
+- Equal-count/equal-tier counterbids are disallowed. The current bidder may
+  reinforce only the same face with a larger total count.
+- Followers must contribute as many cards in the led effective suit as they
+  hold, up to the trick's card count, and must match tuple/tractor/throw
+  structure as fully as their hand allows.
+- A legal follow can still be ineligible to win when its final shape does not
+  match. A trump ruff is eligible only when the player is void in the led
+  effective suit and reproduces the led shape.
+- Client highlights and `legalActions` are coarse UX guidance. They do not
+  prove a selected bid or play is legal.
+
+### Throws, scoring, and progression
+
+- The server can inspect opponents' authoritative hands to decide whether any
+  throw component is beatable. A failed throw forces the smallest failing
+  component. The supported preset's throw point adjustments are both zero,
+  though the ruleset supports nonzero values.
+- Fives are 5 points; tens and kings are 10 points. Each deck contains 100
+  points.
+- Final attacker points are trick points plus any bottom award plus throw
+  adjustment. Negative totals are valid and fall into the first scoring band;
+  do not clamp them.
+- Attackers receive bottom points only when their team wins the final trick.
+  The multiplier is `2 * cardCount` of the largest component in the final led
+  format: single 2x, pair 4x, triple 6x, two-pair tractor 8x, and so on.
+- Supported thresholds are `<1` defenders +3, `1–39` defenders +2, `40–79`
+  defenders +1, `80–119` attackers +0, `120–159` attackers +1, `160–199`
+  attackers +2, and `200+` attackers +3.
+- The winning team advances. It becomes the next defending team, and leadership
+  moves forward to the next seat belonging to that team. A defending team that
+  successfully holds while its rank is A ends the game.
+- On round 1, the winning bidder's team becomes defenders. In later rounds the
+  progressed leader remains leader regardless of which seat wins the bid.
+
+## Persistence and private-view invariants
+
+- SQLite uses Node's synchronous `node:sqlite` API with WAL and foreign keys.
+  The `rooms` row stores a latest snapshot and revision; `room_events` stores one
+  row per event revision; `player_sessions` stores token hashes.
+- Every event increments state revision, so a multi-event command advances by
+  more than one revision.
+- Only non-`game-over` rooms are loaded into `RoomManager` at startup.
+- A ruleset is cloned and stored in every room. Changing the preset affects new
+  rooms, not saved rooms.
+- Deterministic shuffle requires a non-empty seed. Generate randomness and
+  timestamps in the server/context, then put them in events; do not call
+  `Date.now()` or random APIs inside reducer logic.
+- `PrivateGameView` may expose the requesting player's hand, played cards,
+  public bid/trump/score data, seat counts, and the bottom after
+  `BOTTOM_REVEALED`. It must not expose other hands, undealt/bottom/buried card
+  identities before reveal, or `deckSeed`.
+- Any private-view field addition needs serialization-level anti-cheat tests,
+  not just TypeScript review.
+
+## How to make changes
+
+For a rule change:
+
+1. Add or update a focused engine test that states the boundary behavior.
+2. Change the ruleset schema/preset if the behavior is configurable.
+3. Keep legality and scoring in the engine, then update private projection and
+   UI only if the player needs new public information.
+4. Check deterministic replay and forced-play behavior for the changed rule.
+
+For a new command or event, update all applicable layers:
+
+1. `ClientCommand` / `GameEvent` in `state/model.ts`;
+2. validation and event production in `state/commands.ts`;
+3. deterministic application in `state/reducer.ts`;
+4. the Zod wire command in `packages/protocol/src/commands.ts`;
+5. private-view/legal-action projection;
+6. web command emission and rendering;
+7. engine/server tests, including stale revision or secrecy coverage when
+   relevant.
+
+For protocol changes, preserve compatibility or bump `PROTOCOL_VERSION`.
+Outbound envelopes and views are TypeScript types, not runtime Zod schemas.
+
+For timer changes, keep mutations inside the room queue, reschedule after every
+commit, and ensure timeout actions still use engine validation. For persistence
+changes, remember that `CREATE TABLE IF NOT EXISTS` is not a migration strategy
+for altering existing tables; implement an explicit forward migration.
+
+For UI changes, retain server authority. The web app may import pure engine
+format/sort helpers to preview a selection, but it must handle server rejection
+as normal. Four-seat rotation in `lib/cards.ts`, parity team labels, table CSS,
+and practice's four hooks all need redesign before exposing another player
+count.
+
+## Commands and test strategy
+
+Use Node 24 and pnpm 11.7.0.
+
+```bash
+pnpm install
+pnpm dev
+pnpm check
+pnpm test:e2e
+pnpm --filter @shengji/server simulate
+```
+
+`pnpm check` runs, in order, formatting verification, typed lint, strict
+typechecking, Vitest tests, and production builds. Playwright is separate.
+
+Useful focused commands:
+
+```bash
+pnpm --filter @shengji/engine exec vitest run test/bidding.test.ts
+pnpm build:packages
+pnpm --filter @shengji/server exec vitest run test/reconnect.test.ts
+pnpm --filter @shengji/e2e exec playwright test
+pnpm format
+```
+
+Engine tests import source directly. Server and web resolve workspace packages
+through their built `dist` exports, so run `pnpm build:packages` before focused
+server/web checks after changing engine or protocol code. Never edit generated
+`dist` or `.next` output.
+
+Test coverage is split deliberately:
+
+- engine Vitest tests cover rules, boundaries, property checks, event replay,
+  full-round simulation, and forced play;
+- server Vitest tests cover SQLite, hidden-state projection, reconnects,
+  idempotency, deal-time revision handling, and timeouts;
+- Playwright covers room creation, four isolated browser sessions, reconnect,
+  bidding, bottom exchange, and one full trick.
+
+## TypeScript and repository conventions
+
+- TypeScript is strict with `exactOptionalPropertyTypes` and
+  `noUncheckedIndexedAccess`. Omit absent optional properties with conditional
+  spreads rather than assigning `undefined`.
+- Engine, protocol, and server use NodeNext ESM and `.js` suffixes in relative
+  source imports. Follow the local Next.js import style inside `apps/web`.
+- Use type-only imports where possible; ESLint enforces them.
+- Keep user-facing validation failures as stable error codes plus useful
+  messages. The room maps known `CommandValidationError`s into rejected
+  envelopes.
+- Add named regression tests for rule fixes. Do not replace exact boundary
+  fixtures with broad happy-path assertions.
+- Preserve unrelated working-tree changes and do not commit SQLite databases,
+  build output, Playwright artifacts, or environment files.
+
+Process environment defaults come from code, not `.env.example`. In particular,
+the server's code default for `DEAL_INTERVAL_MS` is 600 ms; the example file
+shows a faster 45 ms override. `pnpm check` does not run E2E tests.
