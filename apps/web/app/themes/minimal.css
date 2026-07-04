@@ -422,14 +422,14 @@ html[data-theme="minimal"] .bottom-tab {
 }
 html[data-theme="minimal"] .bottom-tab small {
   color: var(--faint-dark);
-  font-size: 0.5rem;
+  font-size: 0.63rem;
   font-weight: 750;
   letter-spacing: 0.12em;
 }
 html[data-theme="minimal"] .bottom-tab strong {
   color: var(--gold);
   font-family: Georgia, serif;
-  font-size: 0.95rem;
+  font-size: 1.19rem;
 }
 html[data-theme="minimal"] .bottom-tab.is-open {
   border-color: var(--gold-line-strong);
@@ -447,20 +447,22 @@ html[data-theme="minimal"] .buried-panel small {
   font-weight: 800;
   letter-spacing: 0.1em;
 }
-html[data-theme="minimal"] .round-pills > span {
+html[data-theme="minimal"] .round-pills > span,
+html[data-theme="minimal"] .team-score-pills > span,
+html[data-theme="minimal"] .round-overview-row > span {
   border: 1px solid var(--line);
   border-radius: 9px;
   background: var(--frost);
 }
 html[data-theme="minimal"] .round-pills small {
   color: var(--faint-dark);
-  font-size: 0.5rem;
+  font-size: 0.63rem;
   letter-spacing: 0.12em;
 }
 html[data-theme="minimal"] .round-pills strong {
   color: var(--text-bright);
   font-family: Georgia, serif;
-  font-size: 0.8rem;
+  font-size: 1rem;
 }
 html[data-theme="minimal"] .icon-button {
   border: 1px solid var(--line);
@@ -524,11 +526,6 @@ html[data-theme="minimal"] .is-turn .player-chip {
   box-shadow:
     0 0 0 2px var(--gold-line-strong),
     0 0 26px var(--gold-tint);
-}
-html[data-theme="minimal"] .seat-count {
-  color: var(--gold);
-  font-family: Georgia, serif;
-  font-size: 0.82rem;
 }
 html[data-theme="minimal"] .leader-badge {
   border: 1px solid var(--gold-line-strong);

@@ -515,13 +515,13 @@ html[data-theme="retro"] .bottom-tab {
 html[data-theme="retro"] .bottom-tab small {
   color: var(--faint);
   font-family: var(--font-pixel-stack);
-  font-size: 0.42rem;
+  font-size: 0.53rem;
   letter-spacing: 0.1em;
 }
 html[data-theme="retro"] .bottom-tab strong {
   color: var(--gold);
   font-family: var(--font-pixel-stack);
-  font-size: 0.62rem;
+  font-size: 0.78rem;
 }
 html[data-theme="retro"] .bottom-tab.is-open {
   border-color: var(--gold);
@@ -541,7 +541,9 @@ html[data-theme="retro"] .buried-panel small {
   font-size: 0.46rem;
   letter-spacing: 0.08em;
 }
-html[data-theme="retro"] .round-pills > span {
+html[data-theme="retro"] .round-pills > span,
+html[data-theme="retro"] .team-score-pills > span,
+html[data-theme="retro"] .round-overview-row > span {
   border: 2px solid var(--edge);
   border-radius: 6px;
   background: var(--dock-lo);
@@ -552,13 +554,13 @@ html[data-theme="retro"] .round-pills > span {
 html[data-theme="retro"] .round-pills small {
   color: var(--faint);
   font-family: var(--font-pixel-stack);
-  font-size: 0.42rem;
+  font-size: 0.53rem;
   letter-spacing: 0.1em;
 }
 html[data-theme="retro"] .round-pills strong {
   color: var(--gold);
   font-family: var(--font-pixel-stack);
-  font-size: 0.62rem;
+  font-size: 0.78rem;
 }
 html[data-theme="retro"] .icon-button {
   border: 2px solid var(--edge);
@@ -647,11 +649,6 @@ html[data-theme="retro"] .is-turn .player-chip {
     3px 3px 0 var(--hard-shadow),
     0 0 0 2px var(--gold),
     0 0 22px var(--gold-tint);
-}
-html[data-theme="retro"] .seat-count {
-  color: var(--gold);
-  font-family: var(--font-pixel-stack);
-  font-size: 0.5rem;
 }
 html[data-theme="retro"] .leader-badge {
   border: 1px solid var(--edge);

@@ -452,7 +452,7 @@ button:disabled {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  width: 208px;
+  width: 312px;
   flex-shrink: 0;
   padding: 16px 12px;
   overflow-y: auto;
@@ -464,32 +464,196 @@ button:disabled {
   min-width: 0;
   flex-direction: column;
 }
-/* Every stat is a compact, centered half-width tile. */
+/* Two-column round panel; the hero card and primary readouts span both. */
 .round-pills {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 7px;
 }
 .round-pills > span,
-.timer-pill,
+.team-score-pills > span,
+.round-overview-row > span,
 .bottom-tab {
   display: grid;
-  gap: 3px;
+  gap: 4px;
   justify-items: center;
-  padding: 7px 6px;
+  padding: 9px 8px;
   text-align: center;
 }
-/* The trump readout is a single suit glyph; red for hearts/diamonds. */
-.round-pills strong.is-red-suit {
-  color: var(--accent);
+.points-pill,
+.hand-count-pill,
+.bottom-tab {
+  grid-column: 1 / -1;
 }
-.timer-pill .countdown {
-  width: auto;
-  height: auto;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-  padding: 0;
+.round-overview-row {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+.level-trump-pill,
+.game-stats-pill {
+  min-height: 210px;
+  align-content: center;
+}
+.trump-panel-label {
+  margin-bottom: 8px;
+}
+.level-trump-pill .playing-card,
+.pending-trump-card,
+.generic-joker-card {
+  width: 90px;
+  height: 130px;
+}
+.pending-trump-card,
+.generic-joker-card {
+  position: relative;
+  display: grid;
+  overflow: hidden;
+  place-items: center;
+  border: 1px solid #d1cdc0;
+  border-radius: 7px;
+  background: linear-gradient(155deg, #fffefa, #ece8dc);
+  box-shadow: 0 5px 0 rgba(0, 0, 0, 0.28);
+}
+.pending-trump-card strong {
+  position: absolute;
+  top: 9px;
+  left: 10px;
+  color: #30374f !important;
+  font-size: 1.3rem !important;
+}
+.pending-trump-card b {
+  color: #687087;
+  font-family: Georgia, serif;
+  font-size: 3rem;
+}
+.generic-joker-card {
+  color: #b9323e;
+  font-family: Georgia, serif;
+  font-size: 2.7rem;
+  font-weight: 800;
+}
+.game-stats-pill {
+  align-content: start;
+  gap: 8px !important;
+}
+.current-round-stat,
+.previous-round-stat,
+.round-wins-stat {
+  display: grid;
+  width: 100%;
+  gap: 2px;
+  justify-items: center;
+}
+.game-stats-pill i {
+  color: var(--faint);
+  font-size: 0.54rem;
+  font-style: normal;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+}
+.round-pills .current-round-stat strong {
+  color: var(--text-bright);
+  font-size: 1.8rem !important;
+  font-weight: 900;
+  line-height: 1;
+}
+.round-pills .previous-round-stat strong {
+  font-size: 0.82rem !important;
+  line-height: 1.1;
+}
+.game-stats-pill b {
+  color: var(--text-soft);
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.round-wins-stat {
+  grid-template-columns: 1fr 1fr;
+}
+.round-wins-stat i {
+  grid-column: 1 / -1;
+}
+.round-wins-stat b:first-of-type {
+  color: var(--accent-bright);
+}
+.round-wins-stat b:last-of-type {
+  color: var(--gold);
+}
+.points-pill {
+  min-height: 92px;
+  align-content: center;
+}
+.round-pills .points-pill > strong {
+  font-size: 2.55rem !important;
+  font-weight: 900;
+  line-height: 1;
+}
+.hand-count-pill {
+  min-height: 65px;
+  align-content: center;
+}
+.round-pills .hand-count-pill > strong {
+  font-size: 1.35rem !important;
+  font-weight: 800;
+}
+.hand-count-pill i {
+  color: var(--faint);
+  font-style: normal;
+  font-weight: 400;
+}
+.team-score-pills {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+.team-score-pill {
+  min-height: 86px;
+  align-content: center;
+}
+.round-pills .team-score-pill > strong {
+  font-size: 1.45rem !important;
+  font-weight: 900;
+}
+.team-score-pill em {
+  border-radius: 999px;
+  padding: 3px 7px;
+  font-size: 0.58rem;
+  font-style: normal;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.team-score-pill.is-defending {
+  border-color: var(--gold) !important;
+}
+.team-score-pill.is-defending em {
+  background: var(--gold);
+  color: #352205;
+}
+.team-score-pill.is-attacking {
+  border-color: var(--accent-bright) !important;
+}
+.team-score-pill.is-attacking em {
+  background: var(--accent);
+  color: #fff;
+}
+.team-score-pill.is-pending em {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--faint);
+}
+/* Progress readouts become calmer as level/points climb; low values carry
+   the same urgency cue as a nearly expired timer. */
+.round-pills strong.stat-low {
+  color: var(--danger-bright) !important;
+}
+.round-pills strong.stat-mid {
+  color: var(--gold) !important;
+}
+.round-pills strong.stat-high {
+  color: var(--ok) !important;
 }
 .bottom-tab {
   cursor: pointer;
@@ -509,7 +673,7 @@ button:disabled {
   position: fixed;
   z-index: var(--z-banner);
   top: 16px;
-  left: calc(50% + 104px);
+  left: calc(50% + 156px);
   cursor: pointer;
   font: inherit;
   text-align: left;
@@ -573,6 +737,7 @@ button:disabled {
   flex-direction: column;
 }
 .player-chip {
+  position: relative;
   display: flex;
   min-width: 150px;
   align-items: center;
@@ -602,11 +767,24 @@ button:disabled {
   width: 17px;
   height: 17px;
 }
-/* Card count "current / total" — pushed to the right edge of the plate. */
-.seat-count {
-  margin-left: auto;
-  padding-left: 8px;
-  white-space: nowrap;
+.seat-timer-badge {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  right: 9px;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+.seat-timer-badge .countdown {
+  width: auto;
+  min-width: 0;
+  height: auto;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0;
+  font-size: 0.8rem !important;
 }
 .offline-dot {
   flex-shrink: 0;
@@ -733,8 +911,8 @@ button:disabled {
      never disappear behind an opaque nameplate on narrow screens. */
   z-index: calc(var(--z-seats) + 1);
   display: grid;
-  width: min(46%, 430px);
-  height: 48%;
+  width: min(58%, 560px);
+  height: 56%;
   place-items: center;
   transform: translate(-50%, -50%);
 }
@@ -790,7 +968,10 @@ button:disabled {
   white-space: nowrap;
 }
 .center-play .playing-card {
-  margin-left: -24px;
+  margin-left: -34px;
+}
+.center-play .playing-card:first-child {
+  margin-left: 0;
 }
 .center-play > span {
   position: absolute;
@@ -799,17 +980,17 @@ button:disabled {
   transform: translateX(-50%);
   white-space: nowrap;
 }
-.play-0 {
+.play-south {
   bottom: 0;
 }
-.play-1 {
-  right: -4%;
+.play-east {
+  right: 4%;
 }
-.play-2 {
+.play-north {
   top: 0;
 }
-.play-3 {
-  left: -4%;
+.play-west {
+  left: 4%;
 }
 .table-watermark {
   display: grid;
@@ -1060,6 +1241,23 @@ button:disabled {
     grid-auto-flow: column;
     grid-template-columns: none;
     flex-shrink: 0;
+  }
+  .points-pill,
+  .hand-count-pill,
+  .team-score-pills,
+  .round-overview-row,
+  .bottom-tab {
+    grid-column: auto;
+  }
+  .level-trump-pill,
+  .game-stats-pill {
+    min-height: 0;
+  }
+  .level-trump-pill .playing-card,
+  .pending-trump-card,
+  .generic-joker-card {
+    width: 50px;
+    height: 72px;
   }
   .bottom-tab {
     flex-shrink: 0;

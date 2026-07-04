@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Baloo_2, Press_Start_2P } from "next/font/google";
-import { THEME_STORAGE_KEY } from "../lib/theme";
 import "./globals.css";
 
 /*
@@ -27,20 +26,6 @@ export const metadata: Metadata = {
   description: "A polished private online table for four-player Sheng Ji.",
 };
 
-/*
- * Applies the persisted theme before first paint so a non-default choice
- * never flashes. Must stay in sync with lib/theme.ts (inlined because it
- * runs before any module loads).
- */
-const themeInit = `(function () {
-  try {
-    var theme = window.localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)});
-    if (theme === "retro" || theme === "minimal") {
-      document.documentElement.dataset.theme = theme;
-    }
-  } catch (error) {}
-})();`;
-
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -51,10 +36,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${pixel.variable} ${gameFont.variable}`}
     >
-      <body>
-        <script dangerouslySetInnerHTML={{ __html: themeInit }} />
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

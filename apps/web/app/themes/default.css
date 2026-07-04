@@ -463,13 +463,13 @@ html[data-theme="default"] .bottom-tab {
 html[data-theme="default"] .bottom-tab small {
   color: var(--faint);
   font-family: var(--font-game);
-  font-size: 0.62rem;
+  font-size: 0.78rem;
   letter-spacing: 0.08em;
 }
 html[data-theme="default"] .bottom-tab strong {
   color: var(--gold);
   font-family: var(--font-num);
-  font-size: 0.9rem;
+  font-size: 1.12rem;
 }
 html[data-theme="default"] .bottom-tab.is-open {
   border-color: var(--gold);
@@ -488,7 +488,9 @@ html[data-theme="default"] .buried-panel small {
   font-size: 0.78rem;
 }
 /* Counter wells, like Balatro's sidebar readouts. */
-html[data-theme="default"] .round-pills > span {
+html[data-theme="default"] .round-pills > span,
+html[data-theme="default"] .team-score-pills > span,
+html[data-theme="default"] .round-overview-row > span {
   border: 2px solid var(--panel-edge);
   border-radius: 8px;
   background: var(--well-deep);
@@ -497,13 +499,13 @@ html[data-theme="default"] .round-pills > span {
 html[data-theme="default"] .round-pills small {
   color: var(--faint);
   font-family: var(--font-game);
-  font-size: 0.62rem;
+  font-size: 0.78rem;
   letter-spacing: 0.08em;
 }
 html[data-theme="default"] .round-pills strong {
   color: var(--gold);
   font-family: var(--font-num);
-  font-size: 0.82rem;
+  font-size: 1.03rem;
 }
 html[data-theme="default"] .icon-button {
   border: 0;
@@ -576,11 +578,6 @@ html[data-theme="default"] .is-turn .player-chip {
     0 4px 0 var(--edge-shadow),
     0 0 0 2px var(--gold),
     0 0 22px var(--gold-tint);
-}
-html[data-theme="default"] .seat-count {
-  color: var(--gold);
-  font-family: var(--font-num);
-  font-size: 0.8rem;
 }
 html[data-theme="default"] .leader-badge {
   border-radius: 5px;

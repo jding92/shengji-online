@@ -7,6 +7,7 @@ import { replaceWithBot } from "../lib/bot-api";
 import { cardFaceLabel, type TablePosition } from "../lib/cards";
 import { teamClassForSeat, teamLabelForSeat } from "../lib/strings";
 import { CardBack } from "./card";
+import { Countdown } from "./countdown";
 
 type CurrentBid = NonNullable<
   NonNullable<PrivateGameView["publicRound"]>["currentBid"]
@@ -59,9 +60,9 @@ export function TableSeat({
   currentTurn,
   isYou,
   isLeader,
-  handTotal,
   bid,
   roomId,
+  timer,
 }: {
   seat: PrivateGameView["seats"][number];
   position: TablePosition;
@@ -69,11 +70,11 @@ export function TableSeat({
   isYou: boolean;
   /** The round's declarer, marked with the 庄 (banker) crest. */
   isLeader: boolean;
-  /** Steady-state hand size, for the "current / total" card count. */
-  handTotal: number;
   /** This seat's standing trump bid, shown as a badge until finalization. */
   bid?: CurrentBid | undefined;
   roomId: string;
+  /** Local player's active decision clock, overlaid on their nameplate. */
+  timer?: { deadline: string; now: () => number };
 }) {
   const [showTakeover, setShowTakeover] = useState(false);
   const [difficulty, setDifficulty] = useState<BotDifficulty>("intermediate");
@@ -109,6 +110,11 @@ export function TableSeat({
         />
       )}
       <div className="player-chip">
+        {isYou && timer !== undefined && (
+          <span className="seat-timer-badge" aria-label="Turn timer">
+            <Countdown deadline={timer.deadline} now={timer.now} />
+          </span>
+        )}
         <span className="player-avatar">
           {seat.name?.slice(0, 1).toUpperCase() ?? "·"}
         </span>
@@ -135,17 +141,6 @@ export function TableSeat({
               : `Lv ${seat.rank} · ${teamLabelForSeat(seat.seat)}`}
           </small>
         </span>
-        {handTotal > 0 && (
-          <motion.span
-            className="seat-count"
-            key={seat.cardCount}
-            initial={{ scale: 1.25 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 500, damping: 22 }}
-          >
-            {seat.cardCount} / {handTotal}
-          </motion.span>
-        )}
         {!seat.connected && seat.playerId !== null && !seat.isBot && (
           <i className="offline-dot" />
         )}

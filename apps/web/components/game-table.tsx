@@ -6,9 +6,11 @@ import type {
   WireClientCommand,
 } from "@shengji/protocol";
 import { AnimatePresence, LayoutGroup, motion } from "motion/react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  canHandOutbid,
   cardFaceKey,
+  fourPlayerTwoDeckFixedTeamRuleset,
   getEffectiveSuit,
   parseThrow,
   parseTrickFormat,
@@ -18,21 +20,12 @@ import { useCardSelection } from "../hooks/use-card-selection";
 import { THROW_BANNER_MS } from "../lib/constants";
 import { compareForHandDisplay, relativeSeatPosition } from "../lib/cards";
 import { CardBack, PlayingCard } from "./card";
-import { Countdown } from "./countdown";
 import { HandActions } from "./hand-actions";
 import { HandDock } from "./hand-dock";
 import { LeaveButton } from "./leave-button";
 import { RoundSummaryModal } from "./round-summary-modal";
 import { TableSeat } from "./table-seat";
-import { ThemeSwitcher } from "./theme-switcher";
 import { TrickCenter } from "./trick-center";
-
-const SUIT_GLYPHS = {
-  spades: "♠",
-  hearts: "♥",
-  clubs: "♣",
-  diamonds: "♦",
-} as const;
 
 type GameTableProps = {
   view: PrivateGameView;
@@ -164,6 +157,37 @@ export function GameTable({
     [sendCommand, clear],
   );
 
+  // Once post-deal bidding opens, pass automatically when no same-face group
+  // in the private hand can legally beat or reinforce the standing bid.
+  const autoPassedBid = useRef<string | null>(null);
+  useEffect(() => {
+    const currentBid = round?.currentBid;
+    if (
+      view.phase !== "post-deal-bidding" ||
+      round === undefined ||
+      currentBid === undefined ||
+      view.you.seat === null ||
+      !actions.has("pass-bid")
+    ) {
+      autoPassedBid.current = null;
+      return;
+    }
+    const signature = `${currentBid.seat}:${cardFaceKey(currentBid.face)}:${currentBid.count}`;
+    if (
+      autoPassedBid.current !== signature &&
+      !canHandOutbid({
+        seat: view.you.seat,
+        hand: view.you.hand,
+        currentRank: round.trumpRank,
+        currentBid,
+        rules: fourPlayerTwoDeckFixedTeamRuleset.bidding,
+      })
+    ) {
+      autoPassedBid.current = signature;
+      submit({ type: "PASS_BID" });
+    }
+  }, [actions, round, submit, view.phase, view.you.hand, view.you.seat]);
+
   const primaryAction = useCallback((): WireClientCommand | null => {
     const cardIds = selectedCards.map(({ id }) => id);
     if (actions.has("play-cards") && cardIds.length > 0) {
@@ -196,23 +220,37 @@ export function GameTable({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [primaryAction, submit, clear]);
 
-  const trumpSpec = round?.trumpSpec;
-  const trumpDisplay =
-    trumpSpec === undefined
-      ? { glyph: "—", red: false, label: "Trump undeclared" }
-      : trumpSpec.mode === "no-trump"
-        ? { glyph: "NT", red: false, label: "No-trump" }
-        : {
-            glyph: SUIT_GLYPHS[trumpSpec.suit],
-            red: trumpSpec.suit === "hearts" || trumpSpec.suit === "diamonds",
-            label: `Trump ${trumpSpec.suit}`,
-          };
+  const standingTrump = round?.trumpSpec ?? round?.currentBid?.declares;
+  const trumpCard: CardInstance | undefined =
+    standingTrump?.mode === "suit"
+      ? {
+          id: `sidebar-trump:${standingTrump.rank}:${standingTrump.suit}`,
+          deckIndex: 0,
+          face: {
+            kind: "standard",
+            rank: standingTrump.rank,
+            suit: standingTrump.suit,
+          },
+        }
+      : standingTrump?.mode === "no-trump" && round?.currentBid?.face.kind === "joker"
+        ? {
+            id: `sidebar-trump:joker:${round.currentBid.face.joker}`,
+            deckIndex: 0,
+            face: round.currentBid.face,
+          }
+        : undefined;
+  const attackerPoints =
+    (round?.attackerPoints ?? 0) + (round?.throwPenaltyAdjustment ?? 0);
+  const pointsTone =
+    attackerPoints < 80 ? "stat-low" : attackerPoints < 120 ? "stat-mid" : "stat-high";
 
   // One timer at a time: the bidding window, then the current turn's clock.
   const timerDeadline =
     view.phase === "dealing" || view.phase === "post-deal-bidding"
       ? round?.biddingDeadline
-      : view.phase === "playing"
+      : view.phase === "bottom-exchange" ||
+          view.phase === "playing" ||
+          view.phase === "round-scoring"
         ? (turnDeadline ?? undefined)
         : undefined;
 
@@ -225,6 +263,44 @@ export function GameTable({
   }, [buried === undefined]);
 
   const youSeat = view.seats.find((seat) => seat.playerId === view.you.playerId);
+  const enemySeat = view.seats.find(
+    (seat) =>
+      seat.teamId !== undefined &&
+      view.you.teamId !== undefined &&
+      seat.teamId !== view.you.teamId,
+  );
+  const defendingSeatIndex = round?.leaderSeat ?? round?.currentBid?.seat;
+  const defendingTeamId =
+    defendingSeatIndex === undefined
+      ? undefined
+      : view.seats.find((seat) => seat.seat === defendingSeatIndex)?.teamId;
+  const yourTeamRole =
+    defendingTeamId === undefined || view.you.teamId === undefined
+      ? "pending"
+      : defendingTeamId === view.you.teamId
+        ? "defending"
+        : "attacking";
+  const enemyTeamRole =
+    defendingTeamId === undefined || enemySeat?.teamId === undefined
+      ? "pending"
+      : defendingTeamId === enemySeat.teamId
+        ? "defending"
+        : "attacking";
+  const previousRound = round?.roundStats.previousRound;
+  const previousWinner =
+    previousRound === undefined
+      ? null
+      : previousRound.winningTeamId === view.you.teamId
+        ? "Your team"
+        : "Rivals";
+  const yourRoundsWon =
+    view.you.teamId === undefined
+      ? 0
+      : (round?.roundStats.roundsWonByTeam[view.you.teamId] ?? 0);
+  const rivalRoundsWon =
+    enemySeat?.teamId === undefined
+      ? 0
+      : (round?.roundStats.roundsWonByTeam[enemySeat.teamId] ?? 0);
   const bidFor = (seatIndex: number) =>
     (view.phase === "dealing" || view.phase === "post-deal-bidding") &&
     round?.currentBid?.seat === seatIndex
@@ -242,33 +318,77 @@ export function GameTable({
           </span>
         </div>
 
-        {/* Every readout is a half-width tile, including timer and bottom. */}
+        {/* The round panel is a two-column grid with full-width hero rows. */}
         <div className="round-pills">
-          <span>
-            <small>LEVEL / 级</small>
-            <strong>{round?.trumpRank ?? "2"}</strong>
-          </span>
-          <span>
-            <small>TRUMP / 主</small>
-            <strong
-              className={trumpDisplay.red ? "is-red-suit" : ""}
-              aria-label={trumpDisplay.label}
-            >
-              {trumpDisplay.glyph}
-            </strong>
-          </span>
-          <span>
-            <small>POINTS / 分</small>
-            <strong>
-              {(round?.attackerPoints ?? 0) + (round?.throwPenaltyAdjustment ?? 0)}
-            </strong>
-          </span>
-          {timerDeadline !== undefined && (
-            <span className="timer-pill">
-              <small>TIMER / 计时</small>
-              <Countdown deadline={timerDeadline} now={serverNow} />
+          <div className="team-score-pills">
+            <span className={`team-score-pill is-${yourTeamRole}`}>
+              <small>YOUR TEAM / 我方</small>
+              <strong>{youSeat?.rank ?? "—"}</strong>
+              <em>{yourTeamRole}</em>
             </span>
-          )}
+            <span className={`team-score-pill is-${enemyTeamRole}`}>
+              <small>RIVALS / 对方</small>
+              <strong>{enemySeat?.rank ?? "—"}</strong>
+              <em>{enemyTeamRole}</em>
+            </span>
+          </div>
+          <div className="round-overview-row">
+            <span className="game-stats-pill">
+              <small>GAME STATS / 对局</small>
+              <span className="current-round-stat">
+                <i>ROUND</i>
+                <strong>{round?.roundNumber ?? 1}</strong>
+              </span>
+              <span className="previous-round-stat">
+                <i>PREVIOUS</i>
+                <strong>{previousWinner ?? "No result"}</strong>
+                <b>
+                  {previousRound === undefined
+                    ? "—"
+                    : `${previousRound.attackerPoints} pts · ${previousRound.winner}`}
+                </b>
+              </span>
+              <span className="round-wins-stat">
+                <i>ROUNDS WON</i>
+                <b>YOU {yourRoundsWon}</b>
+                <b>RIVALS {rivalRoundsWon}</b>
+              </span>
+            </span>
+            <span
+              className="level-trump-pill"
+              aria-label={
+                standingTrump === undefined
+                  ? `Level ${round?.trumpRank ?? "2"}, trump undeclared`
+                  : standingTrump.mode === "no-trump"
+                    ? "No-trump"
+                    : `${standingTrump.rank} of ${standingTrump.suit} is trump`
+              }
+            >
+              <small className="trump-panel-label">ROUND TRUMP / 本轮主牌</small>
+              {trumpCard !== undefined ? (
+                <PlayingCard card={trumpCard} />
+              ) : standingTrump?.mode === "no-trump" ? (
+                <span className="generic-joker-card" aria-hidden="true">
+                  王
+                </span>
+              ) : (
+                <span className="pending-trump-card" aria-hidden="true">
+                  <strong>{round?.trumpRank ?? "2"}</strong>
+                  <b>?</b>
+                </span>
+              )}
+            </span>
+          </div>
+          <span className="points-pill">
+            <small>POINTS / 分</small>
+            <strong className={pointsTone}>{attackerPoints}</strong>
+          </span>
+          <span className="hand-count-pill">
+            <small>HAND / 手牌</small>
+            <strong>
+              {view.you.hand.length} <i>/</i> {fullHandSize}
+            </strong>
+          </span>
           {buried && (
             <button
               type="button"
@@ -282,7 +402,6 @@ export function GameTable({
         </div>
 
         <div className="side-actions">
-          <ThemeSwitcher />
           <LeaveButton onLeave={onLeave} />
         </div>
       </aside>
@@ -326,7 +445,6 @@ export function GameTable({
                     currentTurn={round?.currentTurnSeat === seat.seat}
                     isYou={false}
                     isLeader={round?.leaderSeat === seat.seat}
-                    handTotal={fullHandSize}
                     bid={bidFor(seat.seat)}
                     roomId={view.roomId}
                   />
@@ -353,9 +471,11 @@ export function GameTable({
                     currentTurn={round?.currentTurnSeat === youSeat.seat}
                     isYou
                     isLeader={round?.leaderSeat === youSeat.seat}
-                    handTotal={fullHandSize}
                     bid={bidFor(youSeat.seat)}
                     roomId={view.roomId}
+                    {...(timerDeadline === undefined
+                      ? {}
+                      : { timer: { deadline: timerDeadline, now: serverNow } })}
                   />
                   <div className="south-slot south-right">
                     <HandActions
