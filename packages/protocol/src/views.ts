@@ -78,9 +78,26 @@ export type PrivateGameView = {
       cardCount: number;
       plays: PublicPlayedCards[];
     };
+    /** Most recently completed trick, retained so clients can show all plays. */
+    lastCompletedTrick?: {
+      leadSeat: number;
+      winnerSeat: number;
+      points: number;
+      plays: PublicPlayedCards[];
+    };
     completedTricksSummary: Array<
       Pick<TrickResult, "leadSeat" | "winnerSeat" | "points">
     >;
+    roundStats: {
+      roundsWonByTeam: Record<TeamId, number>;
+      previousRound?: {
+        roundNumber: number;
+        winningTeamId: TeamId;
+        winner: "defenders" | "attackers";
+        attackerPoints: number;
+        levelDelta: number;
+      };
+    };
     biddingDeadline?: string;
     bottomCount: number;
     buriedBottomCount: number;

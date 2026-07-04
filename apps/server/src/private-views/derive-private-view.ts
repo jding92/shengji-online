@@ -61,6 +61,19 @@ export function derivePrivateView(state: GameState, playerId: string): PrivateGa
       };
     },
   );
+  const previousRound = state.roundHistory?.at(-1);
+  const roundsWonByTeam = Object.fromEntries(
+    state.rulesetSnapshot.teams.teams.map((_, index) => {
+      const teamId = `team-${index}`;
+      return [
+        teamId,
+        (state.roundHistory ?? []).filter(
+          ({ winningTeamId }) => winningTeamId === teamId,
+        ).length,
+      ];
+    }),
+  );
+  const lastCompletedTrick = round?.completedTricks.at(-1);
 
   return {
     roomId: state.roomId,
@@ -126,9 +139,36 @@ export function derivePrivateView(state: GameState, playerId: string): PrivateGa
                     })),
                   },
                 }),
+            ...(lastCompletedTrick === undefined
+              ? {}
+              : {
+                  lastCompletedTrick: {
+                    leadSeat: lastCompletedTrick.leadSeat,
+                    winnerSeat: lastCompletedTrick.winnerSeat,
+                    points: lastCompletedTrick.points,
+                    plays: lastCompletedTrick.plays.map((play) => ({
+                      seat: play.seat,
+                      cards: play.cards,
+                    })),
+                  },
+                }),
             completedTricksSummary: round.completedTricks.map(
               ({ leadSeat, winnerSeat, points }) => ({ leadSeat, winnerSeat, points }),
             ),
+            roundStats: {
+              roundsWonByTeam,
+              ...(previousRound === undefined
+                ? {}
+                : {
+                    previousRound: {
+                      roundNumber: previousRound.roundNumber,
+                      winningTeamId: previousRound.winningTeamId,
+                      winner: previousRound.outcome.winner,
+                      attackerPoints: previousRound.outcome.attackerPoints,
+                      levelDelta: previousRound.outcome.levelDelta,
+                    },
+                  }),
+            },
             ...(round.biddingDeadline === undefined
               ? {}
               : { biddingDeadline: round.biddingDeadline }),

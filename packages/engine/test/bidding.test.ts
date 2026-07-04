@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   BidValidationError,
+  canHandOutbid,
   createAndValidateBid,
   createDeck,
   fourPlayerTwoDeckFixedTeamRuleset,
@@ -201,5 +202,71 @@ describe("bidding", () => {
         }),
       "CARDS_NOT_OWNED",
     );
+  });
+
+  it("detects when a hand cannot outbid the standing bid", () => {
+    const hearts = standards(twoDecks, "hearts", "2");
+    const currentBid = createAndValidateBid({
+      seat: 0,
+      cards: hearts,
+      hand: hearts,
+      currentRank: "2",
+      placedAt,
+      rules,
+    });
+
+    expect(
+      canHandOutbid({
+        seat: 1,
+        hand: [
+          ...standards(twoDecks, "spades", "2"),
+          ...jokers(twoDecks, "small").slice(0, 1),
+        ],
+        currentRank: "2",
+        currentBid,
+        rules,
+      }),
+    ).toBe(false);
+  });
+
+  it("detects a higher-tier counterbid and a legal reinforcement", () => {
+    const small = jokers(twoDecks, "small");
+    const currentBid = createAndValidateBid({
+      seat: 0,
+      cards: small,
+      hand: small,
+      currentRank: "2",
+      placedAt,
+      rules,
+    });
+
+    expect(
+      canHandOutbid({
+        seat: 1,
+        hand: jokers(twoDecks, "big"),
+        currentRank: "2",
+        currentBid,
+        rules,
+      }),
+    ).toBe(true);
+
+    const hearts = standards(twoDecks, "hearts", "2");
+    const openingBid = createAndValidateBid({
+      seat: 0,
+      cards: hearts.slice(0, 1),
+      hand: hearts,
+      currentRank: "2",
+      placedAt,
+      rules,
+    });
+    expect(
+      canHandOutbid({
+        seat: 0,
+        hand: hearts,
+        currentRank: "2",
+        currentBid: openingBid,
+        rules,
+      }),
+    ).toBe(true);
   });
 });

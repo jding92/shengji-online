@@ -140,6 +140,15 @@ describe("round completion", () => {
       pointsAwarded: 40,
     });
     expect(completed.round?.bottomReveal?.cards).toHaveLength(8);
+    expect(completed.roundHistory).toEqual([
+      {
+        roundNumber: 1,
+        defendingTeamId: "team-0",
+        attackingTeamId: "team-1",
+        winningTeamId: "team-0",
+        outcome: { attackerPoints: 40, winner: "defenders", levelDelta: 1 },
+      },
+    ]);
   });
 
   it("lets throw penalties drive the attacker total negative instead of clamping to 0", () => {

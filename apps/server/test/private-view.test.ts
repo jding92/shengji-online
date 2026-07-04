@@ -112,4 +112,57 @@ describe("private views", () => {
       for (const cardId of buried) expect(serialized).not.toContain(cardId);
     }
   });
+
+  it("exposes only public completed plays and durable round summaries", () => {
+    const state = dealtState();
+    const plays = Array.from({ length: 4 }, (_, seat) => {
+      const cardId = state.round!.hands[seat]!.shift()!;
+      return {
+        seat,
+        cards: [state.round!.cards[cardId]!],
+        format: null,
+        eligibleToWin: true,
+      };
+    });
+    state.round!.completedTricks.push({
+      leadSeat: 0,
+      winnerSeat: 2,
+      points: 15,
+      plays,
+    });
+    state.roundHistory = [
+      {
+        roundNumber: 1,
+        defendingTeamId: "team-0",
+        attackingTeamId: "team-1",
+        winningTeamId: "team-1",
+        outcome: { attackerPoints: 125, winner: "attackers", levelDelta: 1 },
+      },
+    ];
+
+    const view = derivePrivateView(state, "p0");
+    expect(view.publicRound?.lastCompletedTrick).toMatchObject({
+      leadSeat: 0,
+      winnerSeat: 2,
+      points: 15,
+    });
+    expect(view.publicRound?.lastCompletedTrick?.plays).toHaveLength(4);
+    expect(view.publicRound?.roundStats).toEqual({
+      roundsWonByTeam: { "team-0": 0, "team-1": 1 },
+      previousRound: {
+        roundNumber: 1,
+        winningTeamId: "team-1",
+        winner: "attackers",
+        attackerPoints: 125,
+        levelDelta: 1,
+      },
+    });
+
+    const serialized = JSON.stringify(view);
+    for (let seat = 1; seat < 4; seat += 1) {
+      for (const cardId of state.round!.hands[seat]!) {
+        expect(serialized).not.toContain(cardId);
+      }
+    }
+  });
 });

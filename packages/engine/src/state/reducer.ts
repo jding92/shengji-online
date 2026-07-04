@@ -279,6 +279,23 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
     case "ROUND_SCORED": {
       const round = requireRound(next);
       round.outcome = event.outcome;
+      if (next.defendingTeamId === undefined || next.attackingTeamId === undefined) {
+        throw new Error("Cannot record a round before team roles are assigned");
+      }
+      const winningTeamId =
+        event.outcome.winner === "defenders"
+          ? next.defendingTeamId
+          : next.attackingTeamId;
+      next.roundHistory = [
+        ...(next.roundHistory ?? []),
+        {
+          roundNumber: round.roundNumber,
+          defendingTeamId: next.defendingTeamId,
+          attackingTeamId: next.attackingTeamId,
+          winningTeamId,
+          outcome: { ...event.outcome },
+        },
+      ];
       next.phase = "round-scoring";
       break;
     }

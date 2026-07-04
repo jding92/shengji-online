@@ -10,8 +10,10 @@ export const COUNTDOWN_TICK_MS = 250;
 export const NOTICE_DISMISS_MS = 5_000;
 /** How long the Leave button stays armed awaiting its confirming tap. */
 export const LEAVE_CONFIRM_MS = 3_000;
-/** How long a completed trick lingers while sweeping to the winner. */
-export const TRICK_SWEEP_MS = 700;
+/** How long all completed plays remain still before sweeping to the winner. */
+export const TRICK_RESULT_HOLD_MS = 2_000;
+/** Total lifetime of a completed trick, including its 600ms sweep animation. */
+export const TRICK_SWEEP_MS = TRICK_RESULT_HOLD_MS + 600;
 /** How long the throw result banner stays before auto-dismissing. */
 export const THROW_BANNER_MS = 8_000;
 /** How long error toasts stay before auto-dismissing. */

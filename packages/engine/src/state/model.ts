@@ -80,6 +80,14 @@ export type RoundState = {
   };
 };
 
+export type RoundHistoryEntry = {
+  roundNumber: number;
+  defendingTeamId: TeamId;
+  attackingTeamId: TeamId;
+  winningTeamId: TeamId;
+  outcome: RoundOutcome;
+};
+
 export type GameState = {
   roomId: string;
   revision: number;
@@ -93,6 +101,8 @@ export type GameState = {
   leaderSeat?: SeatIndex;
   defendingTeamId?: TeamId;
   attackingTeamId?: TeamId;
+  /** Public, durable summaries of completed rounds. */
+  roundHistory?: RoundHistoryEntry[];
   round?: RoundState;
   createdAt: string;
   updatedAt: string;

@@ -1,4 +1,4 @@
-import { sameCardFace } from "../cards/deck.js";
+import { cardFaceKey, sameCardFace } from "../cards/deck.js";
 import type { ShengJiRuleset } from "../rulesets/schema.js";
 import type { Bid, BidTier, CardInstance, Rank, SeatIndex } from "../types.js";
 
@@ -32,10 +32,12 @@ type CreateBidInput = {
   cards: readonly CardInstance[];
   hand: readonly CardInstance[];
   currentRank: Rank;
-  currentBid?: Bid;
+  currentBid?: ComparableBid;
   placedAt: string;
   rules: ShengJiRuleset["bidding"];
 };
+
+export type ComparableBid = Pick<Bid, "seat" | "face" | "count" | "tier" | "declares">;
 
 export function getBidTier(card: CardInstance): BidTier {
   if (card.face.kind === "standard") return "level-card";
@@ -47,8 +49,8 @@ function bidTierValue(tier: BidTier, rules: ShengJiRuleset["bidding"]): number {
 }
 
 export function compareBids(
-  challenger: Bid,
-  current: Bid,
+  challenger: ComparableBid,
+  current: ComparableBid,
   rules: ShengJiRuleset["bidding"],
 ): BidComparison {
   if (challenger.count > current.count) return "challenger-wins";
@@ -158,4 +160,48 @@ export function createAndValidateBid({
   }
 
   return bid;
+}
+
+/**
+ * Returns whether a hand contains any legal bid that can beat (or reinforce)
+ * the standing bid. Using the largest same-face group is sufficient because
+ * bid strength compares card count before tier.
+ */
+export function canHandOutbid({
+  seat,
+  hand,
+  currentRank,
+  currentBid,
+  rules,
+}: {
+  seat: SeatIndex;
+  hand: readonly CardInstance[];
+  currentRank: Rank;
+  currentBid: ComparableBid;
+  rules: ShengJiRuleset["bidding"];
+}): boolean {
+  const candidatesByFace = new Map<string, CardInstance[]>();
+  for (const card of hand) {
+    if (card.face.kind === "standard" && card.face.rank !== currentRank) continue;
+    const key = cardFaceKey(card.face);
+    candidatesByFace.set(key, [...(candidatesByFace.get(key) ?? []), card]);
+  }
+
+  return [...candidatesByFace.values()].some((cards) => {
+    try {
+      createAndValidateBid({
+        seat,
+        cards,
+        hand,
+        currentRank,
+        currentBid,
+        placedAt: "",
+        rules,
+      });
+      return true;
+    } catch (error) {
+      if (error instanceof BidValidationError) return false;
+      throw error;
+    }
+  });
 }

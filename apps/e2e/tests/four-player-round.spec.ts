@@ -113,6 +113,11 @@ test("four players join, bid, bury, and complete a legal trick", async ({
       await playButton(page).click();
     }
 
+    const finalPlayerPage = players[(bidderSeat + 3) % 4]!.page;
+    await expect(finalPlayerPage.locator(".trick-sweep .center-play")).toHaveCount(4);
+    await finalPlayerPage.waitForTimeout(1_500);
+    await expect(finalPlayerPage.locator(".trick-sweep .center-play")).toHaveCount(4);
+
     for (const { page } of players) {
       await expect(page.locator(".hand-scroll .playing-card")).toHaveCount(24);
     }

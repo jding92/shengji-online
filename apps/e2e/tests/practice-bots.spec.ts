@@ -17,7 +17,7 @@ test("practice drops the human straight into a game against three bots", async (
   await expect(page.getByRole("tablist", { name: "Practice players" })).toHaveCount(0);
   // Bots bid and play on their own.
   await expect(page.locator(".bid-badge")).toBeVisible({ timeout: 15_000 });
-  await expect(page.locator(".center-play")).toBeVisible({ timeout: 25_000 });
+  await expect(page.locator(".center-play").first()).toBeVisible({ timeout: 25_000 });
 });
 
 test("a human can add and remove a lobby bot", async ({ page, request }) => {
