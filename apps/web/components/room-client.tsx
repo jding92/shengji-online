@@ -54,7 +54,14 @@ function useConnectionNotices(
   return { notice, clearNotice: () => setNotice(null) };
 }
 
-export function RoomClient({ roomId }: { roomId: string }) {
+export function RoomClient({
+  roomId,
+  autoStart = false,
+}: {
+  roomId: string;
+  /** Practice tables sit and ready the human automatically, skipping the lobby. */
+  autoStart?: boolean;
+}) {
   const {
     view,
     status,
@@ -70,6 +77,10 @@ export function RoomClient({ roomId }: { roomId: string }) {
   const [joining, setJoining] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
   const autoSitAttempted = useRef(false);
+  const autoReadyAttempted = useRef(false);
+  // Reveal the lobby if an auto-start table has not begun dealing in time, so a
+  // stalled sit/ready never leaves the player on a dead loading screen.
+  const [autoStartStalled, setAutoStartStalled] = useState(false);
   const { notice, clearNotice } = useConnectionNotices(view?.seats);
 
   useEffect(() => {
@@ -83,6 +94,32 @@ export function RoomClient({ roomId }: { roomId: string }) {
       autoSitAttempted.current = true;
     }
   }, [sendCommand, view]);
+
+  // Practice tables ready the human as soon as they are seated with an all-bot
+  // table, so the round starts without a manual lobby step.
+  useEffect(() => {
+    if (!autoStart || view?.phase !== "lobby" || autoReadyAttempted.current) return;
+    const mine = view.seats.find(({ playerId }) => playerId === view.you.playerId);
+    if (mine === undefined || mine.ready) return;
+    const others = view.seats.filter(
+      ({ playerId }) => playerId !== null && playerId !== view.you.playerId,
+    );
+    if (others.length === 0 || others.some(({ isBot }) => !isBot)) return;
+    if (sendCommand({ type: "READY" })) {
+      autoReadyAttempted.current = true;
+    }
+  }, [autoStart, sendCommand, view]);
+
+  // Safety net: if the auto-start table is still in the lobby after a few
+  // seconds, fall back to the manual lobby instead of a stuck loading screen.
+  useEffect(() => {
+    if (!autoStart || view?.phase !== "lobby") {
+      setAutoStartStalled(false);
+      return;
+    }
+    const timer = setTimeout(() => setAutoStartStalled(true), 6_000);
+    return () => clearTimeout(timer);
+  }, [autoStart, view?.phase]);
 
   // Every toast auto-dismisses; all remain click-dismissable.
   useEffect(() => {
@@ -160,9 +197,17 @@ export function RoomClient({ roomId }: { roomId: string }) {
     );
   }
 
+  const autoStarting = autoStart && view.phase === "lobby" && !autoStartStalled;
+
   return (
     <>
-      {view.phase === "lobby" ? (
+      {autoStarting ? (
+        <main className="join-shell">
+          <div className="loading-mark">升</div>
+          <strong>Dealing you in…</strong>
+          <small>Shuffling the deck and seating your bots.</small>
+        </main>
+      ) : view.phase === "lobby" ? (
         <Lobby view={view} sendCommand={sendCommand} onLeave={leaveSession} />
       ) : (
         <GameTable

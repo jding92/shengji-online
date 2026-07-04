@@ -1,20 +1,22 @@
 import { expect, test } from "@playwright/test";
 
-test("practice creates one human session with three configured bots", async ({
+test("practice drops the human straight into a game against three bots", async ({
   page,
 }) => {
   await page.goto("/");
   await page.getByLabel("Practice difficulty").selectOption("advanced");
   await page.getByRole("button", { name: "Practice table · solo" }).click();
 
-  await expect(page.getByRole("heading", { name: /^Room / })).toBeVisible();
-  await expect(page.getByText("Bot · Advanced")).toHaveCount(3);
-  await expect(page.getByText("You")).toBeVisible();
+  // No manual lobby step: the human is auto-seated, auto-readied, and dealt in.
+  await expect(page.locator(".hand-scroll .playing-card")).toHaveCount(25, {
+    timeout: 15_000,
+  });
+  await expect(page.locator(".table-seat .bot-badge")).toHaveCount(3);
+  // The lobby ready control and the legacy practice switcher are both gone.
+  await expect(page.getByRole("button", { name: "Ready up" })).toHaveCount(0);
   await expect(page.getByRole("tablist", { name: "Practice players" })).toHaveCount(0);
-
-  await page.getByRole("button", { name: "Ready up" }).click();
-  await expect(page.locator(".hand-scroll .playing-card")).toHaveCount(25);
-  await expect(page.locator(".bid-badge")).toBeVisible({ timeout: 10_000 });
+  // Bots bid and play on their own.
+  await expect(page.locator(".bid-badge")).toBeVisible({ timeout: 15_000 });
   await expect(page.locator(".center-play")).toBeVisible({ timeout: 25_000 });
 });
 

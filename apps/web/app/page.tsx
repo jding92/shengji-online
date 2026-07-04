@@ -56,7 +56,7 @@ export default function HomePage() {
         }
         safeStorage.set(sessionKey(body.room.roomId), joined.playerToken);
       }
-      router.push(`/room/${body.room.roomId}`);
+      router.push(`/room/${body.room.roomId}${practice ? "?practice=1" : ""}`);
     } catch (createError) {
       setError(
         createError instanceof Error ? createError.message : "Could not create table",
