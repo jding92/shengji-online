@@ -73,6 +73,7 @@ export function PlayingCard({
       onClick={onSelect}
       initial={initial}
       animate={{ opacity: 1, y: selected ? -18 : 0, scale: 1, rotate: 0 }}
+      {...(onSelect === undefined ? {} : { whileHover: { y: -18 } })}
       transition={transition}
     >
       <span className="card-corner">

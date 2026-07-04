@@ -510,11 +510,6 @@ html[data-theme="minimal"] .board {
 html[data-theme="minimal"] .hand-dock {
   background: transparent;
 }
-html[data-theme="minimal"] .felt-ring {
-  inset: 8%;
-  border: 1px solid var(--felt-ring-line);
-  border-radius: 50%;
-}
 html[data-theme="minimal"] .player-chip {
   border: 1px solid var(--line);
   border-radius: 999px;
@@ -540,13 +535,19 @@ html[data-theme="minimal"] .player-avatar {
   background: var(--avatar-bg);
   color: var(--accent-bright);
   font-family: Georgia, serif;
+  font-size: 1.55rem;
+}
+html[data-theme="minimal"] .seat-count {
+  color: var(--gold);
+  font-family: Georgia, serif;
+  font-size: 1rem;
 }
 html[data-theme="minimal"] .player-chip strong {
-  font-size: 0.68rem;
+  font-size: 1rem;
 }
 html[data-theme="minimal"] .player-chip small {
   color: var(--faint-dark);
-  font-size: 0.51rem;
+  font-size: 0.68rem;
 }
 html[data-theme="minimal"] .offline-dot {
   width: 6px;
@@ -655,31 +656,32 @@ html[data-theme="minimal"] .playing-card {
   color: var(--card-ink);
 }
 html[data-theme="minimal"] .playing-card.is-selected {
+  border-color: var(--danger-bright);
   box-shadow:
-    0 0 0 2px var(--accent-bright),
+    0 0 0 3px var(--danger-bright),
     0 14px 25px rgba(0, 0, 0, 0.36);
 }
 html[data-theme="minimal"] .card-corner {
   font-family: Georgia, serif;
 }
 html[data-theme="minimal"] .card-corner strong {
-  font-size: 0.92rem;
+  font-size: 1.4rem;
 }
 html[data-theme="minimal"] .card-corner span {
-  font-size: 0.8rem;
+  font-size: 1.2rem;
 }
 html[data-theme="minimal"] .card-center {
   font-family: Georgia, serif;
-  font-size: 1.6rem;
+  font-size: 2.4rem;
   opacity: 0.82;
 }
 /* "JOKER" is a word, not a glyph — sized to fit inside the card face. */
 html[data-theme="minimal"] .card-center.is-joker-center {
-  font-size: 0.78rem;
+  font-size: 1.05rem;
 }
 html[data-theme="minimal"] .joker-script {
   font-family: Georgia, serif;
-  font-size: 0.75rem;
+  font-size: 1rem;
 }
 html[data-theme="minimal"] .card-hearts {
   color: var(--card-red);
@@ -704,7 +706,7 @@ html[data-theme="minimal"] .card-back.is-compact {
   border-radius: 6px;
 }
 html[data-theme="minimal"] .playing-card.is-compact .card-center {
-  font-size: 1rem;
+  font-size: 1.6rem;
 }
 html[data-theme="minimal"] .card-back {
   border: 2px solid var(--card-back-border);

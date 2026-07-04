@@ -625,11 +625,6 @@ html[data-theme="retro"] .hand-dock {
   box-shadow: none;
 }
 /* Inner pinstripe frame instead of an ellipse ring. */
-html[data-theme="retro"] .felt-ring {
-  inset: 14px;
-  border: 1px dashed var(--felt-ring-line);
-  border-radius: 8px;
-}
 /* Player nameplates: little beveled plaques like the old avatar frames. */
 html[data-theme="retro"] .player-chip {
   border: 2px solid var(--edge);
@@ -666,15 +661,21 @@ html[data-theme="retro"] .player-avatar {
   background: linear-gradient(180deg, var(--card-face-hi), var(--card-face-lo));
   color: var(--card-red);
   font-family: Georgia, serif;
+  font-size: 1.55rem;
   font-weight: 700;
+}
+html[data-theme="retro"] .seat-count {
+  color: var(--gold);
+  font-family: var(--font-pixel-stack);
+  font-size: 0.68rem;
 }
 html[data-theme="retro"] .player-chip strong {
   font-family: var(--font-pixel-stack);
-  font-size: 0.52rem;
+  font-size: 0.68rem;
 }
 html[data-theme="retro"] .player-chip small {
   color: var(--muted);
-  font-size: 0.51rem;
+  font-size: 0.62rem;
 }
 html[data-theme="retro"] .offline-dot {
   width: 7px;
@@ -801,8 +802,9 @@ html[data-theme="retro"] .playing-card {
   color: var(--card-ink);
 }
 html[data-theme="retro"] .playing-card.is-selected {
+  border-color: var(--danger-bright);
   box-shadow:
-    0 0 0 3px var(--accent-bright),
+    0 0 0 3px var(--danger-bright),
     5px 5px 0 var(--hard-shadow);
 }
 html[data-theme="retro"] .card-corner {
@@ -810,23 +812,23 @@ html[data-theme="retro"] .card-corner {
   font-weight: 700;
 }
 html[data-theme="retro"] .card-corner strong {
-  font-size: 0.92rem;
+  font-size: 1.4rem;
 }
 html[data-theme="retro"] .card-corner span {
-  font-size: 0.8rem;
+  font-size: 1.2rem;
 }
 html[data-theme="retro"] .card-center {
   font-family: Georgia, serif;
-  font-size: 1.6rem;
+  font-size: 2.4rem;
   opacity: 0.9;
 }
 /* "JOKER" is a word, not a glyph — sized to fit inside the card face. */
 html[data-theme="retro"] .card-center.is-joker-center {
-  font-size: 0.78rem;
+  font-size: 1.05rem;
 }
 html[data-theme="retro"] .joker-script {
   font-family: Georgia, serif;
-  font-size: 0.75rem;
+  font-size: 1rem;
 }
 html[data-theme="retro"] .card-hearts {
   color: var(--card-red);
@@ -851,7 +853,7 @@ html[data-theme="retro"] .card-back.is-compact {
   border-radius: 5px;
 }
 html[data-theme="retro"] .playing-card.is-compact .card-center {
-  font-size: 1rem;
+  font-size: 1.6rem;
 }
 /* Blue lattice backs with a white frame — straight off the old clients. */
 html[data-theme="retro"] .card-back {

@@ -115,7 +115,12 @@ test("four players join, bid, bury, and complete a legal trick", async ({
 
     const finalPlayerPage = players[(bidderSeat + 3) % 4]!.page;
     await expect(finalPlayerPage.locator(".trick-sweep .center-play")).toHaveCount(4);
-    await finalPlayerPage.waitForTimeout(1_500);
+    for (const position of ["south", "east", "north", "west"]) {
+      await expect(
+        finalPlayerPage.locator(`.trick-sweep .play-${position}`),
+      ).toHaveCount(1);
+    }
+    await finalPlayerPage.waitForTimeout(2_500);
     await expect(finalPlayerPage.locator(".trick-sweep .center-play")).toHaveCount(4);
 
     for (const { page } of players) {

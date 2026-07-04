@@ -465,6 +465,12 @@ export function validateCommand(
       }
       const seat = actorSeat(state, actor);
       const round = state.round!;
+      if (state.phase === "post-deal-bidding" && round.passedBidSeats.includes(seat)) {
+        throw new CommandValidationError(
+          "INVALID_COMMAND",
+          "You already passed; wait for another bid",
+        );
+      }
       const bid = createAndValidateBid({
         seat,
         cards: cardsById(state, command.cards),
@@ -494,7 +500,14 @@ export function validateCommand(
           "Passing is only available after the deal",
         );
       }
-      return [{ type: "BID_PASSED", seat: actorSeat(state, actor), at: context.now }];
+      const seat = actorSeat(state, actor);
+      if (state.round?.passedBidSeats.includes(seat) === true) {
+        throw new CommandValidationError(
+          "INVALID_COMMAND",
+          "You already passed this bid",
+        );
+      }
+      return [{ type: "BID_PASSED", seat, at: context.now }];
     }
     case "BURY_BOTTOM": {
       if (state.phase !== "bottom-exchange") {

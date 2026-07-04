@@ -21,6 +21,8 @@ export function HandActions({
   selectionKind,
   actions,
   bottomSize,
+  hasPassedBid,
+  requiredCardCount,
   trump,
   submit,
 }: {
@@ -28,6 +30,8 @@ export function HandActions({
   selectionKind: "normal" | "throw" | "unleadable";
   actions: ReadonlySet<PrivateGameView["legalActions"][number]>;
   bottomSize: number;
+  hasPassedBid: boolean;
+  requiredCardCount: number | undefined;
   trump: TrumpSpec | undefined;
   submit: (command: WireClientCommand) => void;
 }) {
@@ -68,6 +72,11 @@ export function HandActions({
         )}
       </AnimatePresence>
 
+      {hasPassedBid && (
+        <span className="bid-passed-status" role="status">
+          Passed
+        </span>
+      )}
       {actions.has("pass-bid") && (
         <button
           className="button button-ghost"
@@ -98,20 +107,43 @@ export function HandActions({
         </button>
       )}
       {actions.has("play-cards") && (
-        <button
-          className={`button ${isThrow ? "button-gold" : "button-primary"}`}
-          type="button"
-          disabled={
-            selectedIds.length === 0 || (isLeading && selectionKind === "unleadable")
-          }
-          onClick={play}
-        >
-          {isThrow
-            ? confirmingThrow
-              ? "Confirm throw 甩牌"
-              : "Play throw 甩牌"
-            : describePlaySelection(selectedCards, trump)}
-        </button>
+        <>
+          <span
+            className="play-selection-progress"
+            aria-label={
+              requiredCardCount === undefined
+                ? `${selectedIds.length} cards selected for the lead`
+                : `${selectedIds.length} of ${requiredCardCount} cards selected`
+            }
+          >
+            {requiredCardCount === undefined ? (
+              <>
+                <b>{selectedIds.length}</b> selected
+              </>
+            ) : (
+              <>
+                <b>{selectedIds.length}</b> / {requiredCardCount} cards
+              </>
+            )}
+          </span>
+          <button
+            className={`button ${isThrow ? "button-gold" : "button-primary"}`}
+            type="button"
+            disabled={
+              selectedIds.length === 0 ||
+              (requiredCardCount !== undefined &&
+                selectedIds.length !== requiredCardCount) ||
+              (isLeading && selectionKind === "unleadable")
+            }
+            onClick={play}
+          >
+            {isThrow
+              ? confirmingThrow
+                ? "Confirm throw 甩牌"
+                : "Play throw 甩牌"
+              : describePlaySelection(selectedCards, trump)}
+          </button>
+        </>
       )}
     </div>
   );

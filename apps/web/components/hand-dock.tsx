@@ -1,6 +1,7 @@
 "use client";
 
 import type { CardInstance } from "@shengji/protocol";
+import type { CSSProperties } from "react";
 import { PlayingCard } from "./card";
 
 /**
@@ -21,7 +22,12 @@ export function HandDock({
 }) {
   return (
     <section className="hand-dock">
-      <div className="hand-scroll" role="group" aria-label="Your hand">
+      <div
+        className="hand-scroll"
+        role="group"
+        aria-label="Your hand"
+        style={{ "--hand-count": Math.max(cards.length, 1) } as CSSProperties}
+      >
         {cards.map((card, index) => (
           <PlayingCard
             key={card.id}

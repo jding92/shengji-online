@@ -111,6 +111,20 @@ describe("event-sourced round flow", () => {
     expect(replayEvents(setup.initial, setup.events)).toEqual(setup.state);
   });
 
+  it("treats a pass as final until another bid resets the responses", () => {
+    let { state } = readyAndDeal(setupLobby());
+    const passed = validateCommand(state, "p0", { type: "PASS_BID" }, { now });
+    state = replayEvents(state, passed);
+
+    expect(state.round!.passedBidSeats).toEqual([0]);
+    expect(() => validateCommand(state, "p0", { type: "PASS_BID" }, { now })).toThrow(
+      "already passed",
+    );
+    expect(() =>
+      validateCommand(state, "p0", { type: "BID", cards: [] }, { now }),
+    ).toThrow("already passed");
+  });
+
   it("bids, finalizes trump, exchanges the bottom, and completes a trick", () => {
     const setup = readyAndDeal(setupLobby());
     let { state } = setup;

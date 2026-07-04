@@ -10,7 +10,11 @@ function legalActions(state: GameState, playerId: string): LegalAction[] {
   }
   if (seat === null) return [];
   if (state.phase === "dealing") return ["bid"];
-  if (state.phase === "post-deal-bidding") return ["bid", "pass-bid"];
+  if (state.phase === "post-deal-bidding") {
+    return state.round?.passedBidSeats.includes(seat) === true
+      ? []
+      : ["bid", "pass-bid"];
+  }
   if (state.phase === "bottom-exchange" && state.leaderSeat === seat) {
     return ["bury-bottom"];
   }
