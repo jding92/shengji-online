@@ -41,7 +41,7 @@ app.get("/api/health", () => ({ ok: true }));
 app.post("/api/rooms", async (request, reply) => {
   const parsed = createRoomBodySchema.safeParse(request.body);
   if (!parsed.success) return reply.code(400).send({ error: "Invalid request" });
-  const room = rooms.createRoom({
+  const room = await rooms.createRoom({
     ...(parsed.data?.practice === undefined ? {} : { practice: parsed.data.practice }),
     ...(parsed.data?.botDifficulty === undefined
       ? {}
@@ -70,7 +70,7 @@ app.post<{ Params: { roomId: string } }>(
       return reply.code(400).send({ error: parsed.error.issues[0]?.message });
     }
     try {
-      return rooms.joinRoom({
+      return await rooms.joinRoom({
         roomId: request.params.roomId,
         name: parsed.data.name,
         ...(parsed.data.resumeToken === undefined
@@ -106,7 +106,7 @@ app.post<{ Params: { roomId: string } }>(
       return reply.code(400).send({ error: "At least one human is required" });
     }
     try {
-      const playerId = rooms.addBot(
+      const playerId = await rooms.addBot(
         room.state.roomId,
         parsed.data.seat,
         parsed.data.difficulty,
@@ -137,7 +137,7 @@ app.delete<{ Params: { roomId: string; botId: string } }>(
       return reply.code(403).send({ error: "Room membership required" });
     }
     try {
-      room.removeBot(request.params.botId, new Date().toISOString());
+      await room.removeBot(request.params.botId, new Date().toISOString());
       return reply.code(204).send();
     } catch (error) {
       return reply.code(400).send({
@@ -163,19 +163,8 @@ app.post<{ Params: { roomId: string; targetId: string } }>(
     if (requester === null || room.state.players[requester]?.bot !== undefined) {
       return reply.code(403).send({ error: "Room membership required" });
     }
-    const connectedHumanRemains = Object.values(room.state.players).some(
-      (player) =>
-        player.id !== request.params.targetId &&
-        player.bot === undefined &&
-        player.connected,
-    );
-    if (!connectedHumanRemains) {
-      return reply.code(400).send({
-        error: "A connected human must remain at the table",
-      });
-    }
     try {
-      room.takeoverByBot(
+      await room.takeoverByBot(
         request.params.targetId,
         parsed.data.difficulty,
         new Date().toISOString(),

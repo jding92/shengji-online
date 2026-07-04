@@ -3,11 +3,11 @@ import { SqliteStore } from "../src/persistence/sqlite-store.js";
 import { RoomManager } from "../src/room-manager.js";
 
 describe("SQLite room persistence", () => {
-  it("persists room snapshots, events, and hashed resume sessions", () => {
+  it("persists room snapshots, events, and hashed resume sessions", async () => {
     const store = new SqliteStore(":memory:");
     const manager = new RoomManager(store);
-    const room = manager.createRoom("2026-06-19T12:00:00.000Z");
-    const joined = manager.joinRoom({
+    const room = await manager.createRoom("2026-06-19T12:00:00.000Z");
+    const joined = await manager.joinRoom({
       roomId: room.state.roomId,
       name: "Ada",
       at: "2026-06-19T12:00:01.000Z",
@@ -35,17 +35,20 @@ describe("SQLite room persistence", () => {
     store.close();
   });
 
-  it("loads active rooms and resumes players after a manager restart", () => {
+  it("loads active rooms and resumes players after a manager restart", async () => {
     const store = new SqliteStore(":memory:");
     const firstManager = new RoomManager(store);
-    const room = firstManager.createRoom();
-    const joined = firstManager.joinRoom({ roomId: room.state.roomId, name: "Lin" });
+    const room = await firstManager.createRoom();
+    const joined = await firstManager.joinRoom({
+      roomId: room.state.roomId,
+      name: "Lin",
+    });
     firstManager.close();
 
     const restoredManager = new RoomManager(store);
     const restored = restoredManager.getRoom(room.state.roomId);
     expect(restored?.state.players[joined.playerId]?.name).toBe("Lin");
-    const resumed = restoredManager.joinRoom({
+    const resumed = await restoredManager.joinRoom({
       roomId: room.state.roomId,
       name: "Ignored on resume",
       resumeToken: joined.playerToken,

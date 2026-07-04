@@ -45,7 +45,7 @@ export class RoomManager {
     }
   }
 
-  createRoom(input: CreateRoomOptions | string = {}): Room {
+  async createRoom(input: CreateRoomOptions | string = {}): Promise<Room> {
     const options = typeof input === "string" ? { at: input } : input;
     const at = options.at ?? new Date().toISOString();
     let roomId = roomCode();
@@ -75,7 +75,7 @@ export class RoomManager {
     if (options.practice === true) {
       const difficulty = options.botDifficulty ?? "intermediate";
       for (let seat = 1; seat < ruleset.players.count; seat += 1) {
-        this.addBot(roomId, seat, difficulty, at);
+        await this.addBot(roomId, seat, difficulty, at);
       }
     }
     return room;
@@ -85,12 +85,12 @@ export class RoomManager {
     return this.rooms.get(roomId.toUpperCase()) ?? null;
   }
 
-  joinRoom(input: {
+  async joinRoom(input: {
     roomId: string;
     name: string;
     resumeToken?: string;
     at?: string;
-  }): JoinResult {
+  }): Promise<JoinResult> {
     const roomId = input.roomId.toUpperCase();
     const room = this.getRoom(roomId);
     if (room === null) throw new RangeError("Room not found");
@@ -130,7 +130,7 @@ export class RoomManager {
 
     const playerId = randomUUID();
     const playerToken = randomBytes(32).toString("base64url");
-    room.addPlayer(playerId, name, at);
+    await room.addPlayer(playerId, name, at);
     this.store.saveSession({
       roomId,
       playerId,
@@ -148,12 +148,12 @@ export class RoomManager {
     );
   }
 
-  addBot(
+  async addBot(
     roomId: string,
     seat: number,
     difficulty: BotDifficulty,
     at = new Date().toISOString(),
-  ): string {
+  ): Promise<string> {
     const room = this.getRoom(roomId);
     if (room === null) throw new RangeError("Room not found");
     const botCount = Object.values(room.state.players).filter(

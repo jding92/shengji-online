@@ -526,8 +526,19 @@ export class Room {
     });
   }
 
-  addPlayer(playerId: string, name: string, at: string): void {
-    this.commit([{ type: "PLAYER_JOINED", playerId, name, at }]);
+  addPlayer(playerId: string, name: string, at: string): Promise<void> {
+    return this.serialize(() => {
+      if (this.currentState.phase !== "lobby") {
+        throw new RangeError("This game has already started");
+      }
+      if (
+        Object.keys(this.currentState.players).length >=
+        this.currentState.rulesetSnapshot.players.count
+      ) {
+        throw new RangeError("Room is full");
+      }
+      this.commit([{ type: "PLAYER_JOINED", playerId, name, at }]);
+    });
   }
 
   addBot(
@@ -536,79 +547,100 @@ export class Room {
     difficulty: BotDifficulty,
     at: string,
     playerId = randomUUID(),
-  ): string {
-    if (this.currentState.phase !== "lobby") {
-      throw new RangeError("Bots can only be added in the lobby");
-    }
-    if (
-      Object.keys(this.currentState.players).length >=
-      this.currentState.rulesetSnapshot.players.count
-    ) {
-      throw new RangeError("Room is full");
-    }
-    const normalizedName = name.trim();
-    if (normalizedName.length < 1 || normalizedName.length > 32) {
-      throw new RangeError("Bot name must be between 1 and 32 characters");
-    }
-    const joined: GameEvent = {
-      type: "PLAYER_JOINED",
-      playerId,
-      name: normalizedName,
-      bot: { difficulty },
-      at,
-    };
-    let preview = replayEvents(this.currentState, [joined]);
-    const seated = validateCommand(
-      preview,
-      playerId,
-      { type: "SIT", seat },
-      { now: at },
-    );
-    preview = replayEvents(preview, seated);
-    const ready = validateCommand(
-      preview,
-      playerId,
-      { type: "READY" },
-      { now: at, roundSeed: randomUUID() },
-    );
-    this.commit([joined, ...seated, ...ready]);
-    this.rescheduleTimers();
-    return playerId;
-  }
-
-  removeBot(playerId: string, at: string): void {
-    if (this.currentState.phase !== "lobby") {
-      throw new RangeError("Bots can only be removed in the lobby");
-    }
-    if (this.currentState.players[playerId]?.bot === undefined) {
-      throw new RangeError("Player is not a bot");
-    }
-    this.commit([{ type: "PLAYER_REMOVED", playerId, at }]);
-    this.rescheduleTimers();
-  }
-
-  takeoverByBot(playerId: string, difficulty: BotDifficulty, at: string): void {
-    const player = this.currentState.players[playerId];
-    if (
-      this.currentState.phase === "lobby" ||
-      this.currentState.phase === "game-over"
-    ) {
-      throw new RangeError("Bot takeover is only available during a game");
-    }
-    if (player === undefined) throw new RangeError("Player not found");
-    if (player.bot !== undefined) throw new RangeError("Player is already a bot");
-    if (player.connected) {
-      throw new RangeError("Connected players cannot be replaced by a bot");
-    }
-    this.commit([
-      {
-        type: "PLAYER_CONTROL_CHANGED",
+  ): Promise<string> {
+    return this.serialize(() => {
+      if (this.currentState.phase !== "lobby") {
+        throw new RangeError("Bots can only be added in the lobby");
+      }
+      if (
+        Object.keys(this.currentState.players).length >=
+        this.currentState.rulesetSnapshot.players.count
+      ) {
+        throw new RangeError("Room is full");
+      }
+      const normalizedName = name.trim();
+      if (normalizedName.length < 1 || normalizedName.length > 32) {
+        throw new RangeError("Bot name must be between 1 and 32 characters");
+      }
+      const joined: GameEvent = {
+        type: "PLAYER_JOINED",
         playerId,
+        name: normalizedName,
         bot: { difficulty },
         at,
-      },
-    ]);
-    this.rescheduleTimers();
+      };
+      let preview = replayEvents(this.currentState, [joined]);
+      const seated = validateCommand(
+        preview,
+        playerId,
+        { type: "SIT", seat },
+        { now: at },
+      );
+      preview = replayEvents(preview, seated);
+      const ready = validateCommand(
+        preview,
+        playerId,
+        { type: "READY" },
+        { now: at, roundSeed: randomUUID() },
+      );
+      this.commit([joined, ...seated, ...ready]);
+      this.rescheduleTimers();
+      return playerId;
+    });
+  }
+
+  removeBot(playerId: string, at: string): Promise<void> {
+    return this.serialize(() => {
+      if (this.currentState.phase !== "lobby") {
+        throw new RangeError("Bots can only be removed in the lobby");
+      }
+      if (this.currentState.players[playerId]?.bot === undefined) {
+        throw new RangeError("Player is not a bot");
+      }
+      this.commit([{ type: "PLAYER_REMOVED", playerId, at }]);
+      this.rescheduleTimers();
+    });
+  }
+
+  takeoverByBot(
+    playerId: string,
+    difficulty: BotDifficulty,
+    at: string,
+  ): Promise<void> {
+    return this.serialize(() => {
+      const player = this.currentState.players[playerId];
+      if (
+        this.currentState.phase === "lobby" ||
+        this.currentState.phase === "game-over"
+      ) {
+        throw new RangeError("Bot takeover is only available during a game");
+      }
+      if (player === undefined) throw new RangeError("Player not found");
+      if (player.bot !== undefined) {
+        throw new RangeError("Player is already a bot");
+      }
+      if (player.connected) {
+        throw new RangeError("Connected players cannot be replaced by a bot");
+      }
+      const connectedHumanRemains = Object.values(this.currentState.players).some(
+        (candidate) =>
+          candidate.id !== playerId &&
+          candidate.bot === undefined &&
+          candidate.connected,
+      );
+      if (!connectedHumanRemains) {
+        throw new RangeError("A connected human must remain at the table");
+      }
+      this.commit([
+        {
+          type: "PLAYER_CONTROL_CHANGED",
+          playerId,
+          bot: { difficulty },
+          at,
+        },
+      ]);
+      this.rescheduleTimers();
+    });
   }
 
   close(): void {

@@ -89,10 +89,10 @@ function postDealState(roomId: string): GameState {
 }
 
 describe("server bot orchestration", () => {
-  it("creates practice rooms with three ready sessionless bots", () => {
+  it("creates practice rooms with three ready sessionless bots", async () => {
     const store = new SqliteStore(":memory:");
     const manager = new RoomManager(store, { timersEnabled: false });
-    const room = manager.createRoom({
+    const room = await manager.createRoom({
       at: now,
       practice: true,
       botDifficulty: "advanced",
@@ -160,7 +160,7 @@ describe("server bot orchestration", () => {
       timersEnabled: true,
       botDelayMsOverride: { min: 80, max: 80 },
     });
-    room.takeoverByBot("p1", "expert", now);
+    await room.takeoverByBot("p1", "expert", now);
     expect(room.state.players["p1"]?.bot?.difficulty).toBe("expert");
 
     const socket = new FakeSocket();
@@ -196,21 +196,48 @@ describe("server bot orchestration", () => {
     store.close();
   });
 
-  it("enforces lobby removal and disconnected-human takeover guards", () => {
+  it("serializes competing bot administration requests", async () => {
     const store = new SqliteStore(":memory:");
     const manager = new RoomManager(store, { timersEnabled: false });
-    const room = manager.createRoom({ at: now });
-    const human = manager.joinRoom({
+    const room = await manager.createRoom({ at: now });
+    await manager.joinRoom({
       roomId: room.state.roomId,
       name: "Ada",
       at: now,
     });
-    const botId = manager.addBot(room.state.roomId, 1, "beginner", now);
-    expect(() => room.takeoverByBot(human.playerId, "expert", now)).toThrow(
+
+    const results = await Promise.allSettled([
+      manager.addBot(room.state.roomId, 1, "beginner", now),
+      manager.addBot(room.state.roomId, 1, "expert", now),
+    ]);
+
+    expect(results.filter(({ status }) => status === "fulfilled")).toHaveLength(1);
+    expect(results.filter(({ status }) => status === "rejected")).toHaveLength(1);
+    expect(
+      Object.values(room.state.players).filter(({ bot }) => bot !== undefined),
+    ).toHaveLength(1);
+
+    manager.close();
+    store.close();
+  });
+
+  it("enforces lobby removal and disconnected-human takeover guards", async () => {
+    const store = new SqliteStore(":memory:");
+    const manager = new RoomManager(store, { timersEnabled: false });
+    const room = await manager.createRoom({ at: now });
+    const human = await manager.joinRoom({
+      roomId: room.state.roomId,
+      name: "Ada",
+      at: now,
+    });
+    const botId = await manager.addBot(room.state.roomId, 1, "beginner", now);
+    await expect(room.takeoverByBot(human.playerId, "expert", now)).rejects.toThrow(
       "only available during a game",
     );
-    expect(() => room.removeBot(human.playerId, now)).toThrow("Player is not a bot");
-    room.removeBot(botId, now);
+    await expect(room.removeBot(human.playerId, now)).rejects.toThrow(
+      "Player is not a bot",
+    );
+    await room.removeBot(botId, now);
     expect(room.state.players[botId]).toBeUndefined();
 
     manager.close();
