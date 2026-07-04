@@ -3,35 +3,90 @@
 import type { CardInstance } from "@shengji/protocol";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+export function capCardSelection(
+  selected: ReadonlySet<string>,
+  cards: readonly CardInstance[],
+  limit?: number,
+): Set<string> {
+  const capped = new Set<string>();
+  const maximum = limit === undefined ? Number.POSITIVE_INFINITY : Math.max(0, limit);
+  for (const card of cards) {
+    if (!selected.has(card.id)) continue;
+    if (capped.size >= maximum) break;
+    capped.add(card.id);
+  }
+  return capped;
+}
+
+export function toggleCardSelection({
+  selected,
+  cards,
+  card,
+  index,
+  shift,
+  lastIndex,
+  limit,
+}: {
+  selected: ReadonlySet<string>;
+  cards: readonly CardInstance[];
+  card: CardInstance;
+  index: number;
+  shift: boolean;
+  lastIndex: number | null;
+  limit?: number;
+}): Set<string> {
+  const next = new Set(selected);
+  if (!shift || lastIndex === null) {
+    if (next.has(card.id)) {
+      next.delete(card.id);
+    } else if (limit === undefined || next.size < limit) {
+      next.add(card.id);
+    }
+    return next;
+  }
+
+  const start = Math.min(lastIndex, index);
+  const end = Math.max(lastIndex, index);
+  for (const rangeCard of cards.slice(start, end + 1)) {
+    if (next.has(rangeCard.id)) continue;
+    if (limit !== undefined && next.size >= limit) break;
+    next.add(rangeCard.id);
+  }
+  return next;
+}
+
 /**
  * Card selection over a sorted hand: click toggles, shift-click extends a
  * range from the last click, and the selection prunes itself when cards
  * leave the hand.
  */
-export function useCardSelection(cards: readonly CardInstance[]) {
+export function useCardSelection(cards: readonly CardInstance[], limit?: number) {
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
   const lastIndex = useRef<number | null>(null);
 
   useEffect(() => {
-    const owned = new Set(cards.map(({ id }) => id));
-    setSelected((current) => new Set([...current].filter((id) => owned.has(id))));
-  }, [cards]);
+    setSelected((current) => capCardSelection(current, cards, limit));
+    if (lastIndex.current !== null && lastIndex.current >= cards.length) {
+      lastIndex.current = null;
+    }
+  }, [cards, limit]);
 
   const toggle = useCallback(
     (card: CardInstance, index: number, shift: boolean) => {
-      setSelected((current) => {
-        const next = new Set(current);
-        if (shift && lastIndex.current !== null) {
-          const start = Math.min(lastIndex.current, index);
-          const end = Math.max(lastIndex.current, index);
-          for (const rangeCard of cards.slice(start, end + 1)) next.add(rangeCard.id);
-        } else if (next.has(card.id)) next.delete(card.id);
-        else next.add(card.id);
-        return next;
-      });
+      setSelected((current) =>
+        toggleCardSelection({
+          selected: current,
+          cards,
+          card,
+          index,
+          shift,
+          lastIndex: lastIndex.current,
+          ...(limit === undefined ? {} : { limit }),
+        }),
+      );
       lastIndex.current = index;
     },
-    [cards],
+    [cards, limit],
   );
 
   const clear = useCallback(() => {

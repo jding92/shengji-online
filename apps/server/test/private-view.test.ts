@@ -75,6 +75,19 @@ describe("private views", () => {
     expect(derivePrivateView(state, "p0").publicRound?.bottomCount).toBe(8);
   });
 
+  it("removes bid controls after the player passes", () => {
+    let state = dealtState();
+    expect(derivePrivateView(state, "p0").legalActions).toEqual(["bid", "pass-bid"]);
+
+    state = replayEvents(
+      state,
+      validateCommand(state, "p0", { type: "PASS_BID" }, { now }),
+    );
+
+    expect(derivePrivateView(state, "p0").legalActions).toEqual([]);
+    expect(derivePrivateView(state, "p1").legalActions).toEqual(["bid", "pass-bid"]);
+  });
+
   it("exposes bot identity without widening the card boundary", () => {
     let state = dealtState();
     state = applyEvent(state, {

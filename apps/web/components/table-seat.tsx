@@ -14,8 +14,8 @@ type CurrentBid = NonNullable<
 >;
 
 /* Compact card-back box, fixed in the layout skeleton. */
-const CARD_W = 50;
-const CARD_H = 72;
+const CARD_W = 75;
+const CARD_H = 108;
 
 /**
  * An opponent's whole hand as a fan of card backs, so hand size reads at a
@@ -26,8 +26,8 @@ function MiniHand({ count, vertical }: { count: number; vertical: boolean }) {
   // Distribute the fan across a fixed span; big hands pack tighter.
   const step = count > 1 ? Math.min(18, (vertical ? 250 : 320) / (count - 1)) : 0;
   const extent = count > 0 ? (count - 1) * step + CARD_W : CARD_W;
-  // A rotated card keeps its 50×72 layout box, so offset it to make the
-  // 72×50 visual footprint start at the fan position.
+  // A rotated card keeps its 75×108 layout box, so offset it to make the
+  // 108×75 visual footprint start at the fan position.
   const skew = (CARD_H - CARD_W) / 2;
   return (
     <div
@@ -60,6 +60,7 @@ export function TableSeat({
   currentTurn,
   isYou,
   isLeader,
+  handTotal,
   bid,
   roomId,
   timer,
@@ -70,6 +71,8 @@ export function TableSeat({
   isYou: boolean;
   /** The round's declarer, marked with the 庄 (banker) crest. */
   isLeader: boolean;
+  /** Steady-state hand size, shown only on the local player's nameplate. */
+  handTotal?: number;
   /** This seat's standing trump bid, shown as a badge until finalization. */
   bid?: CurrentBid | undefined;
   roomId: string;
@@ -110,11 +113,6 @@ export function TableSeat({
         />
       )}
       <div className="player-chip">
-        {isYou && timer !== undefined && (
-          <span className="seat-timer-badge" aria-label="Turn timer">
-            <Countdown deadline={timer.deadline} now={timer.now} />
-          </span>
-        )}
         <span className="player-avatar">
           {seat.name?.slice(0, 1).toUpperCase() ?? "·"}
         </span>
@@ -141,6 +139,23 @@ export function TableSeat({
               : `Lv ${seat.rank} · ${teamLabelForSeat(seat.seat)}`}
           </small>
         </span>
+        {isYou && handTotal !== undefined && handTotal > 0 && (
+          <motion.span
+            className="seat-count"
+            key={seat.cardCount}
+            aria-label={`${seat.cardCount} of ${handTotal} cards remaining`}
+            initial={{ scale: 1.2 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 500, damping: 22 }}
+          >
+            {seat.cardCount} / {handTotal}
+          </motion.span>
+        )}
+        {isYou && timer !== undefined && (
+          <span className="seat-timer-badge" aria-label="Turn timer">
+            <Countdown deadline={timer.deadline} now={timer.now} />
+          </span>
+        )}
         {!seat.connected && seat.playerId !== null && !seat.isBot && (
           <i className="offline-dot" />
         )}

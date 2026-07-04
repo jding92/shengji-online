@@ -20,6 +20,9 @@
   --z-connection: 50;
   --z-toast: 70;
   --z-modal: 80;
+  /* Fixed-team colors shared by seats and score tiles. */
+  --team-blue: #3f8cff;
+  --team-red: #ff4d3d;
 }
 
 * {
@@ -481,7 +484,6 @@ button:disabled {
   text-align: center;
 }
 .points-pill,
-.hand-count-pill,
 .bottom-tab {
   grid-column: 1 / -1;
 }
@@ -493,7 +495,7 @@ button:disabled {
 }
 .level-trump-pill,
 .game-stats-pill {
-  min-height: 210px;
+  min-height: 250px;
   align-content: center;
 }
 .trump-panel-label {
@@ -502,8 +504,8 @@ button:disabled {
 .level-trump-pill .playing-card,
 .pending-trump-card,
 .generic-joker-card {
-  width: 90px;
-  height: 130px;
+  width: 135px;
+  height: 195px;
 }
 .pending-trump-card,
 .generic-joker-card {
@@ -521,17 +523,17 @@ button:disabled {
   top: 9px;
   left: 10px;
   color: #30374f !important;
-  font-size: 1.3rem !important;
+  font-size: 1.8rem !important;
 }
 .pending-trump-card b {
   color: #687087;
   font-family: Georgia, serif;
-  font-size: 3rem;
+  font-size: 4.2rem;
 }
 .generic-joker-card {
   color: #b9323e;
   font-family: Georgia, serif;
-  font-size: 2.7rem;
+  font-size: 3.8rem;
   font-weight: 800;
 }
 .game-stats-pill {
@@ -590,19 +592,6 @@ button:disabled {
   font-weight: 900;
   line-height: 1;
 }
-.hand-count-pill {
-  min-height: 65px;
-  align-content: center;
-}
-.round-pills .hand-count-pill > strong {
-  font-size: 1.35rem !important;
-  font-weight: 800;
-}
-.hand-count-pill i {
-  color: var(--faint);
-  font-style: normal;
-  font-weight: 400;
-}
 .team-score-pills {
   display: grid;
   grid-column: 1 / -1;
@@ -643,6 +632,25 @@ button:disabled {
 .team-score-pill.is-pending em {
   background: rgba(255, 255, 255, 0.08);
   color: var(--faint);
+}
+.team-score-pill.team-blue {
+  --team-color: var(--team-blue);
+}
+.team-score-pill.team-red {
+  --team-color: var(--team-red);
+}
+.team-score-pill.team-blue,
+.team-score-pill.team-red {
+  border-color: var(--team-color) !important;
+}
+.round-pills .team-score-pill.team-blue > strong,
+.round-pills .team-score-pill.team-red > strong {
+  color: var(--team-color) !important;
+}
+.team-score-pill.team-blue em,
+.team-score-pill.team-red em {
+  background: color-mix(in srgb, var(--team-color) 20%, transparent);
+  color: var(--team-color);
 }
 /* Progress readouts become calmer as level/points climb; low values carry
    the same urgency cue as a nearly expired timer. */
@@ -702,10 +710,6 @@ button:disabled {
   height: 100%;
   margin: auto;
 }
-.felt-ring {
-  position: absolute;
-  pointer-events: none;
-}
 .table-seat {
   position: absolute;
   z-index: var(--z-seats);
@@ -725,13 +729,13 @@ button:disabled {
   transform: translateX(-50%);
 }
 .seat-west {
-  top: 45%;
+  top: calc(50% + 100px);
   left: 14px;
   transform: translateY(-50%);
   flex-direction: column;
 }
 .seat-east {
-  top: 45%;
+  top: calc(50% + 100px);
   right: 14px;
   transform: translateY(-50%);
   flex-direction: column;
@@ -739,21 +743,24 @@ button:disabled {
 .player-chip {
   position: relative;
   display: flex;
-  min-width: 150px;
+  min-width: 230px;
+  min-height: 82px;
   align-items: center;
-  gap: 9px;
-  padding: 5px 10px 5px 6px;
+  gap: 12px;
+  padding: 10px 14px 10px 10px;
 }
 .player-avatar {
   display: grid;
-  width: 31px;
-  height: 31px;
+  width: 58px;
+  height: 58px;
   place-items: center;
   flex-shrink: 0;
 }
 .player-ident {
   display: grid;
-  gap: 2px;
+  gap: 4px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 .player-ident strong {
   display: flex;
@@ -764,16 +771,23 @@ button:disabled {
 .leader-badge {
   display: grid;
   place-items: center;
-  width: 17px;
-  height: 17px;
+  width: 24px;
+  height: 24px;
+}
+.player-chip .bot-badge {
+  padding: 3px 7px;
+  font-size: 0.62rem;
+}
+.seat-count {
+  margin-left: auto;
+  padding-left: 8px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 .seat-timer-badge {
-  position: absolute;
   z-index: 2;
-  top: 50%;
-  right: 9px;
+  flex-shrink: 0;
   pointer-events: none;
-  transform: translateY(-50%);
 }
 .seat-timer-badge .countdown {
   width: auto;
@@ -784,7 +798,7 @@ button:disabled {
   background: transparent !important;
   box-shadow: none !important;
   padding: 0;
-  font-size: 0.8rem !important;
+  font-size: 0.95rem !important;
 }
 .offline-dot {
   flex-shrink: 0;
@@ -823,13 +837,35 @@ button:disabled {
   align-items: center;
   gap: 8px;
 }
+.bid-passed-status {
+  color: var(--gold);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.play-selection-progress {
+  position: absolute;
+  right: auto;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  color: var(--gold);
+  padding: 0;
+  font-size: 0.72rem;
+  font-weight: 750;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.play-selection-progress b {
+  font-size: 1.05em;
+}
 /* Team coding: even seats blue, odd seats red — reinforces the plaque
    labels. The turn glow (gold) has higher specificity and still wins. */
 .table-seat.team-blue .player-chip {
-  border-color: #3f8cff;
+  border-color: var(--team-blue);
 }
 .table-seat.team-red .player-chip {
-  border-color: #ff4d3d;
+  border-color: var(--team-red);
 }
 /* Fan of card backs; the component computes size and per-card offsets. */
 .mini-hand {
@@ -837,8 +873,8 @@ button:disabled {
 }
 .mini-card {
   position: absolute;
-  width: 50px;
-  height: 72px;
+  width: 75px;
+  height: 108px;
 }
 /* Side seats hold their cards sideways, facing the middle of the table. */
 .mini-hand.is-vertical .mini-card {
@@ -905,14 +941,14 @@ button:disabled {
 }
 .trick-center {
   position: absolute;
-  top: 50%;
+  top: calc(50% + 100px);
   left: 50%;
   /* Above the seat plaques: a played card sliding toward the center must
      never disappear behind an opaque nameplate on narrow screens. */
   z-index: calc(var(--z-seats) + 1);
   display: grid;
   width: min(58%, 560px);
-  height: 56%;
+  height: 42%;
   place-items: center;
   transform: translate(-50%, -50%);
 }
@@ -940,9 +976,11 @@ button:disabled {
   display: flex;
   align-items: center;
 }
-.trick-sweep {
+.trick-plays {
   position: absolute;
   inset: 0;
+  display: grid;
+  place-items: center;
   pointer-events: none;
 }
 .phase-slot {
@@ -953,7 +991,7 @@ button:disabled {
 /* Floats above the play button so it never pushes the hand or clips cards. */
 .throw-warning {
   position: absolute;
-  bottom: calc(100% + 10px);
+  bottom: calc(100% + 48px);
   right: 0;
   width: 280px;
   padding: 9px 12px;
@@ -968,7 +1006,7 @@ button:disabled {
   white-space: nowrap;
 }
 .center-play .playing-card {
-  margin-left: -34px;
+  margin-left: -51px;
 }
 .center-play .playing-card:first-child {
   margin-left: 0;
@@ -1004,39 +1042,36 @@ button:disabled {
   padding: 4px 20px 12px;
 }
 .hand-scroll {
-  display: flex;
-  width: min(1200px, 100%);
-  height: 140px;
+  --hand-card-width: 108px;
+  --hand-horizontal-padding: 100px;
+
+  display: grid;
+  width: min(
+    calc(var(--hand-count) * var(--hand-card-width) + var(--hand-horizontal-padding)),
+    1400px,
+    100%
+  );
+  height: 200px;
   margin: auto;
+  grid-template-columns: repeat(var(--hand-count), minmax(0, 1fr));
   align-items: flex-end;
-  justify-content: flex-start;
+  justify-items: center;
   overflow-x: auto;
   overflow-y: hidden;
   /* Generous top padding gives selected/hovered cards room to lift. */
-  padding: 34px 50px 8px;
+  padding: 42px 50px 8px;
   scrollbar-width: thin;
 }
 .hand-scroll .playing-card {
   flex: 0 0 auto;
-  margin-left: -37px;
+  margin-left: 0;
 }
-.hand-scroll .playing-card:first-child {
-  margin-left: auto;
-}
-.hand-scroll .playing-card:last-child {
-  margin-right: auto;
-}
-.hand-scroll .playing-card:hover {
-  z-index: var(--z-card-hover);
-  transform: translateY(-10px);
-}
-
 /* Cards */
 .playing-card,
 .card-back {
   position: relative;
-  width: 72px;
-  height: 104px;
+  width: 108px;
+  height: 156px;
 }
 .playing-card {
   display: block;
@@ -1050,32 +1085,35 @@ button:disabled {
   opacity: 1;
 }
 .playing-card.is-selected {
-  z-index: var(--z-card-selected);
+  z-index: auto;
+}
+.level-trump-pill .playing-card .card-corner strong {
+  color: inherit;
 }
 .card-corner {
   position: absolute;
-  top: 6px;
-  left: 7px;
+  top: 9px;
+  left: 10px;
   display: grid;
   justify-items: center;
   line-height: 0.95;
 }
 .card-center {
   position: absolute;
-  right: 8px;
-  bottom: 7px;
+  right: 12px;
+  bottom: 10px;
 }
 .joker-script {
   position: absolute;
-  right: 8px;
-  bottom: 8px;
-  max-width: 14px;
+  right: 12px;
+  bottom: 12px;
+  max-width: 18px;
   line-height: 1.05;
 }
 .playing-card.is-compact,
 .card-back.is-compact {
-  width: 50px;
-  height: 72px;
+  width: 75px;
+  height: 108px;
 }
 .card-back {
   display: grid;
@@ -1188,7 +1226,7 @@ button:disabled {
   justify-content: center;
 }
 .bottom-reveal-cards .playing-card {
-  margin-left: -26px;
+  margin-left: -65px;
 }
 .bottom-reveal-cards .playing-card:first-child {
   margin-left: 0;
@@ -1243,7 +1281,6 @@ button:disabled {
     flex-shrink: 0;
   }
   .points-pill,
-  .hand-count-pill,
   .team-score-pills,
   .round-overview-row,
   .bottom-tab {
@@ -1256,8 +1293,8 @@ button:disabled {
   .level-trump-pill .playing-card,
   .pending-trump-card,
   .generic-joker-card {
-    width: 50px;
-    height: 72px;
+    width: 75px;
+    height: 108px;
   }
   .bottom-tab {
     flex-shrink: 0;
@@ -1275,6 +1312,17 @@ button:disabled {
   }
   .seat-picker {
     grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-height: 800px) and (min-width: 621px) {
+  .seat-east,
+  .seat-west {
+    top: 39%;
+  }
+  .trick-center {
+    top: 50%;
+    height: 56%;
   }
 }
 
@@ -1306,12 +1354,13 @@ button:disabled {
     display: none;
   }
   .player-chip {
-    min-width: 92px;
+    min-width: 150px;
+    min-height: 64px;
     padding-right: 7px;
   }
   .player-avatar {
-    width: 26px;
-    height: 26px;
+    width: 44px;
+    height: 44px;
   }
   .player-chip small {
     display: none;
@@ -1320,25 +1369,32 @@ button:disabled {
     display: none;
   }
   .seat-east {
+    top: 50%;
     right: 4px;
   }
   .seat-west {
+    top: 50%;
     left: 4px;
   }
   .trick-center {
+    top: 50%;
     width: 54%;
+    height: 50%;
   }
   .hand-scroll {
-    height: 118px;
+    --hand-card-width: 81px;
+    --hand-horizontal-padding: 70px;
+
+    height: 154px;
     justify-content: flex-start;
     padding-inline: 35px;
   }
   .hand-scroll .playing-card {
-    margin-left: -40px;
+    margin-left: 0;
   }
   .playing-card {
-    width: 65px;
-    height: 94px;
+    width: 81px;
+    height: 117px;
   }
   /* Keep the You-seat action row from overflowing a phone width. */
   .south-cluster {

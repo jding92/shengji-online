@@ -560,11 +560,6 @@ html[data-theme="default"] .board {
 html[data-theme="default"] .hand-dock {
   background: transparent;
 }
-html[data-theme="default"] .felt-ring {
-  inset: 16px;
-  border: 2px dashed var(--felt-ring-line);
-  border-radius: 14px;
-}
 html[data-theme="default"] .player-chip {
   border: 2px solid var(--panel-edge);
   border-radius: 9px;
@@ -594,16 +589,22 @@ html[data-theme="default"] .player-avatar {
   background: linear-gradient(180deg, var(--card-face), var(--card-face-lo));
   color: var(--card-red);
   font-family: Georgia, serif;
+  font-size: 1.55rem;
   font-weight: 700;
+}
+html[data-theme="default"] .seat-count {
+  color: var(--gold);
+  font-family: var(--font-num);
+  font-size: 1rem;
 }
 html[data-theme="default"] .player-chip strong {
   font-family: var(--font-game);
-  font-size: 0.82rem;
+  font-size: 1.02rem;
   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
 }
 html[data-theme="default"] .player-chip small {
   color: var(--muted);
-  font-size: 0.51rem;
+  font-size: 0.7rem;
 }
 html[data-theme="default"] .offline-dot {
   width: 7px;
@@ -726,9 +727,9 @@ html[data-theme="default"] .playing-card {
   color: var(--card-ink);
 }
 html[data-theme="default"] .playing-card.is-selected {
-  border-color: var(--accent);
+  border-color: var(--danger-bright);
   box-shadow:
-    0 0 0 2px var(--accent),
+    0 0 0 3px var(--danger-bright),
     0 6px 0 var(--edge-shadow);
 }
 html[data-theme="default"] .card-corner {
@@ -736,23 +737,23 @@ html[data-theme="default"] .card-corner {
   font-weight: 700;
 }
 html[data-theme="default"] .card-corner strong {
-  font-size: 0.85rem;
+  font-size: 1.35rem;
 }
 html[data-theme="default"] .card-corner span {
-  font-size: 0.8rem;
+  font-size: 1.2rem;
 }
 html[data-theme="default"] .card-center {
   font-family: var(--font-game);
-  font-size: 1.6rem;
+  font-size: 2.4rem;
   opacity: 0.92;
 }
 /* "JOKER" is a word, not a glyph — sized to fit inside the card face. */
 html[data-theme="default"] .card-center.is-joker-center {
-  font-size: 0.72rem;
+  font-size: 1rem;
 }
 html[data-theme="default"] .joker-script {
   font-family: var(--font-game);
-  font-size: 0.75rem;
+  font-size: 1rem;
 }
 html[data-theme="default"] .card-hearts {
   color: var(--card-red);
@@ -777,7 +778,7 @@ html[data-theme="default"] .card-back.is-compact {
   border-radius: 7px;
 }
 html[data-theme="default"] .playing-card.is-compact .card-center {
-  font-size: 1rem;
+  font-size: 1.6rem;
 }
 /* Blue marbled backs with a gold rim, like a prized custom deck. */
 html[data-theme="default"] .card-back {

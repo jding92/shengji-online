@@ -37,6 +37,15 @@ function useTrickSweep(view: PrivateGameView): Sweep | null {
       : `${round.roundNumber}:${round.completedTricksSummary.length}`;
   const previousCompletedKey = useRef<string | null>(completedKey);
   const pendingSweeps = useRef<Sweep[]>([]);
+  const freshSweep =
+    completedKey !== null &&
+    completedKey !== previousCompletedKey.current &&
+    round?.lastCompletedTrick !== undefined
+      ? {
+          plays: round.lastCompletedTrick.plays,
+          winnerSeat: round.lastCompletedTrick.winnerSeat,
+        }
+      : null;
 
   useEffect(() => {
     if (
@@ -65,7 +74,10 @@ function useTrickSweep(view: PrivateGameView): Sweep | null {
     return () => clearTimeout(timer);
   }, [sweep]);
 
-  return sweep;
+  // Return the newly completed trick during the render that first receives
+  // it. The effect persists it for the timer, but this synchronous fallback
+  // prevents a blank/remounted frame after the final card is played.
+  return sweep ?? freshSweep;
 }
 
 /** The single centered status message for the current phase, keyed for exits. */
@@ -150,6 +162,7 @@ export function TrickCenter({ view }: { view: PrivateGameView }) {
     sweep === null || reducedMotion
       ? { x: 0, y: 0 }
       : SWEEP_VECTORS[relativeSeatPosition(sweep.winnerSeat, view.you.seat)];
+  const displayedPlays = sweep?.plays ?? round?.currentTrick?.plays;
   return (
     <div className="trick-center">
       {/*
@@ -171,43 +184,40 @@ export function TrickCenter({ view }: { view: PrivateGameView }) {
           </motion.div>
         )}
       </AnimatePresence>
-      {sweep !== null && (
+      {displayedPlays !== undefined && displayedPlays.length > 0 && (
         <motion.div
-          className="trick-sweep"
-          initial={{ x: 0, y: 0, scale: 1, opacity: 1 }}
-          animate={{ ...sweepVector, scale: 0.45, opacity: 0 }}
-          transition={{
-            duration: 0.6,
-            ease: "easeIn",
-            delay: TRICK_RESULT_HOLD_MS / 1_000,
-          }}
+          className={`trick-plays ${sweep === null ? "" : "trick-sweep"}`}
+          initial={false}
+          animate={
+            sweep === null
+              ? { x: 0, y: 0, scale: 1, opacity: 1 }
+              : { ...sweepVector, scale: 0.45, opacity: 0 }
+          }
+          transition={
+            sweep === null
+              ? { duration: 0.16 }
+              : {
+                  duration: 0.6,
+                  ease: "easeIn",
+                  delay: TRICK_RESULT_HOLD_MS / 1_000,
+                }
+          }
         >
-          {sweep.plays.map((play) => (
-            <div
+          {displayedPlays.map((play) => (
+            <motion.div
               className={`center-play play-${relativeSeatPosition(play.seat, view.you.seat)}`}
               key={play.seat}
+              initial={{ opacity: 0, scale: 0.82 }}
+              animate={{ opacity: 1, scale: 1 }}
             >
               {play.cards.map((card) => (
                 <PlayingCard key={card.id} card={card} />
               ))}
-            </div>
+              {sweep === null && <span>Seat {play.seat + 1}</span>}
+            </motion.div>
           ))}
         </motion.div>
       )}
-      {sweep === null &&
-        round?.currentTrick?.plays.map((play) => (
-          <motion.div
-            className={`center-play play-${relativeSeatPosition(play.seat, view.you.seat)}`}
-            key={`${play.seat}-${play.cards.map(({ id }) => id).join("-")}`}
-            initial={{ opacity: 0, scale: 0.82 }}
-            animate={{ opacity: 1, scale: 1 }}
-          >
-            {play.cards.map((card) => (
-              <PlayingCard key={card.id} card={card} />
-            ))}
-            <span>Seat {play.seat + 1}</span>
-          </motion.div>
-        ))}
     </div>
   );
 }

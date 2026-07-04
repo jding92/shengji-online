@@ -19,6 +19,7 @@ import {
 import { useCardSelection } from "../hooks/use-card-selection";
 import { THROW_BANNER_MS } from "../lib/constants";
 import { compareForHandDisplay, relativeSeatPosition } from "../lib/cards";
+import { teamClassForSeat } from "../lib/strings";
 import { CardBack, PlayingCard } from "./card";
 import { HandActions } from "./hand-actions";
 import { HandDock } from "./hand-dock";
@@ -59,7 +60,17 @@ export function GameTable({
   const fullHandSize = Math.round(
     (view.ruleset.decks * 54 - view.ruleset.bottomSize) / view.ruleset.players,
   );
-  const { selected, selectedCards, toggle, clear } = useCardSelection(cards);
+  const requiredCardCount = round?.currentTrick?.cardCount;
+  const selectionLimit =
+    view.phase === "bottom-exchange" && actions.has("bury-bottom")
+      ? view.ruleset.bottomSize
+      : view.phase === "playing" && requiredCardCount !== undefined
+        ? requiredCardCount
+        : undefined;
+  const { selected, selectedCards, toggle, clear } = useCardSelection(
+    cards,
+    selectionLimit,
+  );
 
   // Would the current selection lead as a throw (multiple components)?
   // Only meaningful when leading; followers may legally mix suits when void.
@@ -190,7 +201,11 @@ export function GameTable({
 
   const primaryAction = useCallback((): WireClientCommand | null => {
     const cardIds = selectedCards.map(({ id }) => id);
-    if (actions.has("play-cards") && cardIds.length > 0) {
+    if (
+      actions.has("play-cards") &&
+      cardIds.length > 0 &&
+      (requiredCardCount === undefined || cardIds.length === requiredCardCount)
+    ) {
       // Throws need the explicit two-tap button, never the Enter shortcut.
       if (actions.has("attempt-throw") && selectionKind !== "normal") return null;
       return { type: "PLAY_CARDS", cards: cardIds, intent: "normal" };
@@ -202,7 +217,13 @@ export function GameTable({
       return { type: "BID", cards: cardIds };
     }
     return null;
-  }, [actions, selectedCards, selectionKind, view.ruleset.bottomSize]);
+  }, [
+    actions,
+    requiredCardCount,
+    selectedCards,
+    selectionKind,
+    view.ruleset.bottomSize,
+  ]);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -306,6 +327,14 @@ export function GameTable({
     round?.currentBid?.seat === seatIndex
       ? round.currentBid
       : undefined;
+  const hasPassedBid =
+    view.phase === "post-deal-bidding" &&
+    view.you.seat !== null &&
+    !actions.has("bid") &&
+    !actions.has("pass-bid");
+  const yourTeamClass = youSeat === undefined ? "" : teamClassForSeat(youSeat.seat);
+  const enemyTeamClass =
+    enemySeat === undefined ? "" : teamClassForSeat(enemySeat.seat);
 
   return (
     <main className="game-shell">
@@ -321,12 +350,12 @@ export function GameTable({
         {/* The round panel is a two-column grid with full-width hero rows. */}
         <div className="round-pills">
           <div className="team-score-pills">
-            <span className={`team-score-pill is-${yourTeamRole}`}>
+            <span className={`team-score-pill ${yourTeamClass} is-${yourTeamRole}`}>
               <small>YOUR TEAM / 我方</small>
               <strong>{youSeat?.rank ?? "—"}</strong>
               <em>{yourTeamRole}</em>
             </span>
-            <span className={`team-score-pill is-${enemyTeamRole}`}>
+            <span className={`team-score-pill ${enemyTeamClass} is-${enemyTeamRole}`}>
               <small>RIVALS / 对方</small>
               <strong>{enemySeat?.rank ?? "—"}</strong>
               <em>{enemyTeamRole}</em>
@@ -383,12 +412,6 @@ export function GameTable({
             <small>POINTS / 分</small>
             <strong className={pointsTone}>{attackerPoints}</strong>
           </span>
-          <span className="hand-count-pill">
-            <small>HAND / 手牌</small>
-            <strong>
-              {view.you.hand.length} <i>/</i> {fullHandSize}
-            </strong>
-          </span>
           {buried && (
             <button
               type="button"
@@ -435,7 +458,6 @@ export function GameTable({
         <LayoutGroup>
           <section className="table-stage">
             <div className="felt-table">
-              <div className="felt-ring" />
               {view.seats.map((seat) =>
                 seat.playerId === view.you.playerId ? null : (
                   <TableSeat
@@ -471,6 +493,7 @@ export function GameTable({
                     currentTurn={round?.currentTurnSeat === youSeat.seat}
                     isYou
                     isLeader={round?.leaderSeat === youSeat.seat}
+                    handTotal={fullHandSize}
                     bid={bidFor(youSeat.seat)}
                     roomId={view.roomId}
                     {...(timerDeadline === undefined
@@ -483,6 +506,8 @@ export function GameTable({
                       selectionKind={selectionKind}
                       actions={actions}
                       bottomSize={view.ruleset.bottomSize}
+                      hasPassedBid={hasPassedBid}
+                      requiredCardCount={requiredCardCount}
                       trump={round?.trumpSpec}
                       submit={submit}
                     />
