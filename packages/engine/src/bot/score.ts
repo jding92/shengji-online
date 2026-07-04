@@ -38,7 +38,11 @@ export function scoreBotCandidate(input: BotCandidateScoreInput): number {
     input.config.teamCoordination === "none"
       ? 0
       : input.partnerWinning
-        ? 1.2 + (input.givesPointsToPartner ? points / 4 : 0)
+        ? 1.2 +
+          (input.givesPointsToPartner ? points / 4 : 0) +
+          (input.config.teamCoordination === "full"
+            ? 0.6 + (input.givesPointsToPartner ? points / 8 : 0)
+            : 0)
         : 0;
   const spendCost = input.config.trumpConservation ? spend * 0.65 : spend * 0.15;
   const endgame =

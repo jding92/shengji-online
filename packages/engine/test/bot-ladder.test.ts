@@ -6,7 +6,7 @@ const environment = (
     process?: { env?: Record<string, string | undefined> };
   }
 ).process?.env;
-const ladderRuns = Number.parseInt(environment?.["BOT_LADDER_RUNS"] ?? "10", 10);
+const ladderRuns = Number.parseInt(environment?.["BOT_LADDER_RUNS"] ?? "40", 10);
 
 function winRate(stronger: BotDifficulty, weaker: BotDifficulty, runs: number): number {
   let wins = 0;
@@ -21,7 +21,7 @@ function winRate(stronger: BotDifficulty, weaker: BotDifficulty, runs: number): 
 }
 
 describe("bot difficulty ladder", () => {
-  it("gives stronger configurations an aggregate edge", () => {
+  it("gives every stronger configuration an edge", () => {
     const adjacentPairs = [
       ["intermediate", "beginner"],
       ["advanced", "intermediate"],
@@ -40,10 +40,12 @@ describe("bot difficulty ladder", () => {
       }
       expect.soft(expertRate, "expert vs beginner win rate").toBeGreaterThan(0.75);
     } else {
-      expect(
-        adjacentRates.reduce((total, rate) => total + rate, 0) / adjacentRates.length,
-      ).toBeGreaterThan(0.5);
-      expect(expertRate).toBeGreaterThan(0.5);
+      for (const [index, rate] of adjacentRates.entries()) {
+        expect
+          .soft(rate, `${adjacentPairs[index]!.join(" vs ")} win rate`)
+          .toBeGreaterThan(0.5);
+      }
+      expect.soft(expertRate, "expert vs beginner win rate").toBeGreaterThan(0.5);
     }
   }, 120_000);
 });

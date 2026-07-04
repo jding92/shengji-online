@@ -11,6 +11,11 @@ type BidCandidate = {
   score: number;
 };
 
+export function bidScoreThreshold(config: BotConfig): number {
+  const aggression = Math.max(0, Math.min(1, config.bidAggression));
+  return 14 - aggression * 15;
+}
+
 function asBid(bid: BotPublicBid): Bid {
   return { ...bid, cards: [] };
 }
@@ -128,17 +133,9 @@ export function decideBidAction(
 
   const candidates = legalBidCandidates(observation, config);
   const bestScore = Math.max(0, ...candidates.map(({ score }) => score));
-  const backingThreshold =
-    config.difficulty === "beginner"
-      ? 5
-      : config.difficulty === "intermediate"
-        ? 7.5
-        : config.difficulty === "advanced"
-          ? 8.5
-          : 9.5;
+  const backingThreshold = bidScoreThreshold(config);
   const shouldBid =
-    bestScore >= backingThreshold &&
-    (config.difficulty !== "beginner" || rng() < config.bidAggression);
+    bestScore >= backingThreshold && (config.difficulty !== "beginner" || rng() < 0.6);
   if (!shouldBid) {
     return observation.phase === "post-deal-bidding" ? { type: "PASS_BID" } : null;
   }

@@ -79,6 +79,8 @@ All levels bid during dealing — the ladder scales _how well and when_, not _wh
 
 **Think delays are pacing, not difficulty**: one uniform jittered range for all levels (≈600–1500 ms per play/bid) so bot-heavy tables remain readable by humans; without it a 3-bot trick resolves in <50 ms. Delay knobs live in `RoomOptions`, not `BotConfig`.
 
+> **Separate tuning follow-up:** measured play currently has a steeper Beginner → Intermediate jump than either upper-tier step. Fine-tune that onboarding curve through manual playtesting after the correctness and knowledge-module work; it is not coupled to the structural bot implementation.
+
 ## Phase 4 — Protocol
 
 **`packages/protocol/src/views.ts`**: `SeatView` gains `isBot: boolean; botDifficulty?: BotDifficulty` (re-export `BotDifficulty` from engine). No envelope changes — bots send no envelopes.

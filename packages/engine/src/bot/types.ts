@@ -19,6 +19,7 @@ export type BotConfig = {
   trumpConservation: boolean;
   throws: "never" | "safe-limited" | "safe";
   endgameAwareness: boolean;
+  /** Normalized bidding willingness; higher values lower the hand-strength gate. */
   bidAggression: number;
   bidTiming: number;
   counterBid: "never" | "pair-only" | "strong" | "full";

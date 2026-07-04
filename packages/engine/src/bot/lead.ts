@@ -4,7 +4,13 @@ import { parseThrow } from "../tricks/formats.js";
 import { groupsFor, validateLead } from "../tricks/legality.js";
 import { getEffectiveRankGroup, getEffectiveSuit } from "../trump/trump.js";
 import type { CardInstance, EffectiveSuit } from "../types.js";
-import { deriveCardKnowledge, isKnownBoss } from "./knowledge.js";
+import {
+  deriveCardKnowledge,
+  inferVoidSuits,
+  isKnownBoss,
+  partnerSeat,
+  teamForSeat,
+} from "./knowledge.js";
 import type { BotObservation } from "./observation.js";
 import { noisyPick, type BotRng } from "./rng.js";
 import { scoreBotCandidate } from "./score.js";
@@ -111,6 +117,8 @@ export function decideLeadAction(
     return null;
   }
   const knowledge = deriveCardKnowledge(observation, config);
+  const inferredVoids = inferVoidSuits(observation, config);
+  const partner = partnerSeat(observation);
   const seen = new Set<string>();
   const candidates: LeadCandidate[] = [];
   const add = (cards: CardInstance[], intent: "normal" | "throw") => {
@@ -134,6 +142,22 @@ export function decideLeadAction(
         (total, card) => total + getEffectiveRankGroup(card, trump).order,
         0,
       ) / Math.max(1, cards.length * 14);
+    const effectiveSuit = getEffectiveSuit(cards[0]!, trump);
+    const partnerCanRuff =
+      config.teamCoordination === "full" &&
+      effectiveSuit !== "trump" &&
+      partner !== undefined &&
+      inferredVoids.get(partner)?.has(effectiveSuit) === true;
+    const voidOpponents = observation.seats.filter(
+      ({ seat }) =>
+        teamForSeat(observation, seat) !== observation.ownTeamId &&
+        inferredVoids.get(seat)?.has(effectiveSuit) === true,
+    ).length;
+    const voidLeadValue =
+      config.voidInference && effectiveSuit !== "trump"
+        ? (partnerCanRuff ? 0.9 : 0) -
+          voidOpponents * (config.difficulty === "expert" ? 0.55 : 0.4)
+        : 0;
     candidates.push({
       cards,
       intent,
@@ -146,7 +170,7 @@ export function decideLeadAction(
         partnerWinning: false,
         givesPointsToPartner: false,
         isLastTrick: observation.ownHand.length === cards.length,
-        leadValue: cards.length * 0.15,
+        leadValue: cards.length * 0.15 + voidLeadValue,
       }),
     });
   };

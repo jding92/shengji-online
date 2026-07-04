@@ -4,10 +4,11 @@ import type { ClientCommand } from "../state/model.js";
 import { validateFollow } from "../tricks/legality.js";
 import { determineTrickWinner } from "../tricks/winner.js";
 import { getEffectiveRankGroup } from "../trump/trump.js";
-import type { CardInstance } from "../types.js";
+import type { CardInstance, SeatIndex } from "../types.js";
 import {
   currentWinningSeat,
   deriveCardKnowledge,
+  inferVoidSuits,
   isKnownBoss,
   partnerSeat,
   teamForSeat,
@@ -21,6 +22,17 @@ type FollowCandidate = {
   cards: CardInstance[];
   score: number;
 };
+
+function seatsYetToPlay(
+  currentSeat: SeatIndex,
+  playedCount: number,
+  playerCount: number,
+): SeatIndex[] {
+  return Array.from(
+    { length: Math.max(0, playerCount - playedCount - 1) },
+    (_, offset) => (currentSeat + offset + 1) % playerCount,
+  );
+}
 
 function combinations(
   cards: readonly CardInstance[],
@@ -104,6 +116,28 @@ export function decideFollowAction(
   const currentWinner = currentWinningSeat(observation);
   const partner = partnerSeat(observation);
   const knowledge = deriveCardKnowledge(observation, config);
+  const inferredVoids = inferVoidSuits(observation, config);
+  const laterSeats = seatsYetToPlay(
+    observation.ownSeat,
+    trick.plays.length,
+    observation.ruleset.players.count,
+  );
+  const laterVoidOpponents =
+    trick.ledFormat.effectiveSuit === "trump"
+      ? []
+      : laterSeats.filter(
+          (seat) =>
+            teamForSeat(observation, seat) !== observation.ownTeamId &&
+            inferredVoids.get(seat)?.has(trick.ledFormat.effectiveSuit) === true,
+        );
+  const partnerPlay = trick.plays.find(({ seat }) => seat === partner);
+  const partnerHasControl =
+    partnerPlay !== undefined &&
+    partnerPlay.cards.length > 0 &&
+    partnerPlay.cards.every((card) => isKnownBoss(card, observation, knowledge));
+  const partnerControlIsSecure =
+    currentWinner === partner &&
+    (laterSeats.length === 0 || (partnerHasControl && laterVoidOpponents.length === 0));
   for (const cards of candidateSelections(
     observation.ownHand,
     trick.ledFormat.cardCount,
@@ -130,7 +164,7 @@ export function decideFollowAction(
       const winnerTeam = teamForSeat(observation, winner.winnerSeat);
       const ownTeam = observation.ownTeamId;
       const wins = winner.winnerSeat === observation.ownSeat;
-      const partnerWinning = currentWinner === partner;
+      const partnerWinning = winner.winnerSeat === partner;
       const givesPointsToPartner =
         winner.winnerSeat === partner ||
         (winnerTeam !== undefined && winnerTeam === ownTeam);
@@ -138,7 +172,7 @@ export function decideFollowAction(
       const controlled =
         play.cards.length > 0 &&
         play.cards.every((card) => isKnownBoss(card, observation, knowledge));
-      const winProbability = wins
+      const baseWinProbability = wins
         ? actsLast
           ? 1
           : controlled
@@ -151,18 +185,26 @@ export function decideFollowAction(
         : winnerTeam === ownTeam
           ? 0.6
           : 0;
+      const ruffRisk =
+        wins && config.voidInference
+          ? laterVoidOpponents.length * (config.difficulty === "expert" ? 0.3 : 0.22)
+          : 0;
+      const winProbability = Math.max(wins ? 0.15 : 0, baseWinProbability - ruffRisk);
+      const partnerProtection =
+        config.teamCoordination === "full" && wins && partnerControlIsSecure ? 1.4 : 0;
       candidates.push({
         cards,
-        score: scoreBotCandidate({
-          cards,
-          trump,
-          config,
-          winProbability,
-          trickPoints: winner.points,
-          partnerWinning,
-          givesPointsToPartner,
-          isLastTrick: observation.ownHand.length === cards.length,
-        }),
+        score:
+          scoreBotCandidate({
+            cards,
+            trump,
+            config,
+            winProbability,
+            trickPoints: winner.points,
+            partnerWinning,
+            givesPointsToPartner,
+            isLastTrick: observation.ownHand.length === cards.length,
+          }) - partnerProtection,
       });
     } catch {
       // Candidate construction intentionally overproduces; legality is final.
