@@ -41,7 +41,7 @@ export default defineConfig({
         DATABASE_PATH: "/tmp/shengji-playwright.sqlite",
         PORT: String(serverPort),
         DEAL_INTERVAL_MS: "3",
-        BID_POST_DEAL_SECONDS: "120",
+        BID_POST_DEAL_SECONDS: "15",
         BID_RESPONSE_SECONDS: "2",
       },
     },

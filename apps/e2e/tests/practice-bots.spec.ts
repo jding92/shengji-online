@@ -15,7 +15,7 @@ test("practice creates one human session with three configured bots", async ({
   await page.getByRole("button", { name: "Ready up" }).click();
   await expect(page.locator(".hand-scroll .playing-card")).toHaveCount(25);
   await expect(page.locator(".bid-badge")).toBeVisible({ timeout: 10_000 });
-  await expect(page.locator(".center-play")).toBeVisible({ timeout: 10_000 });
+  await expect(page.locator(".center-play")).toBeVisible({ timeout: 25_000 });
 });
 
 test("a human can add and remove a lobby bot", async ({ page, request }) => {
