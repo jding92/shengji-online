@@ -1,5 +1,6 @@
 "use client";
 
+import type { TrumpSpec } from "@shengji/engine";
 import type { CardInstance } from "@shengji/protocol";
 import type { CSSProperties } from "react";
 import { PlayingCard } from "./card";
@@ -13,11 +14,14 @@ export function HandDock({
   cards,
   selected,
   hinted,
+  trump,
   onToggle,
 }: {
   cards: readonly CardInstance[];
   selected: ReadonlySet<string>;
   hinted: ReadonlySet<string>;
+  /** Finalized trump, so trump cards in the fan can wear their gilding. */
+  trump?: TrumpSpec | undefined;
   onToggle: (card: CardInstance, index: number, shift: boolean) => void;
 }) {
   return (
@@ -35,6 +39,7 @@ export function HandDock({
             entrance="deal"
             selected={selected.has(card.id)}
             hinted={hinted.has(card.id)}
+            {...(trump === undefined ? {} : { trump })}
             onSelect={(event) => onToggle(card, index, event.shiftKey)}
           />
         ))}

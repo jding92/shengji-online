@@ -93,7 +93,9 @@ export function Lobby({ view, sendCommand, onLeave }: LobbyProps) {
                   onClick={() => sendCommand({ type: "SIT", seat: seat.seat })}
                 >
                   <span className="seat-number">0{seat.seat + 1}</span>
-                  <span className="seat-avatar">
+                  <span
+                    className={`seat-avatar ${seat.playerId === null ? "" : `avatar-seat-${seat.seat}`}`}
+                  >
                     {seat.name?.slice(0, 1).toUpperCase() ?? "+"}
                   </span>
                   <strong>{seat.name ?? "Open seat"}</strong>

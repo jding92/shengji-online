@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Seat 0 — the Vanguard: red-flame warrior lianpu (脸谱). -->
+  <rect width="100" height="100" fill="#16131b"/>
+  <g fill="#e51636" opacity=".3">
+    <polygon points="50 52 44 -20 56 -20"/>
+    <polygon points="50 52 44 -20 56 -20" transform="rotate(72 50 52)"/>
+    <polygon points="50 52 44 -20 56 -20" transform="rotate(144 50 52)"/>
+    <polygon points="50 52 44 -20 56 -20" transform="rotate(216 50 52)"/>
+    <polygon points="50 52 44 -20 56 -20" transform="rotate(288 50 52)"/>
+  </g>
+  <!-- Face plate. -->
+  <path fill="#f7f5f0" d="M50 10C70 10 80 25 78 47C76 68 66 87 50 91C34 87 24 68 22 47C20 25 30 10 50 10Z"/>
+  <!-- Forehead flame. -->
+  <path fill="#e51636" d="M50 12C57 20 56 30 50 36C44 30 43 20 50 12Z"/>
+  <!-- Brow slashes. -->
+  <polygon fill="#e51636" points="28,38 44,33 43,39 30,43"/>
+  <polygon fill="#e51636" points="72,38 56,33 57,39 70,43"/>
+  <!-- Angular eyes. -->
+  <polygon fill="#1d1826" points="29,48 44,45 42,53 31,55"/>
+  <polygon fill="#1d1826" points="71,48 56,45 58,53 69,55"/>
+  <!-- Cheek strikes. -->
+  <polygon fill="#e51636" points="26,62 36,60 34,66 27,67"/>
+  <polygon fill="#e51636" points="74,62 64,60 66,66 73,67"/>
+  <!-- Gold chin diamond. -->
+  <polygon fill="#ffb63d" points="50,72 55,79 50,86 45,79"/>
+</svg>

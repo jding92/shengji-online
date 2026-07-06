@@ -3,7 +3,8 @@ import { safeStorage } from "./safe-storage";
 export const THEME_STORAGE_KEY = "shengji-theme";
 
 export const THEMES = [
-  { id: "default", label: "Default" },
+  { id: "phantom", label: "Phantom" },
+  { id: "default", label: "Classic" },
   { id: "retro", label: "Retro" },
   { id: "minimal", label: "Minimal" },
 ] as const;
@@ -17,7 +18,7 @@ export function isThemeId(value: string | null): value is ThemeId {
 /** The active theme, from the html attribute the init script already set. */
 export function currentTheme(): ThemeId {
   const applied = document.documentElement.dataset.theme ?? null;
-  return isThemeId(applied) ? applied : "default";
+  return isThemeId(applied) ? applied : "phantom";
 }
 
 export function applyTheme(theme: ThemeId): void {

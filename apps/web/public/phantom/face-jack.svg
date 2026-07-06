@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!--
+    Jack: the trickster — a winged domino mask over a curved dao saber.
+    Black silhouette for CSS masking; suit color supplies the tint.
+  -->
+  <g fill="#000">
+    <!-- Domino mask with cut eye holes. -->
+    <path fill-rule="evenodd" d="M50 16C36 14 22 20 9 36C20 30 28 32 33 38C39 44 46 48 50 46C54 48 61 44 67 38C72 32 80 30 91 36C78 20 64 14 50 16ZM25 30C31 25 40 26 44 31C40 36 31 36 25 30ZM75 30C69 25 60 26 56 31C60 36 69 36 75 30Z"/>
+    <!-- Dao blade sweeping under the mask. -->
+    <path d="M22 88 C38 74 58 62 80 46 L86 55 C66 70 46 82 28 94 Z"/>
+    <!-- Guard and grip. -->
+    <circle cx="21" cy="90" r="4.4"/>
+    <polygon points="10,92 17,85 22,91 15,98"/>
+    <!-- Spark off the blade tip. -->
+    <path d="M87 38l1.8 5 5 1.8-5 1.8-1.8 5-1.8-5-5-1.8 5-1.8z"/>
+  </g>
+</svg>

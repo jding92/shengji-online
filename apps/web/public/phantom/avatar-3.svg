@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Seat 3 — the Bulwark: gold guardian lianpu with the 王 brow. -->
+  <rect width="100" height="100" fill="#16131b"/>
+  <g fill="#ffb63d" opacity=".22">
+    <polygon points="50 52 44 -20 56 -20"/>
+    <polygon points="50 52 44 -20 56 -20" transform="rotate(72 50 52)"/>
+    <polygon points="50 52 44 -20 56 -20" transform="rotate(144 50 52)"/>
+    <polygon points="50 52 44 -20 56 -20" transform="rotate(216 50 52)"/>
+    <polygon points="50 52 44 -20 56 -20" transform="rotate(288 50 52)"/>
+  </g>
+  <path fill="#f7f5f0" d="M50 10C70 10 80 25 78 47C76 68 66 87 50 91C34 87 24 68 22 47C20 25 30 10 50 10Z"/>
+  <!-- 王 on the brow, tiger-general style. -->
+  <g fill="#ffb63d">
+    <polygon points="40,17 60,17 60,21 40,21"/>
+    <polygon points="42,25 58,25 58,29 42,29"/>
+    <polygon points="38,33 62,33 62,37 38,37"/>
+    <polygon points="48,17 52,17 52,34 48,34"/>
+  </g>
+  <!-- Heavy hooked brows. -->
+  <path fill="#1d1826" d="M27 44C33 40 42 40 46 44L44 49C39 46 33 46 29 49Z"/>
+  <path fill="#1d1826" d="M73 44C67 40 58 40 54 44L56 49C61 46 67 46 71 49Z"/>
+  <!-- Set eyes. -->
+  <polygon fill="#1d1826" points="31,54 43,53 42,58 32,58"/>
+  <polygon fill="#1d1826" points="69,54 57,53 58,58 68,58"/>
+  <!-- Red jaw guards. -->
+  <polygon fill="#e51636" points="26,64 34,62 33,72 27,71"/>
+  <polygon fill="#e51636" points="74,64 66,62 67,72 73,71"/>
+  <!-- Chin seal. -->
+  <polygon fill="#e51636" points="50,76 54,81 50,86 46,81"/>
+</svg>
