@@ -211,7 +211,13 @@ export function TrickCenter({ view }: { view: PrivateGameView }) {
               animate={{ opacity: 1, scale: 1 }}
             >
               {play.cards.map((card) => (
-                <PlayingCard key={card.id} card={card} />
+                <PlayingCard
+                  key={card.id}
+                  card={card}
+                  {...(round?.trumpSpec === undefined
+                    ? {}
+                    : { trump: round.trumpSpec })}
+                />
               ))}
               {sweep === null && <span>Seat {play.seat + 1}</span>}
             </motion.div>

@@ -60,6 +60,7 @@ export function TableSeat({
   currentTurn,
   isYou,
   isLeader,
+  role = null,
   handTotal,
   bid,
   roomId,
@@ -71,6 +72,8 @@ export function TableSeat({
   isYou: boolean;
   /** The round's declarer, marked with the 庄 (banker) crest. */
   isLeader: boolean;
+  /** This seat's side this round; shown as a 攻/守 tag on the nameplate. */
+  role?: "attacking" | "defending" | null;
   /** Steady-state hand size, shown only on the local player's nameplate. */
   handTotal?: number;
   /** This seat's standing trump bid, shown as a badge until finalization. */
@@ -113,7 +116,7 @@ export function TableSeat({
         />
       )}
       <div className="player-chip">
-        <span className="player-avatar">
+        <span className={`player-avatar avatar-seat-${seat.seat}`}>
           {seat.name?.slice(0, 1).toUpperCase() ?? "·"}
         </span>
         <span className="player-ident">
@@ -137,6 +140,14 @@ export function TableSeat({
             {seat.rank === null
               ? "Waiting"
               : `Lv ${seat.rank} · ${teamLabelForSeat(seat.seat)}`}
+            {role !== null && (
+              <span
+                className={`role-tag role-${role}`}
+                title={role === "attacking" ? "Attacking · 攻方" : "Defending · 守方"}
+              >
+                {role === "attacking" ? "攻" : "守"}
+              </span>
+            )}
           </small>
         </span>
         {isYou && handTotal !== undefined && handTotal > 0 && (

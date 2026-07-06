@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!--
+    King: the imperial mianguan crown — flat board with hanging bead strands —
+    over a bold 王. Used as a CSS mask, so everything is a black silhouette
+    tinted by the card's suit color.
+  -->
+  <g fill="#000">
+    <!-- Crown board, tilted with the punk lean. -->
+    <polygon points="12,20 88,16 86,25 14,29"/>
+    <!-- Cap under the board. -->
+    <polygon points="38,27 62,25 59,40 41,42"/>
+    <!-- Bead strands. -->
+    <rect x="19" y="27" width="2.4" height="12" transform="rotate(3 20 27)"/>
+    <circle cx="20.8" cy="42" r="2.6"/>
+    <rect x="31" y="26" width="2.4" height="13" transform="rotate(2 32 26)"/>
+    <circle cx="32.6" cy="42" r="2.6"/>
+    <rect x="66" y="24" width="2.4" height="13" transform="rotate(-2 67 24)"/>
+    <circle cx="67.2" cy="40" r="2.6"/>
+    <rect x="78" y="23" width="2.4" height="12" transform="rotate(-3 79 23)"/>
+    <circle cx="78.6" cy="38" r="2.6"/>
+    <!-- 王 -->
+    <polygon points="30,52 70,50 70,58 30,60"/>
+    <polygon points="34,68 66,66.5 66,74 34,75.5"/>
+    <polygon points="26,84 74,82 74,90 26,92"/>
+    <polygon points="46,54 54,53.5 54,86 46,86.5"/>
+  </g>
+</svg>

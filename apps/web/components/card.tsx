@@ -1,5 +1,6 @@
 "use client";
 
+import { getEffectiveSuit, type TrumpSpec } from "@shengji/engine";
 import type { CardInstance } from "@shengji/protocol";
 import { motion, useReducedMotion } from "motion/react";
 import type { MouseEvent } from "react";
@@ -20,6 +21,11 @@ type CardProps = {
   hinted?: boolean;
   /** "deal" drops in from above (hand cards); "pop" scales in (table plays). */
   entrance?: "deal" | "pop";
+  /**
+   * The round's finalized trump. When set, cards that count as trump get an
+   * is-trump class so skins can mark their power (gilded frame, 主 seal).
+   */
+  trump?: TrumpSpec;
   onSelect?: (event: MouseEvent<HTMLButtonElement>) => void;
 };
 
@@ -30,10 +36,14 @@ export function PlayingCard({
   disabled = false,
   hinted = false,
   entrance = "pop",
+  trump,
   onSelect,
 }: CardProps) {
   const reducedMotion = useReducedMotion() ?? false;
   const face = card.face;
+  const isTrump =
+    trump !== undefined && getEffectiveSuit(card, trump) === "trump";
+  const rankClass = face.kind === "standard" ? `rank-${face.rank}` : "";
   const display =
     face.kind === "joker"
       ? {
@@ -69,7 +79,7 @@ export function PlayingCard({
       aria-label={display.label}
       aria-pressed={selected}
       disabled={disabled || onSelect === undefined}
-      className={`playing-card card-${display.color} ${selected ? "is-selected" : ""} ${compact ? "is-compact" : ""} ${hinted ? "is-hinted" : ""}`}
+      className={`playing-card card-${display.color} ${rankClass} ${isTrump ? "is-trump" : ""} ${selected ? "is-selected" : ""} ${compact ? "is-compact" : ""} ${hinted ? "is-hinted" : ""}`}
       onClick={onSelect}
       initial={initial}
       animate={{ opacity: 1, y: selected ? -18 : 0, scale: 1, rotate: 0 }}

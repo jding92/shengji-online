@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!--
+    Ace: a four-point star seal inside a ring — the "power emblem" card.
+    Black silhouette for CSS masking; suit color supplies the tint.
+  -->
+  <g fill="#000">
+    <!-- Ring band. -->
+    <path fill-rule="evenodd" d="M50 5A45 45 0 1 0 50 95A45 45 0 1 0 50 5ZM50 13A37 37 0 1 1 50 87A37 37 0 1 1 50 13Z"/>
+    <!-- Four-point star. -->
+    <path d="M50 18L58 42L82 50L58 58L50 82L42 58L18 50L42 42Z"/>
+    <!-- Diagonal sparks. -->
+    <circle cx="27" cy="27" r="3"/>
+    <circle cx="73" cy="27" r="3"/>
+    <circle cx="27" cy="73" r="3"/>
+    <circle cx="73" cy="73" r="3"/>
+  </g>
+</svg>

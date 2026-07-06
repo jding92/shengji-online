@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 156">
+  <!--
+    Phantom deck back: a Joker domino mask floating on a red starburst.
+    Drawn at the card's native 108x156 so strokes stay crisp at hand size
+    and still read on the 75x108 opponent minis.
+  -->
+  <rect width="108" height="156" fill="#0c0a0f"/>
+  <g fill="#e51636">
+    <polygon points="54 78 47 -40 61 -40" opacity=".5"/>
+    <polygon points="54 78 47 -40 61 -40" opacity=".2" transform="rotate(30 54 78)"/>
+    <polygon points="54 78 47 -40 61 -40" opacity=".5" transform="rotate(60 54 78)"/>
+    <polygon points="54 78 47 -40 61 -40" opacity=".2" transform="rotate(90 54 78)"/>
+    <polygon points="54 78 47 -40 61 -40" opacity=".5" transform="rotate(120 54 78)"/>
+    <polygon points="54 78 47 -40 61 -40" opacity=".2" transform="rotate(150 54 78)"/>
+    <polygon points="54 78 47 -40 61 -40" opacity=".5" transform="rotate(180 54 78)"/>
+    <polygon points="54 78 47 -40 61 -40" opacity=".2" transform="rotate(210 54 78)"/>
+    <polygon points="54 78 47 -40 61 -40" opacity=".5" transform="rotate(240 54 78)"/>
+    <polygon points="54 78 47 -40 61 -40" opacity=".2" transform="rotate(270 54 78)"/>
+    <polygon points="54 78 47 -40 61 -40" opacity=".5" transform="rotate(300 54 78)"/>
+    <polygon points="54 78 47 -40 61 -40" opacity=".2" transform="rotate(330 54 78)"/>
+  </g>
+  <!-- Halftone drift across the rays, dense to sparse toward the corner. -->
+  <g fill="#ffffff" opacity=".1">
+    <circle cx="14" cy="18" r="2.2"/><circle cx="26" cy="14" r="1.9"/><circle cx="38" cy="10" r="1.5"/>
+    <circle cx="18" cy="30" r="1.9"/><circle cx="30" cy="26" r="1.5"/><circle cx="42" cy="22" r="1.1"/>
+    <circle cx="10" cy="42" r="1.5"/><circle cx="22" cy="40" r="1.1"/><circle cx="34" cy="36" r=".8"/>
+    <circle cx="94" cy="138" r="2.2"/><circle cx="82" cy="142" r="1.9"/><circle cx="70" cy="146" r="1.5"/>
+    <circle cx="90" cy="126" r="1.9"/><circle cx="78" cy="130" r="1.5"/><circle cx="66" cy="134" r="1.1"/>
+    <circle cx="98" cy="114" r="1.5"/><circle cx="86" cy="116" r="1.1"/><circle cx="74" cy="120" r=".8"/>
+  </g>
+  <circle cx="54" cy="78" r="34" fill="#0c0a0f"/>
+  <circle cx="54" cy="78" r="34" fill="none" stroke="#e51636" stroke-width="1.5" opacity=".6"/>
+  <!-- The winged domino mask, eye holes cut through. -->
+  <path fill="#f7f5f0" fill-rule="evenodd" d="M54 56C40 54 24 60 10 76C22 70 30 72 36 78C42 84 50 88 54 86C58 88 66 84 72 78C78 72 86 70 98 76C84 60 68 54 54 56ZM27 70C33 65 43 66 47 71C43 76 33 76 27 70ZM81 70C75 65 65 66 61 71C65 76 75 76 81 70Z"/>
+  <!-- Four-point spark under the mask's chin. -->
+  <path fill="#e51636" d="M54 96l2.6 7 7 2.6-7 2.6L54 115.2l-2.6-7-7-2.6 7-2.6z"/>
+</svg>

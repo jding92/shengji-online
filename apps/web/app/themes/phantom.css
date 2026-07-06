@@ -1,0 +1,1360 @@
+/*
+ * "Phantom" skin — Balatro × Persona 5. Balatro supplies the game-feel:
+ * chunky slabs sitting on hard black bottom edges, saturated flat buttons
+ * that physically sink when pressed, gold score readouts. Persona 5 supplies
+ * the voice: near-black lacquer surfaces, one screaming red, shouty slanted
+ * all-caps type, halftone dots, starburst rays, and a Joker mask on the deck.
+ * Everything leans a few degrees off vertical on purpose.
+ */
+html[data-theme="phantom"] {
+  /* Archivo Black for the shouting; CJK glyphs (升, 庄, 主) fall back to a
+     brushy serif, which reads like a chop stamp against the punk type. */
+  --font-game: var(--font-phantom-face), "Kaiti SC", "STKaiti", sans-serif;
+  --font-num: var(--font-phantom-face), "Kaiti SC", "STKaiti", sans-serif;
+
+  /* Text */
+  --ink: #f5f2f4;
+  --text-bright: #ffffff;
+  --text-soft: #d9d2d6;
+  --muted: #a89ea6;
+  --faint: #7d7280;
+
+  /* Page and panel surfaces: black lacquer with a violet undertone. */
+  --night: #0b090d;
+  --panel: #201c25;
+  --panel-deep: #16131b;
+  --panel-edge: #060509;
+  --panel-line: rgba(255, 255, 255, 0.07);
+  --well: #15121a;
+  --well-deep: #0f0c14;
+  --overlay: rgba(5, 3, 8, 0.84);
+
+  /* Chunky 2.5D edges: every raised element sits on a pit of black. */
+  --edge-shadow: rgba(0, 0, 0, 0.62);
+
+  /* The one red. Everything urgent, primary, or dramatic is this red. */
+  --red: #e51636;
+  --red-deep: #8c0a20;
+  --red-bright: #ff4d63;
+  --red-tint: rgba(229, 22, 54, 0.22);
+
+  --accent: var(--red);
+  --accent-deep: var(--red-deep);
+  --accent-bright: var(--red-bright);
+  --gold: #ffb63d;
+  --gold-deep: #b3730e;
+  --gold-tint: rgba(255, 182, 61, 0.2);
+  --blue: #4f95ff;
+  --slate: #3a3341;
+  --slate-deep: #1e1924;
+
+  /* Connectivity */
+  --ok: #57e389;
+
+  /* Danger / warnings share the signature red. */
+  --danger: var(--red);
+  --danger-bright: var(--red-bright);
+  --danger-soft: #ffe1e5;
+  --danger-muted: #e39ba6;
+  --danger-panel: #3a0a13;
+
+  /* Table surface: black baize under a red spotlight. */
+  --felt: #1c1821;
+  --felt-deep: #110f15;
+  --felt-rim: #050408;
+  --felt-ring-line: rgba(229, 22, 54, 0.25);
+  --watermark: rgba(229, 22, 54, 0.2);
+
+  /* Card faces and backs */
+  --card-face: #fbfaf5;
+  --card-face-lo: #edeae0;
+  --card-line: #16131c;
+  --card-ink: #1d1826;
+  --card-red: #d91532;
+  --card-diamond: #d91532;
+  --card-club: #1d1826;
+  --card-spade: #1d1826;
+  --card-joker-small: #e9e4f2;
+  --card-joker-big: #ff4d63;
+  --card-back-ink: var(--gold);
+
+  /* Controls the layout file styles directly. */
+  --line: rgba(255, 255, 255, 0.14);
+  --frost: rgba(255, 255, 255, 0.06);
+  --float-bg: #201c25;
+
+  /* Gold focus so keyboard focus never drowns in the red everything else. */
+  --focus-ring: var(--gold);
+  --dur-fast: 110ms;
+
+  background: var(--night);
+  color: var(--ink);
+}
+
+@keyframes phantom-bob {
+  50% {
+    transform: translateY(-4px) rotate(-3deg);
+  }
+}
+@keyframes phantom-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes phantom-turn-pulse {
+  50% {
+    box-shadow:
+      0 4px 0 var(--edge-shadow),
+      0 0 0 2px var(--red-bright),
+      0 0 34px rgba(229, 22, 54, 0.55);
+  }
+}
+
+/* Deep black field; faint red bleeds in from opposite corners, and a sparse
+   halftone dot drift keeps big empty areas alive. */
+html[data-theme="phantom"] body,
+html[data-theme="phantom"] .game-shell {
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.03) 1px, transparent 1.5px) 0 0 /
+      22px 22px,
+    radial-gradient(55% 45% at 88% 6%, rgba(229, 22, 54, 0.1), transparent 62%),
+    radial-gradient(50% 42% at 6% 94%, rgba(229, 22, 54, 0.09), transparent 65%),
+    linear-gradient(162deg, #14101a, var(--night));
+}
+
+/* Buttons: flat slabs of color, skewed like they're mid-lunge, sitting on a
+   hard black strip. Press = sink into the strip. */
+html[data-theme="phantom"] .button {
+  border: 0;
+  border-radius: 6px;
+  color: #fff;
+  font-family: var(--font-game);
+  font-size: 0.86rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.45);
+  box-shadow: 0 4px 0 var(--edge-shadow);
+  transform: skewX(-6deg);
+  transition:
+    transform var(--dur-fast) ease,
+    box-shadow var(--dur-fast) ease,
+    filter var(--dur-fast) ease;
+}
+html[data-theme="phantom"] .button:not(:disabled):hover {
+  filter: brightness(1.12);
+  transform: skewX(-6deg) translateY(-1px);
+}
+html[data-theme="phantom"] .button:not(:disabled):active {
+  transform: skewX(-6deg) translateY(3px);
+  box-shadow: 0 1px 0 var(--edge-shadow);
+}
+
+html[data-theme="phantom"] .button-primary {
+  background: linear-gradient(180deg, var(--red-bright), var(--red) 55%);
+  box-shadow: 0 4px 0 var(--red-deep);
+}
+html[data-theme="phantom"] .button-primary:not(:disabled):active {
+  box-shadow: 0 1px 0 var(--red-deep);
+}
+
+html[data-theme="phantom"] .button-gold {
+  background: linear-gradient(180deg, #ffc95e, var(--gold) 55%);
+  box-shadow: 0 4px 0 var(--gold-deep);
+  color: #33210a;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+html[data-theme="phantom"] .button-gold:not(:disabled):active {
+  box-shadow: 0 1px 0 var(--gold-deep);
+}
+
+html[data-theme="phantom"] .button-ghost {
+  background: var(--slate);
+  box-shadow: 0 4px 0 var(--slate-deep);
+  color: var(--text-soft);
+}
+html[data-theme="phantom"] .button-ghost:not(:disabled):active {
+  box-shadow: 0 1px 0 var(--slate-deep);
+}
+
+html[data-theme="phantom"] .button-large {
+  font-size: 1rem;
+}
+
+html[data-theme="phantom"] .eyebrow {
+  color: var(--red-bright);
+  font-family: var(--font-game);
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+html[data-theme="phantom"] .brand-lockup strong {
+  font-family: var(--font-game);
+  font-size: 0.98rem;
+  color: var(--text-bright);
+  letter-spacing: 0.02em;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.5);
+}
+html[data-theme="phantom"] .brand-lockup small {
+  color: var(--muted);
+  font-family: var(--font-game);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* The brand tile: a red calling card, dropped at an angle. */
+html[data-theme="phantom"] .brand-mark {
+  border: 2px solid #fff;
+  border-radius: 7px;
+  background: linear-gradient(160deg, var(--red-bright), var(--red-deep));
+  box-shadow: 0 3px 0 var(--edge-shadow);
+  color: #fff;
+  font-family: Georgia, serif;
+  font-size: 1.2rem;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.4);
+  transform: rotate(-6deg);
+}
+html[data-theme="phantom"] .brand-mark.large {
+  font-size: 1.7rem;
+}
+
+html[data-theme="phantom"] .glass-panel {
+  border: 2px solid var(--panel-edge);
+  border-radius: 12px;
+  background: linear-gradient(180deg, var(--panel), var(--panel-deep));
+  box-shadow:
+    inset 0 2px 0 var(--panel-line),
+    0 6px 0 var(--edge-shadow);
+}
+
+/* Home menu: a giant slow starburst behind everything (orb-one) and a
+   halftone field with a red floor glow (orb-two). */
+html[data-theme="phantom"] .ambient-orb {
+  position: absolute;
+  pointer-events: none;
+}
+html[data-theme="phantom"] .orb-one {
+  inset: -45%;
+  background: repeating-conic-gradient(
+    from 0deg at 50% 50%,
+    rgba(229, 22, 54, 0.16) 0deg 8deg,
+    transparent 8deg 24deg
+  );
+  mask-image: radial-gradient(closest-side, #000 30%, transparent 78%);
+  -webkit-mask-image: radial-gradient(closest-side, #000 30%, transparent 78%);
+  animation: phantom-spin 120s linear infinite;
+}
+html[data-theme="phantom"] .orb-two {
+  inset: 0;
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.05) 1.3px, transparent 1.7px) 0 0 /
+      19px 19px,
+    radial-gradient(60% 45% at 50% 108%, rgba(229, 22, 54, 0.22), transparent 70%);
+}
+
+/* The menu card: black slab, white pinstripe frame, hard red drop — a
+   calling card left on the table. */
+html[data-theme="phantom"] .menu-card {
+  border: 2px solid #f5f2f4;
+  border-radius: 14px;
+  background:
+    linear-gradient(
+      115deg,
+      transparent 0 68%,
+      rgba(229, 22, 54, 0.14) 68.5% 76%,
+      transparent 76.5% 82%,
+      rgba(229, 22, 54, 0.09) 82.5% 100%
+    ),
+    linear-gradient(180deg, var(--panel), var(--panel-deep));
+  box-shadow:
+    0 10px 0 var(--red-deep),
+    0 22px 44px rgba(0, 0, 0, 0.55);
+  transform: rotate(-0.6deg);
+}
+
+html[data-theme="phantom"] .menu-mark {
+  border: 3px solid #fff;
+  border-radius: 14px;
+  background:
+    repeating-conic-gradient(
+      from 12deg at 50% 50%,
+      rgba(0, 0, 0, 0.16) 0deg 10deg,
+      transparent 10deg 30deg
+    ),
+    linear-gradient(160deg, var(--red-bright), var(--red-deep));
+  box-shadow: 0 6px 0 var(--edge-shadow);
+  color: #fff;
+  font-family: Georgia, serif;
+  font-size: 3rem;
+  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.4);
+  transform: rotate(-7deg);
+}
+
+/* Logo lettering: white core, black outline, long hard red drop. */
+html[data-theme="phantom"] .menu-title {
+  font-family: var(--font-game);
+  font-size: 3.6rem;
+  font-weight: 700;
+  color: #fff;
+  transform: skewX(-4deg) rotate(-1.5deg);
+  text-shadow:
+    -2px 0 0 #0b090d,
+    2px 0 0 #0b090d,
+    0 -2px 0 #0b090d,
+    0 2px 0 #0b090d,
+    -2px -2px 0 #0b090d,
+    2px -2px 0 #0b090d,
+    -2px 2px 0 #0b090d,
+    2px 2px 0 #0b090d,
+    5px 7px 0 var(--red);
+}
+
+html[data-theme="phantom"] .menu-subtitle {
+  color: var(--red-bright);
+  font-family: var(--font-game);
+  font-size: 0.9rem;
+  letter-spacing: 0.5em;
+  text-indent: 0.5em;
+  text-transform: uppercase;
+  transform: skewX(-6deg);
+}
+
+html[data-theme="phantom"] .menu-join {
+  border: 2px solid var(--panel-edge);
+  border-radius: 7px;
+  background: var(--well-deep);
+  box-shadow: inset 0 3px 0 rgba(0, 0, 0, 0.4);
+}
+html[data-theme="phantom"] .menu-join input {
+  color: var(--gold);
+  font-family: var(--font-game);
+  font-size: 0.85rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+html[data-theme="phantom"] .menu-join input::placeholder {
+  color: var(--faint);
+}
+html[data-theme="phantom"] .menu-join .button {
+  border-radius: 5px;
+}
+
+html[data-theme="phantom"] .inline-error {
+  color: var(--red-bright);
+  font-size: 0.8rem;
+}
+
+html[data-theme="phantom"] .theme-picker {
+  color: var(--faint);
+  font-family: var(--font-game);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+html[data-theme="phantom"] .theme-chip {
+  border-radius: 5px;
+  background: var(--well-deep);
+  color: var(--muted);
+  font-family: var(--font-game);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  box-shadow: 0 2px 0 var(--edge-shadow);
+  transform: skewX(-6deg);
+}
+html[data-theme="phantom"] .theme-chip.is-active {
+  background: var(--red);
+  color: #fff;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+  box-shadow: 0 2px 0 var(--red-deep);
+}
+
+/* Join and lobby */
+html[data-theme="phantom"] .join-shell > strong {
+  font-family: var(--font-game);
+  font-size: 1.1rem;
+  color: var(--text-bright);
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.5);
+}
+html[data-theme="phantom"] .join-shell > small {
+  color: var(--muted);
+}
+html[data-theme="phantom"] .join-card h1 {
+  font-family: var(--font-game);
+  font-size: 1.8rem;
+  color: var(--text-bright);
+  text-shadow:
+    2px 2px 0 #0b090d,
+    4px 5px 0 var(--red);
+}
+html[data-theme="phantom"] .join-card > p:not(.eyebrow) {
+  color: var(--muted);
+}
+html[data-theme="phantom"] .join-card label {
+  color: var(--text-soft);
+  font-family: var(--font-game);
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+html[data-theme="phantom"] .join-card input {
+  border: 2px solid var(--panel-edge);
+  border-radius: 7px;
+  background: var(--well-deep);
+  box-shadow: inset 0 3px 0 rgba(0, 0, 0, 0.4);
+  color: var(--ink);
+}
+
+html[data-theme="phantom"] .loading-mark {
+  border: 3px solid #fff;
+  border-radius: 14px;
+  background: linear-gradient(160deg, var(--red-bright), var(--red-deep));
+  box-shadow: 0 5px 0 var(--edge-shadow);
+  color: #fff;
+  font-family: Georgia, serif;
+  font-size: 2rem;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.4);
+  animation: phantom-bob 1.5s infinite ease-in-out;
+}
+
+html[data-theme="phantom"] .lobby-heading h1 {
+  font-family: var(--font-game);
+  font-size: clamp(1.4rem, 3vw, 2.2rem);
+  color: var(--text-bright);
+  text-shadow:
+    2px 2px 0 #0b090d,
+    4px 5px 0 var(--red);
+}
+html[data-theme="phantom"] .lobby-heading p {
+  color: var(--muted);
+}
+html[data-theme="phantom"] .rules-ribbon {
+  color: var(--muted);
+  font-family: var(--font-game);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+html[data-theme="phantom"] .rules-ribbon i {
+  width: 7px;
+  height: 7px;
+  background: var(--red);
+  transform: rotate(45deg);
+}
+html[data-theme="phantom"] .lobby-seat {
+  border: 2px solid var(--panel-edge);
+  border-radius: 10px;
+  background:
+    radial-gradient(80% 60% at 50% 0%, rgba(229, 22, 54, 0.1), transparent 70%),
+    linear-gradient(180deg, var(--panel), var(--panel-deep));
+  box-shadow:
+    inset 0 2px 0 var(--panel-line),
+    0 5px 0 var(--edge-shadow);
+  color: var(--ink);
+  transition:
+    transform var(--dur-fast) ease,
+    filter var(--dur-fast) ease,
+    box-shadow var(--dur-fast) ease;
+}
+html[data-theme="phantom"] .lobby-seat:not(:disabled):hover,
+html[data-theme="phantom"] .lobby-seat.is-you {
+  filter: brightness(1.12);
+  box-shadow:
+    inset 0 2px 0 var(--panel-line),
+    0 5px 0 var(--edge-shadow),
+    0 0 0 2px var(--red-bright),
+    0 0 22px var(--red-tint);
+}
+html[data-theme="phantom"] .seat-number {
+  color: rgba(255, 255, 255, 0.35);
+  font-family: var(--font-game);
+  font-size: 0.7rem;
+}
+html[data-theme="phantom"] .seat-avatar {
+  border: 2px solid #fff;
+  border-radius: 8px;
+  background: linear-gradient(180deg, var(--card-face), var(--card-face-lo));
+  box-shadow: 0 3px 0 var(--edge-shadow);
+  color: var(--red);
+  font-family: Georgia, serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  transform: rotate(-4deg);
+}
+html[data-theme="phantom"] .lobby-seat strong {
+  font-family: var(--font-game);
+  font-size: 0.88rem;
+  letter-spacing: 0.02em;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.4);
+}
+html[data-theme="phantom"] .lobby-seat small {
+  color: var(--text-soft);
+}
+/* Approval stamp, slapped on crooked. */
+html[data-theme="phantom"] .ready-stamp {
+  border: 2px solid var(--red-bright);
+  border-radius: 4px;
+  background: rgba(229, 22, 54, 0.14);
+  color: var(--red-bright);
+  font-family: var(--font-game);
+  font-size: 0.64rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+html[data-theme="phantom"] .lobby-footer strong {
+  font-family: var(--font-game);
+  font-size: 0.88rem;
+  color: var(--gold);
+  letter-spacing: 0.08em;
+}
+html[data-theme="phantom"] .lobby-footer span {
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
+/* Table chrome */
+html[data-theme="phantom"] .side-panel {
+  border-right: 2px solid var(--panel-edge);
+  background:
+    linear-gradient(
+      170deg,
+      rgba(229, 22, 54, 0.12) 0,
+      transparent 90px
+    ),
+    linear-gradient(180deg, var(--panel), var(--panel-deep));
+  box-shadow: 4px 0 0 var(--edge-shadow);
+}
+@media (max-width: 960px) {
+  html[data-theme="phantom"] .side-panel {
+    border-right: 0;
+    border-bottom: 2px solid var(--panel-edge);
+    box-shadow: 0 4px 0 var(--edge-shadow);
+  }
+}
+html[data-theme="phantom"] .bottom-tab {
+  border: 2px solid var(--panel-edge);
+  border-radius: 7px;
+  background: var(--well-deep);
+  box-shadow: inset 0 3px 0 rgba(0, 0, 0, 0.4);
+}
+html[data-theme="phantom"] .bottom-tab small {
+  color: var(--faint);
+  font-family: var(--font-game);
+  font-size: 0.64rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+html[data-theme="phantom"] .bottom-tab strong {
+  color: var(--gold);
+  font-family: var(--font-num);
+  font-size: 1.05rem;
+}
+html[data-theme="phantom"] .bottom-tab.is-open {
+  border-color: var(--gold);
+}
+html[data-theme="phantom"] .buried-panel {
+  border: 2px solid #f5f2f4;
+  border-radius: 12px;
+  background: linear-gradient(180deg, var(--panel), var(--panel-deep));
+  box-shadow:
+    0 8px 0 var(--red-deep),
+    0 18px 40px rgba(0, 0, 0, 0.5);
+}
+html[data-theme="phantom"] .buried-panel small {
+  color: var(--gold);
+  font-family: var(--font-game);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+/* Sidebar readout wells. */
+html[data-theme="phantom"] .round-pills > span,
+html[data-theme="phantom"] .team-score-pills > span,
+html[data-theme="phantom"] .round-overview-row > span {
+  border: 2px solid var(--panel-edge);
+  border-radius: 7px;
+  background: var(--well-deep);
+  box-shadow: inset 0 3px 0 rgba(0, 0, 0, 0.4);
+}
+html[data-theme="phantom"] .round-pills small {
+  color: var(--faint);
+  font-family: var(--font-game);
+  font-size: 0.64rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+html[data-theme="phantom"] .round-pills strong {
+  color: var(--gold);
+  font-family: var(--font-num);
+  font-size: 1rem;
+}
+html[data-theme="phantom"] .icon-button {
+  border: 0;
+  border-radius: 7px;
+  background: var(--slate);
+  box-shadow: 0 3px 0 var(--slate-deep);
+  color: #fff;
+  transform: skewX(-6deg);
+}
+html[data-theme="phantom"] .icon-button:not(:disabled):active {
+  transform: skewX(-6deg) translateY(2px);
+  box-shadow: 0 1px 0 var(--slate-deep);
+}
+html[data-theme="phantom"] .throw-banner {
+  border: 2px solid var(--panel-edge);
+  border-radius: 9px;
+  background: var(--panel);
+  color: var(--text-bright);
+  box-shadow: 0 4px 0 var(--edge-shadow);
+  font-size: 0.66rem;
+}
+html[data-theme="phantom"] .throw-banner strong {
+  font-family: var(--font-game);
+  font-size: 0.74rem;
+  color: var(--gold);
+  text-transform: uppercase;
+}
+html[data-theme="phantom"] .throw-banner span {
+  color: var(--text-soft);
+}
+html[data-theme="phantom"] .throw-banner b {
+  color: var(--gold);
+}
+html[data-theme="phantom"] .throw-banner i {
+  color: var(--muted);
+}
+html[data-theme="phantom"] .throw-failed {
+  border-color: var(--red-deep);
+  background: var(--danger-panel);
+}
+
+/* The board: black baize under a red spotlight, halftone dust settling
+   toward the edges, rimmed in true black. */
+html[data-theme="phantom"] .board {
+  margin: 10px 10px 0;
+  border: 8px solid var(--felt-rim);
+  border-bottom: 0;
+  border-radius: 18px 18px 0 0;
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.035) 1px, transparent 1.4px) 0 0 /
+      17px 17px,
+    radial-gradient(58% 46% at 50% 40%, rgba(229, 22, 54, 0.13), transparent 72%),
+    radial-gradient(80% 60% at 50% 110%, rgba(0, 0, 0, 0.5), transparent 60%),
+    linear-gradient(168deg, var(--felt), var(--felt-deep));
+  box-shadow:
+    inset 0 0 0 1px var(--felt-ring-line),
+    inset 0 0 80px rgba(0, 0, 0, 0.45);
+}
+html[data-theme="phantom"] .hand-dock {
+  background: transparent;
+}
+html[data-theme="phantom"] .player-chip {
+  border: 2px solid var(--panel-edge);
+  border-radius: 8px;
+  background: linear-gradient(180deg, var(--panel), var(--panel-deep));
+  box-shadow: 0 4px 0 var(--edge-shadow);
+  transition: box-shadow 150ms;
+}
+/* Turn cue: red ring + pulsing glow. All eyes on you. */
+html[data-theme="phantom"] .is-turn .player-chip {
+  box-shadow:
+    0 4px 0 var(--edge-shadow),
+    0 0 0 2px var(--red-bright),
+    0 0 18px var(--red-tint);
+  animation: phantom-turn-pulse 1.6s ease-in-out infinite;
+}
+html[data-theme="phantom"] .leader-badge {
+  border-radius: 4px;
+  background: var(--gold);
+  box-shadow: 0 2px 0 var(--gold-deep);
+  color: #33210a;
+  font-family: var(--font-game);
+  font-size: 0.72rem;
+  transform: rotate(-6deg);
+}
+html[data-theme="phantom"] .player-avatar {
+  border: 2px solid #fff;
+  border-radius: 7px;
+  background: linear-gradient(180deg, var(--card-face), var(--card-face-lo));
+  color: var(--red);
+  font-family: Georgia, serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  transform: rotate(-4deg);
+}
+html[data-theme="phantom"] .seat-count {
+  color: var(--gold);
+  font-family: var(--font-num);
+  font-size: 0.95rem;
+}
+html[data-theme="phantom"] .player-chip strong {
+  font-family: var(--font-game);
+  font-size: 0.92rem;
+  letter-spacing: 0.01em;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+}
+html[data-theme="phantom"] .player-chip small {
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+html[data-theme="phantom"] .offline-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--red-bright);
+  transform: rotate(45deg);
+}
+html[data-theme="phantom"] .card-count {
+  border-radius: 6px;
+  background: var(--red);
+  box-shadow: 0 2px 0 var(--red-deep);
+  color: #fff;
+  font-family: var(--font-num);
+  font-size: 0.6rem;
+  transform: rotate(6deg);
+}
+html[data-theme="phantom"] .phase-message {
+  color: var(--text-bright);
+}
+html[data-theme="phantom"] .phase-message strong {
+  font-family: var(--font-game);
+  font-size: 1.05rem;
+  color: var(--text-bright);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  text-shadow:
+    1px 1px 0 #0b090d,
+    3px 3px 0 var(--red);
+}
+html[data-theme="phantom"] .phase-message small {
+  color: var(--text-soft);
+  font-size: 0.66rem;
+}
+html[data-theme="phantom"] .deal-spinner,
+html[data-theme="phantom"] .bottom-icon {
+  border: 2px solid #fff;
+  border-radius: 9px;
+  background: linear-gradient(160deg, var(--red-bright), var(--red-deep));
+  box-shadow: 0 4px 0 var(--edge-shadow);
+  color: #fff;
+  font-family: Georgia, serif;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.4);
+  transform: rotate(-6deg);
+  animation: phantom-bob 1.5s infinite;
+}
+html[data-theme="phantom"] .countdown {
+  border: 2px solid var(--panel-edge);
+  border-radius: 9px;
+  background: var(--well-deep);
+  box-shadow: inset 0 3px 0 rgba(0, 0, 0, 0.4);
+  color: var(--blue);
+  font-family: var(--font-num);
+  font-size: 1rem;
+}
+html[data-theme="phantom"] .countdown.is-urgent {
+  border-color: var(--red);
+  color: var(--red-bright);
+  animation: phantom-bob 0.8s infinite;
+}
+html[data-theme="phantom"] .playing-card.is-hinted {
+  box-shadow:
+    0 0 0 2px var(--gold),
+    0 0 16px var(--gold-tint),
+    0 4px 0 var(--edge-shadow);
+}
+html[data-theme="phantom"] .throw-warning {
+  border: 2px solid var(--panel-edge);
+  border-radius: 9px;
+  background: linear-gradient(180deg, var(--panel), var(--panel-deep));
+  box-shadow: 0 6px 0 var(--edge-shadow);
+  color: var(--gold);
+  font-family: var(--font-game);
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+/* Trump declaration: a red tag slapped on the nameplate. */
+html[data-theme="phantom"] .bid-badge {
+  border: 2px solid #fff;
+  border-radius: 6px;
+  background: var(--red);
+  color: #fff;
+  font-family: var(--font-num);
+  font-size: 0.68rem;
+  box-shadow: 0 3px 0 var(--red-deep);
+  transform: rotate(4deg);
+}
+html[data-theme="phantom"] .center-play > span {
+  color: rgba(255, 255, 255, 0.55);
+  font-family: var(--font-game);
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+html[data-theme="phantom"] .table-watermark {
+  color: var(--watermark);
+}
+html[data-theme="phantom"] .table-watermark span {
+  font-family: Georgia, serif;
+  font-size: 5rem;
+  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.3);
+}
+html[data-theme="phantom"] .table-watermark small {
+  color: var(--text-soft);
+  font-family: var(--font-game);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+html[data-theme="phantom"] .hand-meta-label {
+  color: var(--faint);
+  font-family: var(--font-game);
+  font-size: 0.64rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+html[data-theme="phantom"] .hand-meta-label b {
+  color: var(--gold);
+  font-family: var(--font-num);
+}
+
+/* Cards: bright faces with a heavy black frame so they punch out of the
+   dark table like collectibles. Corners tilt with the punk lean. */
+html[data-theme="phantom"] .playing-card {
+  border: 2px solid var(--card-line);
+  border-radius: 7px;
+  background:
+    repeating-linear-gradient(
+      115deg,
+      transparent 0 14px,
+      rgba(22, 19, 28, 0.03) 14px 16px
+    ),
+    linear-gradient(168deg, var(--card-face), var(--card-face-lo));
+  box-shadow: 0 4px 0 var(--edge-shadow);
+  color: var(--card-ink);
+}
+html[data-theme="phantom"] .playing-card.is-selected {
+  border-color: var(--red);
+  box-shadow:
+    0 0 0 3px var(--red),
+    0 0 18px var(--red-tint),
+    0 7px 0 var(--edge-shadow);
+}
+html[data-theme="phantom"] .card-corner {
+  font-family: var(--font-num);
+  transform: skewX(-5deg);
+}
+html[data-theme="phantom"] .card-corner strong {
+  font-size: 1.4rem;
+  letter-spacing: -0.03em;
+}
+html[data-theme="phantom"] .card-corner span {
+  font-size: 1.15rem;
+}
+html[data-theme="phantom"] .card-center {
+  font-family: var(--font-game);
+  font-size: 2.5rem;
+  opacity: 0.94;
+  text-shadow: 2px 3px 0 rgba(22, 19, 28, 0.14);
+}
+html[data-theme="phantom"] .card-hearts {
+  color: var(--card-red);
+}
+html[data-theme="phantom"] .card-diamonds {
+  color: var(--card-diamond);
+}
+html[data-theme="phantom"] .card-clubs {
+  color: var(--card-club);
+}
+html[data-theme="phantom"] .card-spades {
+  color: var(--card-spade);
+}
+
+/* Jokers go full Persona: black card, starburst radiating from the glyph
+   corner. Big joker burns red, small joker keeps a cold white/steel burst. */
+html[data-theme="phantom"] .playing-card.card-big,
+html[data-theme="phantom"] .playing-card.card-small {
+  border-color: #000;
+  background:
+    repeating-conic-gradient(
+      from 8deg at 72% 68%,
+      var(--joker-ray, rgba(229, 22, 54, 0.2)) 0deg 9deg,
+      transparent 9deg 26deg
+    ),
+    linear-gradient(165deg, #17141d, #0c0a10);
+}
+html[data-theme="phantom"] .playing-card.card-big {
+  --joker-ray: rgba(229, 22, 54, 0.24);
+  color: var(--card-joker-big);
+}
+html[data-theme="phantom"] .playing-card.card-small {
+  --joker-ray: rgba(233, 228, 242, 0.14);
+  color: var(--card-joker-small);
+}
+html[data-theme="phantom"] .card-center.is-joker-center {
+  font-size: 0.92rem;
+  letter-spacing: 0.22em;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.6);
+}
+html[data-theme="phantom"] .joker-script {
+  color: var(--gold);
+  font-family: var(--font-game);
+  font-size: 0.95rem;
+  text-shadow: 1px 2px 0 rgba(0, 0, 0, 0.6);
+}
+html[data-theme="phantom"] .playing-card.is-compact,
+html[data-theme="phantom"] .card-back.is-compact {
+  border-radius: 6px;
+}
+html[data-theme="phantom"] .playing-card.is-compact .card-center {
+  font-size: 1.55rem;
+}
+
+/* Deck backs carry the Joker-mask starburst art. */
+html[data-theme="phantom"] .card-back {
+  border: 2px solid #17141d;
+  border-radius: 7px;
+  background: #0c0a0f url("/phantom/card-back.svg") center / 100% 100% no-repeat;
+  box-shadow: 0 3px 0 var(--edge-shadow);
+  color: var(--card-back-ink);
+  font-family: Georgia, serif;
+}
+html[data-theme="phantom"] .card-back::after {
+  position: absolute;
+  inset: 3px;
+  border: 1px solid rgba(247, 245, 240, 0.3);
+  border-radius: 3px;
+  content: "";
+}
+/* Dense fans and piles: only the exposed top card wears the mask art —
+   covered backs go plain dark, so an opponent's 25-card fan reads as the
+   edge of a deck instead of 25 sliced starbursts. */
+html[data-theme="phantom"] .mini-card:not(.is-top) .card-back,
+html[data-theme="phantom"] .buried-pile .card-back:not(:last-child) {
+  background-image: none;
+  background-color: #14111a;
+}
+html[data-theme="phantom"] .mini-card:not(.is-top) .card-back::after,
+html[data-theme="phantom"] .buried-pile .card-back:not(:last-child)::after {
+  border-color: rgba(247, 245, 240, 0.12);
+}
+/* The 升 crest rides the corner like a maker's chop, not over the mask. */
+html[data-theme="phantom"] .card-back > span {
+  position: absolute;
+  right: 8px;
+  bottom: 7px;
+  font-size: 0.85rem;
+  text-shadow:
+    1px 1px 0 #000,
+    -1px 1px 0 #000,
+    1px -1px 0 #000,
+    -1px -1px 0 #000;
+}
+
+/* Overlays and status */
+html[data-theme="phantom"] .connection-pill {
+  border: 2px solid var(--panel-edge);
+  border-radius: 7px;
+  background: var(--panel-deep);
+  color: var(--muted);
+  font-family: var(--font-game);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  box-shadow: 0 3px 0 var(--edge-shadow);
+}
+html[data-theme="phantom"] .connection-pill i {
+  width: 8px;
+  height: 8px;
+  background: var(--gold);
+  transform: rotate(45deg);
+}
+html[data-theme="phantom"] .connection-connected i {
+  background: var(--ok);
+  box-shadow: 0 0 8px var(--ok);
+}
+html[data-theme="phantom"] .connection-offline i {
+  background: var(--red);
+}
+html[data-theme="phantom"] .notice-toast {
+  border: 2px solid var(--panel-edge);
+  border-radius: 9px;
+  background: var(--panel);
+  color: var(--text-soft);
+  font-size: 0.72rem;
+  box-shadow: 0 4px 0 var(--edge-shadow);
+}
+html[data-theme="phantom"] .notice-toast i {
+  color: var(--muted);
+}
+html[data-theme="phantom"] .leave-button.is-confirming {
+  background: var(--red);
+  box-shadow: 0 4px 0 var(--red-deep);
+  color: #fff;
+}
+html[data-theme="phantom"] .clear-selection {
+  color: var(--gold);
+  font-family: var(--font-game);
+  font-size: 0.64rem;
+  letter-spacing: 0.04em;
+  text-decoration: underline;
+  text-transform: uppercase;
+  text-underline-offset: 3px;
+}
+html[data-theme="phantom"] .error-toast {
+  border: 2px solid var(--red);
+  border-radius: 9px;
+  background: var(--danger-panel);
+  color: var(--danger-soft);
+  box-shadow: 0 5px 0 var(--edge-shadow);
+}
+html[data-theme="phantom"] .error-toast strong {
+  font-family: var(--font-game);
+  font-size: 0.8rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+html[data-theme="phantom"] .error-toast span {
+  color: var(--danger-muted);
+  font-size: 0.72rem;
+}
+html[data-theme="phantom"] .modal-scrim {
+  background: var(--overlay);
+}
+html[data-theme="phantom"] .bottom-reveal small {
+  color: var(--gold);
+  font-family: var(--font-game);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+html[data-theme="phantom"] .victory-mark {
+  color: var(--gold);
+  font-family: Georgia, serif;
+  font-size: 4.4rem;
+  text-shadow:
+    0 4px 0 rgba(0, 0, 0, 0.5),
+    0 0 40px var(--gold-tint);
+}
+/* Round verdict: the results card, white-framed on a hard red drop with a
+   diagonal red slash cutting through — maximum "RESULTS" energy. */
+html[data-theme="phantom"] .round-summary {
+  border: 2px solid #f5f2f4;
+  border-radius: 14px;
+  background:
+    linear-gradient(
+      115deg,
+      transparent 0 70%,
+      rgba(229, 22, 54, 0.16) 70.5% 78%,
+      transparent 78.5% 84%,
+      rgba(229, 22, 54, 0.1) 84.5% 100%
+    ),
+    linear-gradient(180deg, var(--panel), var(--panel-deep));
+  box-shadow:
+    0 10px 0 var(--red-deep),
+    0 24px 48px rgba(0, 0, 0, 0.55);
+}
+html[data-theme="phantom"] .round-summary h2 {
+  font-family: var(--font-game);
+  font-size: 1.5rem;
+  line-height: 1.4;
+  color: var(--text-bright);
+  text-shadow:
+    2px 2px 0 #0b090d,
+    4px 4px 0 var(--red);
+}
+html[data-theme="phantom"] .round-summary > p:not(.eyebrow) {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+html[data-theme="phantom"] .summary-score {
+  border: 2px solid var(--panel-edge);
+  border-radius: 9px;
+  background: var(--well-deep);
+  box-shadow: inset 0 3px 0 rgba(0, 0, 0, 0.4);
+}
+html[data-theme="phantom"] .summary-score span + span {
+  border-left: 2px solid var(--panel-edge);
+}
+html[data-theme="phantom"] .summary-score small {
+  color: var(--muted);
+  font-family: var(--font-game);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+/* Chips × mult: points read blue, the level jump reads red. */
+html[data-theme="phantom"] .summary-score strong {
+  font-family: var(--font-num);
+  font-size: 1.55rem;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.5);
+}
+html[data-theme="phantom"] .summary-score span:first-child strong {
+  color: var(--blue);
+}
+html[data-theme="phantom"] .summary-score span:last-child strong {
+  color: var(--red-bright);
+}
+
+@media (max-width: 620px) {
+  html[data-theme="phantom"] .board {
+    margin: 0;
+    border-width: 5px;
+    border-radius: 0;
+  }
+  html[data-theme="phantom"] .menu-title {
+    font-size: 2.7rem;
+  }
+}
+
+/* ---------------------------------------------------------------------- */
+/* Dashboard revamp: emblem logo, 攻/守 role badges, points projection,    */
+/* portrait avatars, face-card art, and trump gilding.                     */
+/* ---------------------------------------------------------------------- */
+
+/* The brand tiles carry the full emblem instead of a bare glyph. */
+html[data-theme="phantom"] .brand-mark,
+html[data-theme="phantom"] .menu-mark,
+html[data-theme="phantom"] .loading-mark {
+  background: #0c0a0f url("/phantom/logo.svg") center / cover no-repeat;
+  color: transparent;
+  text-shadow: none;
+}
+
+/* Team-role badges: the Chinese character leads, icon and English follow. */
+html[data-theme="phantom"] .team-score-pill em {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+}
+html[data-theme="phantom"] .role-icon {
+  flex-shrink: 0;
+}
+html[data-theme="phantom"] .role-char {
+  font-family: var(--font-game);
+  font-size: 1rem;
+  line-height: 1;
+}
+html[data-theme="phantom"] .role-en {
+  font-size: 0.5rem;
+  letter-spacing: 0.1em;
+  opacity: 0.75;
+}
+
+/* Nameplate 攻/守 tag. */
+html[data-theme="phantom"] .role-tag {
+  display: inline-grid;
+  place-items: center;
+  margin-left: 5px;
+  border-radius: 3px;
+  padding: 1px 4px;
+  font-size: 0.68rem;
+  line-height: 1.2;
+  vertical-align: 1px;
+}
+html[data-theme="phantom"] .role-tag.role-attacking {
+  background: var(--red-tint);
+  color: var(--red-bright);
+}
+html[data-theme="phantom"] .role-tag.role-defending {
+  background: rgba(79, 149, 255, 0.18);
+  color: #86b7ff;
+}
+
+/* Points projection: the verdict if the round stopped right here. */
+html[data-theme="phantom"] .points-projection {
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+  border: 1px solid var(--panel-edge);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 5px 12px;
+  font-family: var(--font-game);
+  font-size: 0.95rem;
+  font-style: normal;
+  line-height: 1;
+}
+html[data-theme="phantom"] .points-projection.is-attackers {
+  color: var(--red-bright);
+}
+html[data-theme="phantom"] .points-projection.is-defenders {
+  color: #86b7ff;
+}
+html[data-theme="phantom"] .points-projection i {
+  color: var(--faint);
+  font-size: 0.5rem;
+  font-style: normal;
+  letter-spacing: 0.14em;
+}
+
+/* Opera-mask portraits replace the letter tiles, one per seat. */
+html[data-theme="phantom"] .player-avatar[class*="avatar-seat-"],
+html[data-theme="phantom"] .seat-avatar[class*="avatar-seat-"] {
+  color: transparent;
+  text-shadow: none;
+  background-color: #16131b;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+html[data-theme="phantom"] .avatar-seat-0 {
+  background-image: url("/phantom/avatar-0.svg") !important;
+}
+html[data-theme="phantom"] .avatar-seat-1 {
+  background-image: url("/phantom/avatar-1.svg") !important;
+}
+html[data-theme="phantom"] .avatar-seat-2 {
+  background-image: url("/phantom/avatar-2.svg") !important;
+}
+html[data-theme="phantom"] .avatar-seat-3 {
+  background-image: url("/phantom/avatar-3.svg") !important;
+}
+
+/* Face-card art: silhouette masks tinted by the suit color. The corner
+   index stays; the big center pip shrinks to make room for the art. */
+html[data-theme="phantom"] .playing-card.rank-A::after,
+html[data-theme="phantom"] .playing-card.rank-K::after,
+html[data-theme="phantom"] .playing-card.rank-Q::after,
+html[data-theme="phantom"] .playing-card.rank-J::after {
+  content: "";
+  position: absolute;
+  top: 25%;
+  right: 14%;
+  bottom: 26%;
+  left: 14%;
+  background-color: currentColor;
+  opacity: 0.9;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  mask-size: contain;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  pointer-events: none;
+}
+html[data-theme="phantom"] .playing-card.rank-A::after {
+  mask-image: url("/phantom/face-ace.svg");
+  -webkit-mask-image: url("/phantom/face-ace.svg");
+}
+html[data-theme="phantom"] .playing-card.rank-K::after {
+  mask-image: url("/phantom/face-king.svg");
+  -webkit-mask-image: url("/phantom/face-king.svg");
+}
+html[data-theme="phantom"] .playing-card.rank-Q::after {
+  mask-image: url("/phantom/face-queen.svg");
+  -webkit-mask-image: url("/phantom/face-queen.svg");
+}
+html[data-theme="phantom"] .playing-card.rank-J::after {
+  mask-image: url("/phantom/face-jack.svg");
+  -webkit-mask-image: url("/phantom/face-jack.svg");
+}
+html[data-theme="phantom"] .playing-card.rank-A .card-center,
+html[data-theme="phantom"] .playing-card.rank-K .card-center,
+html[data-theme="phantom"] .playing-card.rank-Q .card-center,
+html[data-theme="phantom"] .playing-card.rank-J .card-center {
+  font-size: 1.15rem;
+  opacity: 0.8;
+}
+html[data-theme="phantom"] .playing-card.is-compact.rank-A .card-center,
+html[data-theme="phantom"] .playing-card.is-compact.rank-K .card-center,
+html[data-theme="phantom"] .playing-card.is-compact.rank-Q .card-center,
+html[data-theme="phantom"] .playing-card.is-compact.rank-J .card-center {
+  font-size: 0.85rem;
+}
+
+/* Trump gilding: trump cards wear a gold frame and a 主 seal — power you
+   can spot across the table. */
+html[data-theme="phantom"] .playing-card.is-trump {
+  border-color: var(--gold-deep);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--gold) 55%, transparent),
+    0 0 14px rgba(255, 182, 61, 0.16),
+    0 4px 0 var(--edge-shadow);
+}
+html[data-theme="phantom"] .playing-card.is-trump::before {
+  content: "主";
+  position: absolute;
+  z-index: 1;
+  top: 6px;
+  right: 6px;
+  display: grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #ffc95e, var(--gold) 60%);
+  box-shadow: 0 2px 0 var(--gold-deep);
+  color: #33210a;
+  font-family: var(--font-game);
+  font-size: 0.66rem;
+  line-height: 1;
+  transform: rotate(6deg);
+  pointer-events: none;
+}
+html[data-theme="phantom"] .playing-card.is-compact.is-trump::before {
+  top: 4px;
+  right: 4px;
+  width: 16px;
+  height: 16px;
+  font-size: 0.54rem;
+}
+/* Selection and hint cues must still outrank the gilding. */
+html[data-theme="phantom"] .playing-card.is-trump.is-selected {
+  border-color: var(--red);
+  box-shadow:
+    0 0 0 3px var(--red),
+    0 0 18px var(--red-tint),
+    0 7px 0 var(--edge-shadow);
+}
+html[data-theme="phantom"] .playing-card.is-trump.is-hinted {
+  box-shadow:
+    0 0 0 2px var(--gold),
+    0 0 16px var(--gold-tint),
+    0 4px 0 var(--edge-shadow);
+}
+
+/* The trump panel reads as a shrine for the round's power card. */
+html[data-theme="phantom"] .level-trump-pill {
+  border-color: color-mix(in srgb, var(--gold) 40%, var(--panel-edge)) !important;
+  background:
+    repeating-conic-gradient(
+      from 10deg at 50% 42%,
+      rgba(255, 182, 61, 0.05) 0deg 9deg,
+      transparent 9deg 26deg
+    ),
+    var(--well-deep);
+}
+html[data-theme="phantom"] .trump-panel-label {
+  color: var(--gold);
+}
+/* Undeclared trump: a dark mystery card instead of the paper placeholder. */
+html[data-theme="phantom"] .pending-trump-card,
+html[data-theme="phantom"] .generic-joker-card {
+  border: 2px solid #000;
+  border-radius: 7px;
+  background:
+    repeating-conic-gradient(
+      from 8deg at 68% 62%,
+      rgba(229, 22, 54, 0.16) 0deg 9deg,
+      transparent 9deg 26deg
+    ),
+    linear-gradient(165deg, #17141d, #0c0a10);
+  box-shadow: 0 5px 0 var(--edge-shadow);
+}
+html[data-theme="phantom"] .pending-trump-card strong {
+  color: #f5f2f4 !important;
+}
+html[data-theme="phantom"] .pending-trump-card b {
+  color: var(--red-bright);
+}
+html[data-theme="phantom"] .generic-joker-card {
+  color: var(--red-bright);
+}
+
+/* The starburst and pulses hold still for reduced-motion users; the global
+   rule already freezes animation, this just drops the leans that imply it. */
+@media (prefers-reduced-motion: reduce) {
+  html[data-theme="phantom"] .orb-one {
+    animation: none;
+  }
+}

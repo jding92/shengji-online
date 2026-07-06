@@ -14,6 +14,7 @@ import {
   getEffectiveSuit,
   parseThrow,
   parseTrickFormat,
+  scoreRound,
   sumCardPoints,
 } from "@shengji/engine";
 import { useCardSelection } from "../hooks/use-card-selection";
@@ -26,6 +27,7 @@ import { HandDock } from "./hand-dock";
 import { LeaveButton } from "./leave-button";
 import { RoundSummaryModal } from "./round-summary-modal";
 import { TableSeat } from "./table-seat";
+import { ThemeSwitcher } from "./theme-switcher";
 import { TrickCenter } from "./trick-center";
 
 type GameTableProps = {
@@ -35,6 +37,58 @@ type GameTableProps = {
   turnDeadline: string | null;
   serverNow: () => number;
 };
+
+type TeamRole = "attacking" | "defending" | "pending";
+
+/**
+ * Team-role badge: the Chinese character carries the meaning (攻 attack,
+ * 守 defend), the icon and small English caption back it up.
+ */
+function TeamRoleBadge({ role }: { role: TeamRole }) {
+  if (role === "pending") {
+    return (
+      <>
+        <span className="role-char">待</span>
+        <span className="role-en">PENDING</span>
+      </>
+    );
+  }
+  return (
+    <>
+      {role === "attacking" ? (
+        <svg
+          className="role-icon"
+          viewBox="0 0 16 16"
+          width="12"
+          height="12"
+          aria-hidden="true"
+        >
+          {/* Crossed blades. */}
+          <path
+            fill="currentColor"
+            d="M2 2l7.2 5.8 1.4-1.4L3.4 1 2 2zm12 0L6.8 7.8l1.4 1.4L15 3.4 14 2zM4.6 10l-2.2 2.8L4 14.4 6.6 12l-2-2zm6.8 0l2 2-2.6 2.4-1.6-1.6 2.2-2.8z"
+          />
+        </svg>
+      ) : (
+        <svg
+          className="role-icon"
+          viewBox="0 0 16 16"
+          width="12"
+          height="12"
+          aria-hidden="true"
+        >
+          {/* Shield. */}
+          <path
+            fill="currentColor"
+            d="M8 1l5.5 2v4.2c0 3.4-2.2 6.1-5.5 7.8-3.3-1.7-5.5-4.4-5.5-7.8V3L8 1zm0 2.1L4.5 4.4v2.8c0 2.5 1.5 4.5 3.5 5.8 2-1.3 3.5-3.3 3.5-5.8V4.4L8 3.1z"
+          />
+        </svg>
+      )}
+      <span className="role-char">{role === "attacking" ? "攻" : "守"}</span>
+      <span className="role-en">{role === "attacking" ? "ATTACK" : "DEFEND"}</span>
+    </>
+  );
+}
 
 export function GameTable({
   view,
@@ -264,6 +318,13 @@ export function GameTable({
     (round?.attackerPoints ?? 0) + (round?.throwPenaltyAdjustment ?? 0);
   const pointsTone =
     attackerPoints < 80 ? "stat-low" : attackerPoints < 120 ? "stat-mid" : "stat-high";
+  // What the scoreboard would do if the round ended on the current points —
+  // shown once cards are actually being played, so the stakes stay visible.
+  const projectedOutcome =
+    round !== undefined &&
+    (view.phase === "playing" || view.phase === "round-scoring")
+      ? scoreRound(attackerPoints, fourPlayerTwoDeckFixedTeamRuleset.scoring)
+      : null;
 
   // One timer at a time: the bidding window, then the current turn's clock.
   const timerDeadline =
@@ -335,6 +396,14 @@ export function GameTable({
   const yourTeamClass = youSeat === undefined ? "" : teamClassForSeat(youSeat.seat);
   const enemyTeamClass =
     enemySeat === undefined ? "" : teamClassForSeat(enemySeat.seat);
+  const roleForSeat = (
+    seat: PrivateGameView["seats"][number],
+  ): "attacking" | "defending" | null =>
+    defendingTeamId === undefined || seat.teamId === undefined
+      ? null
+      : seat.teamId === defendingTeamId
+        ? "defending"
+        : "attacking";
 
   return (
     <main className="game-shell">
@@ -351,19 +420,23 @@ export function GameTable({
         <div className="round-pills">
           <div className="team-score-pills">
             <span className={`team-score-pill ${yourTeamClass} is-${yourTeamRole}`}>
-              <small>YOUR TEAM / 我方</small>
+              <small>我方 · YOUR TEAM</small>
               <strong>{youSeat?.rank ?? "—"}</strong>
-              <em>{yourTeamRole}</em>
+              <em aria-label={yourTeamRole}>
+                <TeamRoleBadge role={yourTeamRole} />
+              </em>
             </span>
             <span className={`team-score-pill ${enemyTeamClass} is-${enemyTeamRole}`}>
-              <small>RIVALS / 对方</small>
+              <small>对方 · RIVALS</small>
               <strong>{enemySeat?.rank ?? "—"}</strong>
-              <em>{enemyTeamRole}</em>
+              <em aria-label={enemyTeamRole}>
+                <TeamRoleBadge role={enemyTeamRole} />
+              </em>
             </span>
           </div>
           <div className="round-overview-row">
             <span className="game-stats-pill">
-              <small>GAME STATS / 对局</small>
+              <small>对局 · GAME STATS</small>
               <span className="current-round-stat">
                 <i>ROUND</i>
                 <strong>{round?.roundNumber ?? 1}</strong>
@@ -393,9 +466,9 @@ export function GameTable({
                     : `${standingTrump.rank} of ${standingTrump.suit} is trump`
               }
             >
-              <small className="trump-panel-label">ROUND TRUMP / 本轮主牌</small>
+              <small className="trump-panel-label">主牌 · ROUND TRUMP</small>
               {trumpCard !== undefined ? (
-                <PlayingCard card={trumpCard} />
+                <PlayingCard card={trumpCard} {...(standingTrump === undefined ? {} : { trump: standingTrump })} />
               ) : standingTrump?.mode === "no-trump" ? (
                 <span className="generic-joker-card" aria-hidden="true">
                   王
@@ -409,8 +482,20 @@ export function GameTable({
             </span>
           </div>
           <span className="points-pill">
-            <small>POINTS / 分</small>
+            <small>分 · POINTS</small>
             <strong className={pointsTone}>{attackerPoints}</strong>
+            {projectedOutcome && (
+              <em
+                className={`points-projection is-${projectedOutcome.winner}`}
+                title="Outcome if the round ended at the current points"
+              >
+                {projectedOutcome.winner === "attackers" ? "攻" : "守"}
+                {projectedOutcome.levelDelta > 0
+                  ? ` +${projectedOutcome.levelDelta}`
+                  : " 夺庄"}
+                <i>IF ENDED NOW</i>
+              </em>
+            )}
           </span>
           {buried && (
             <button
@@ -418,13 +503,14 @@ export function GameTable({
               className={`bottom-tab ${showBuried ? "is-open" : ""}`}
               onClick={() => setShowBuried((open) => !open)}
             >
-              <small>BOTTOM / 底牌</small>
+              <small>底牌 · BOTTOM</small>
               <strong>{sumCardPoints(buried)} pts</strong>
             </button>
           )}
         </div>
 
         <div className="side-actions">
+          <ThemeSwitcher />
           <LeaveButton onLeave={onLeave} />
         </div>
       </aside>
@@ -467,6 +553,7 @@ export function GameTable({
                     currentTurn={round?.currentTurnSeat === seat.seat}
                     isYou={false}
                     isLeader={round?.leaderSeat === seat.seat}
+                    role={roleForSeat(seat)}
                     bid={bidFor(seat.seat)}
                     roomId={view.roomId}
                   />
@@ -493,6 +580,7 @@ export function GameTable({
                     currentTurn={round?.currentTurnSeat === youSeat.seat}
                     isYou
                     isLeader={round?.leaderSeat === youSeat.seat}
+                    role={roleForSeat(youSeat)}
                     handTotal={fullHandSize}
                     bid={bidFor(youSeat.seat)}
                     roomId={view.roomId}
@@ -553,7 +641,14 @@ export function GameTable({
                     </small>
                     <div className="buried-panel-cards">
                       {buried.map((card) => (
-                        <PlayingCard key={card.id} card={card} compact />
+                        <PlayingCard
+                          key={card.id}
+                          card={card}
+                          compact
+                          {...(round?.trumpSpec === undefined
+                            ? {}
+                            : { trump: round.trumpSpec })}
+                        />
                       ))}
                     </div>
                   </motion.div>
@@ -566,6 +661,7 @@ export function GameTable({
             cards={cards}
             selected={selected}
             hinted={hinted}
+            trump={round?.trumpSpec}
             onToggle={toggle}
           />
         </LayoutGroup>

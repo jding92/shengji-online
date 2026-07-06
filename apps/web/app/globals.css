@@ -5,6 +5,7 @@
  * each scoped under html[data-theme="…"]. Adding a theme means adding a
  * skin file; this file should never need to know about it.
  */
+@import "./themes/phantom.css";
 @import "./themes/default.css";
 @import "./themes/retro.css";
 @import "./themes/minimal.css";
@@ -607,6 +608,9 @@ button:disabled {
   font-weight: 900;
 }
 .team-score-pill em {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   border-radius: 999px;
   padding: 3px 7px;
   font-size: 0.58rem;
@@ -614,6 +618,16 @@ button:disabled {
   font-weight: 850;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+/* 攻/守 tag on nameplates and the points projection stack the same way in
+   every skin; themes only recolor them. */
+.role-tag {
+  margin-left: 5px;
+}
+.points-projection {
+  display: grid;
+  gap: 2px;
+  justify-items: center;
 }
 .team-score-pill.is-defending {
   border-color: var(--gold) !important;
