@@ -1,16 +1,13 @@
 /*
- * "Phantom" skin — Balatro × Persona 5. Balatro supplies the game-feel:
- * chunky slabs sitting on hard black bottom edges, saturated flat buttons
- * that physically sink when pressed, gold score readouts. Persona 5 supplies
- * the voice: near-black lacquer surfaces, one screaming red, shouty slanted
- * all-caps type, halftone dots, starburst rays, and a Joker mask on the deck.
- * Everything leans a few degrees off vertical on purpose.
+ * "Mythic" skin — Persona 5 × Hades ink theatre. Phantom's hard lacquer,
+ * shouty poster type, and chunky table chrome remain, but the deck now belongs
+ * to four mythic Houses painted on warm parchment with imperial gold trim.
  */
-html[data-theme="phantom"] {
+html[data-theme="mythic"] {
   /* Archivo Black for the shouting; CJK glyphs (升, 庄, 主) fall back to a
      brushy serif, which reads like a chop stamp against the punk type. */
-  --font-game: var(--font-phantom-face), "Kaiti SC", "STKaiti", sans-serif;
-  --font-num: var(--font-phantom-face), "Kaiti SC", "STKaiti", sans-serif;
+  --font-game: var(--font-display), "Kaiti SC", "STKaiti", sans-serif;
+  --font-num: var(--font-display), "Kaiti SC", "STKaiti", sans-serif;
 
   /* Text */
   --ink: #f5f2f4;
@@ -19,30 +16,30 @@ html[data-theme="phantom"] {
   --muted: #a89ea6;
   --faint: #7d7280;
 
-  /* Page and panel surfaces: black lacquer with a violet undertone. */
-  --night: #0b090d;
-  --panel: #201c25;
-  --panel-deep: #16131b;
+  /* Page and panel surfaces: black lacquer with a green-black undertone. */
+  --night: #080906;
+  --panel: #1c1d16;
+  --panel-deep: #12130f;
   --panel-edge: #060509;
   --panel-line: rgba(255, 255, 255, 0.07);
-  --well: #15121a;
-  --well-deep: #0f0c14;
+  --well: #13150f;
+  --well-deep: #0c0d0a;
   --overlay: rgba(5, 3, 8, 0.84);
 
   /* Chunky 2.5D edges: every raised element sits on a pit of black. */
   --edge-shadow: rgba(0, 0, 0, 0.62);
 
   /* The one red. Everything urgent, primary, or dramatic is this red. */
-  --red: #e51636;
-  --red-deep: #8c0a20;
-  --red-bright: #ff4d63;
-  --red-tint: rgba(229, 22, 54, 0.22);
+  --red: #d61d2f;
+  --red-deep: #7e0b18;
+  --red-bright: #ff4b55;
+  --red-tint: rgba(214, 29, 47, 0.22);
 
   --accent: var(--red);
   --accent-deep: var(--red-deep);
   --accent-bright: var(--red-bright);
-  --gold: #ffb63d;
-  --gold-deep: #b3730e;
+  --gold: #f2b84b;
+  --gold-deep: #a66b13;
   --gold-tint: rgba(255, 182, 61, 0.2);
   --blue: #4f95ff;
   --slate: #3a3341;
@@ -59,24 +56,30 @@ html[data-theme="phantom"] {
   --danger-panel: #3a0a13;
 
   /* Table surface: black baize under a red spotlight. */
-  --felt: #1c1821;
-  --felt-deep: #110f15;
-  --felt-rim: #050408;
-  --felt-ring-line: rgba(229, 22, 54, 0.25);
-  --watermark: rgba(229, 22, 54, 0.2);
+  --felt: #151a13;
+  --felt-deep: #090b08;
+  --felt-rim: #030403;
+  --felt-ring-line: rgba(242, 184, 75, 0.22);
+  --watermark: rgba(242, 184, 75, 0.16);
 
   /* Card faces and backs */
-  --card-face: #fbfaf5;
-  --card-face-lo: #edeae0;
-  --card-line: #16131c;
-  --card-ink: #1d1826;
-  --card-red: #d91532;
-  --card-diamond: #d91532;
-  --card-club: #1d1826;
-  --card-spade: #1d1826;
-  --card-joker-small: #e9e4f2;
-  --card-joker-big: #ff4d63;
+  --card-face: #f5ecd9;
+  --card-face-lo: #e6d8bd;
+  --card-line: #1a130d;
+  --card-ink: #21170f;
+  --card-red: #b81d2b;
+  --card-diamond: #ba1a24;
+  --card-club: #075a55;
+  --card-spade: #164a65;
+  --card-joker-small: #dfe9ef;
+  --card-joker-big: #ff4b55;
   --card-back-ink: var(--gold);
+  --card-chip: rgba(246, 229, 193, 0.92);
+  --card-chip-line: rgba(50, 30, 12, 0.38);
+  --house-hearts: #d9252e;
+  --house-spades: #66c7f1;
+  --house-diamonds: #c91822;
+  --house-clubs: #18b8a3;
 
   /* Controls the layout file styles directly. */
   --line: rgba(255, 255, 255, 0.14);
@@ -91,17 +94,17 @@ html[data-theme="phantom"] {
   color: var(--ink);
 }
 
-@keyframes phantom-bob {
+@keyframes mythic-bob {
   50% {
     transform: translateY(-4px) rotate(-3deg);
   }
 }
-@keyframes phantom-spin {
+@keyframes mythic-spin {
   to {
     transform: rotate(360deg);
   }
 }
-@keyframes phantom-turn-pulse {
+@keyframes mythic-turn-pulse {
   50% {
     box-shadow:
       0 4px 0 var(--edge-shadow),
@@ -109,11 +112,19 @@ html[data-theme="phantom"] {
       0 0 34px rgba(229, 22, 54, 0.55);
   }
 }
+@keyframes mythic-foil-shimmer {
+  from {
+    transform: translateX(-160%) skewX(-18deg);
+  }
+  to {
+    transform: translateX(160%) skewX(-18deg);
+  }
+}
 
 /* Deep black field; faint red bleeds in from opposite corners, and a sparse
    halftone dot drift keeps big empty areas alive. */
-html[data-theme="phantom"] body,
-html[data-theme="phantom"] .game-shell {
+html[data-theme="mythic"] body,
+html[data-theme="mythic"] .game-shell {
   background:
     radial-gradient(circle, rgba(255, 255, 255, 0.03) 1px, transparent 1.5px) 0 0 / 22px
       22px,
@@ -124,7 +135,7 @@ html[data-theme="phantom"] .game-shell {
 
 /* Buttons: flat slabs of color, skewed like they're mid-lunge, sitting on a
    hard black strip. Press = sink into the strip. */
-html[data-theme="phantom"] .button {
+html[data-theme="mythic"] .button {
   border: 0;
   border-radius: 6px;
   color: #fff;
@@ -140,47 +151,47 @@ html[data-theme="phantom"] .button {
     box-shadow var(--dur-fast) ease,
     filter var(--dur-fast) ease;
 }
-html[data-theme="phantom"] .button:not(:disabled):hover {
+html[data-theme="mythic"] .button:not(:disabled):hover {
   filter: brightness(1.12);
   transform: skewX(-6deg) translateY(-1px);
 }
-html[data-theme="phantom"] .button:not(:disabled):active {
+html[data-theme="mythic"] .button:not(:disabled):active {
   transform: skewX(-6deg) translateY(3px);
   box-shadow: 0 1px 0 var(--edge-shadow);
 }
 
-html[data-theme="phantom"] .button-primary {
+html[data-theme="mythic"] .button-primary {
   background: linear-gradient(180deg, var(--red-bright), var(--red) 55%);
   box-shadow: 0 4px 0 var(--red-deep);
 }
-html[data-theme="phantom"] .button-primary:not(:disabled):active {
+html[data-theme="mythic"] .button-primary:not(:disabled):active {
   box-shadow: 0 1px 0 var(--red-deep);
 }
 
-html[data-theme="phantom"] .button-gold {
+html[data-theme="mythic"] .button-gold {
   background: linear-gradient(180deg, #ffc95e, var(--gold) 55%);
   box-shadow: 0 4px 0 var(--gold-deep);
   color: #33210a;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.25);
 }
-html[data-theme="phantom"] .button-gold:not(:disabled):active {
+html[data-theme="mythic"] .button-gold:not(:disabled):active {
   box-shadow: 0 1px 0 var(--gold-deep);
 }
 
-html[data-theme="phantom"] .button-ghost {
+html[data-theme="mythic"] .button-ghost {
   background: var(--slate);
   box-shadow: 0 4px 0 var(--slate-deep);
   color: var(--text-soft);
 }
-html[data-theme="phantom"] .button-ghost:not(:disabled):active {
+html[data-theme="mythic"] .button-ghost:not(:disabled):active {
   box-shadow: 0 1px 0 var(--slate-deep);
 }
 
-html[data-theme="phantom"] .button-large {
+html[data-theme="mythic"] .button-large {
   font-size: 1rem;
 }
 
-html[data-theme="phantom"] .eyebrow {
+html[data-theme="mythic"] .eyebrow {
   color: var(--red-bright);
   font-family: var(--font-game);
   font-size: 0.72rem;
@@ -188,14 +199,14 @@ html[data-theme="phantom"] .eyebrow {
   text-transform: uppercase;
 }
 
-html[data-theme="phantom"] .brand-lockup strong {
+html[data-theme="mythic"] .brand-lockup strong {
   font-family: var(--font-game);
   font-size: 0.98rem;
   color: var(--text-bright);
   letter-spacing: 0.02em;
   text-shadow: 0 2px 0 rgba(0, 0, 0, 0.5);
 }
-html[data-theme="phantom"] .brand-lockup small {
+html[data-theme="mythic"] .brand-lockup small {
   color: var(--muted);
   font-family: var(--font-game);
   font-size: 0.62rem;
@@ -204,7 +215,7 @@ html[data-theme="phantom"] .brand-lockup small {
 }
 
 /* The brand tile: a red calling card, dropped at an angle. */
-html[data-theme="phantom"] .brand-mark {
+html[data-theme="mythic"] .brand-mark {
   border: 2px solid #fff;
   border-radius: 7px;
   background: linear-gradient(160deg, var(--red-bright), var(--red-deep));
@@ -215,11 +226,11 @@ html[data-theme="phantom"] .brand-mark {
   text-shadow: 0 2px 0 rgba(0, 0, 0, 0.4);
   transform: rotate(-6deg);
 }
-html[data-theme="phantom"] .brand-mark.large {
+html[data-theme="mythic"] .brand-mark.large {
   font-size: 1.7rem;
 }
 
-html[data-theme="phantom"] .glass-panel {
+html[data-theme="mythic"] .glass-panel {
   border: 2px solid var(--panel-edge);
   border-radius: 12px;
   background: linear-gradient(180deg, var(--panel), var(--panel-deep));
@@ -230,11 +241,11 @@ html[data-theme="phantom"] .glass-panel {
 
 /* Home menu: a giant slow starburst behind everything (orb-one) and a
    halftone field with a red floor glow (orb-two). */
-html[data-theme="phantom"] .ambient-orb {
+html[data-theme="mythic"] .ambient-orb {
   position: absolute;
   pointer-events: none;
 }
-html[data-theme="phantom"] .orb-one {
+html[data-theme="mythic"] .orb-one {
   inset: -45%;
   background: repeating-conic-gradient(
     from 0deg at 50% 50%,
@@ -243,9 +254,9 @@ html[data-theme="phantom"] .orb-one {
   );
   mask-image: radial-gradient(closest-side, #000 30%, transparent 78%);
   -webkit-mask-image: radial-gradient(closest-side, #000 30%, transparent 78%);
-  animation: phantom-spin 120s linear infinite;
+  animation: mythic-spin 120s linear infinite;
 }
-html[data-theme="phantom"] .orb-two {
+html[data-theme="mythic"] .orb-two {
   inset: 0;
   background:
     radial-gradient(circle, rgba(255, 255, 255, 0.05) 1.3px, transparent 1.7px) 0 0 /
@@ -255,7 +266,7 @@ html[data-theme="phantom"] .orb-two {
 
 /* The menu card: black slab, white pinstripe frame, hard red drop — a
    calling card left on the table. */
-html[data-theme="phantom"] .menu-card {
+html[data-theme="mythic"] .menu-card {
   border: 2px solid #f5f2f4;
   border-radius: 14px;
   background:
@@ -273,7 +284,7 @@ html[data-theme="phantom"] .menu-card {
   transform: rotate(-0.6deg);
 }
 
-html[data-theme="phantom"] .menu-mark {
+html[data-theme="mythic"] .menu-mark {
   border: 3px solid #fff;
   border-radius: 14px;
   background:
@@ -292,7 +303,7 @@ html[data-theme="phantom"] .menu-mark {
 }
 
 /* Logo lettering: white core, black outline, long hard red drop. */
-html[data-theme="phantom"] .menu-title {
+html[data-theme="mythic"] .menu-title {
   font-family: var(--font-game);
   font-size: 3.6rem;
   font-weight: 700;
@@ -310,7 +321,7 @@ html[data-theme="phantom"] .menu-title {
     5px 7px 0 var(--red);
 }
 
-html[data-theme="phantom"] .menu-subtitle {
+html[data-theme="mythic"] .menu-subtitle {
   color: var(--red-bright);
   font-family: var(--font-game);
   font-size: 0.9rem;
@@ -320,67 +331,42 @@ html[data-theme="phantom"] .menu-subtitle {
   transform: skewX(-6deg);
 }
 
-html[data-theme="phantom"] .menu-join {
+html[data-theme="mythic"] .menu-join {
   border: 2px solid var(--panel-edge);
   border-radius: 7px;
   background: var(--well-deep);
   box-shadow: inset 0 3px 0 rgba(0, 0, 0, 0.4);
 }
-html[data-theme="phantom"] .menu-join input {
+html[data-theme="mythic"] .menu-join input {
   color: var(--gold);
   font-family: var(--font-game);
   font-size: 0.85rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
-html[data-theme="phantom"] .menu-join input::placeholder {
+html[data-theme="mythic"] .menu-join input::placeholder {
   color: var(--faint);
 }
-html[data-theme="phantom"] .menu-join .button {
+html[data-theme="mythic"] .menu-join .button {
   border-radius: 5px;
 }
 
-html[data-theme="phantom"] .inline-error {
+html[data-theme="mythic"] .inline-error {
   color: var(--red-bright);
   font-size: 0.8rem;
 }
 
-html[data-theme="phantom"] .theme-picker {
-  color: var(--faint);
-  font-family: var(--font-game);
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-html[data-theme="phantom"] .theme-chip {
-  border-radius: 5px;
-  background: var(--well-deep);
-  color: var(--muted);
-  font-family: var(--font-game);
-  font-size: 0.68rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  box-shadow: 0 2px 0 var(--edge-shadow);
-  transform: skewX(-6deg);
-}
-html[data-theme="phantom"] .theme-chip.is-active {
-  background: var(--red);
-  color: #fff;
-  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
-  box-shadow: 0 2px 0 var(--red-deep);
-}
-
 /* Join and lobby */
-html[data-theme="phantom"] .join-shell > strong {
+html[data-theme="mythic"] .join-shell > strong {
   font-family: var(--font-game);
   font-size: 1.1rem;
   color: var(--text-bright);
   text-shadow: 0 2px 0 rgba(0, 0, 0, 0.5);
 }
-html[data-theme="phantom"] .join-shell > small {
+html[data-theme="mythic"] .join-shell > small {
   color: var(--muted);
 }
-html[data-theme="phantom"] .join-card h1 {
+html[data-theme="mythic"] .join-card h1 {
   font-family: var(--font-game);
   font-size: 1.8rem;
   color: var(--text-bright);
@@ -388,17 +374,17 @@ html[data-theme="phantom"] .join-card h1 {
     2px 2px 0 #0b090d,
     4px 5px 0 var(--red);
 }
-html[data-theme="phantom"] .join-card > p:not(.eyebrow) {
+html[data-theme="mythic"] .join-card > p:not(.eyebrow) {
   color: var(--muted);
 }
-html[data-theme="phantom"] .join-card label {
+html[data-theme="mythic"] .join-card label {
   color: var(--text-soft);
   font-family: var(--font-game);
   font-size: 0.74rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
-html[data-theme="phantom"] .join-card input {
+html[data-theme="mythic"] .join-card input {
   border: 2px solid var(--panel-edge);
   border-radius: 7px;
   background: var(--well-deep);
@@ -406,7 +392,7 @@ html[data-theme="phantom"] .join-card input {
   color: var(--ink);
 }
 
-html[data-theme="phantom"] .loading-mark {
+html[data-theme="mythic"] .loading-mark {
   border: 3px solid #fff;
   border-radius: 14px;
   background: linear-gradient(160deg, var(--red-bright), var(--red-deep));
@@ -415,10 +401,10 @@ html[data-theme="phantom"] .loading-mark {
   font-family: Georgia, serif;
   font-size: 2rem;
   text-shadow: 0 2px 0 rgba(0, 0, 0, 0.4);
-  animation: phantom-bob 1.5s infinite ease-in-out;
+  animation: mythic-bob 1.5s infinite ease-in-out;
 }
 
-html[data-theme="phantom"] .lobby-heading h1 {
+html[data-theme="mythic"] .lobby-heading h1 {
   font-family: var(--font-game);
   font-size: clamp(1.4rem, 3vw, 2.2rem);
   color: var(--text-bright);
@@ -426,23 +412,23 @@ html[data-theme="phantom"] .lobby-heading h1 {
     2px 2px 0 #0b090d,
     4px 5px 0 var(--red);
 }
-html[data-theme="phantom"] .lobby-heading p {
+html[data-theme="mythic"] .lobby-heading p {
   color: var(--muted);
 }
-html[data-theme="phantom"] .rules-ribbon {
+html[data-theme="mythic"] .rules-ribbon {
   color: var(--muted);
   font-family: var(--font-game);
   font-size: 0.68rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
-html[data-theme="phantom"] .rules-ribbon i {
+html[data-theme="mythic"] .rules-ribbon i {
   width: 7px;
   height: 7px;
   background: var(--red);
   transform: rotate(45deg);
 }
-html[data-theme="phantom"] .lobby-seat {
+html[data-theme="mythic"] .lobby-seat {
   border: 2px solid var(--panel-edge);
   border-radius: 10px;
   background:
@@ -457,8 +443,8 @@ html[data-theme="phantom"] .lobby-seat {
     filter var(--dur-fast) ease,
     box-shadow var(--dur-fast) ease;
 }
-html[data-theme="phantom"] .lobby-seat:not(:disabled):hover,
-html[data-theme="phantom"] .lobby-seat.is-you {
+html[data-theme="mythic"] .lobby-seat:not(:disabled):hover,
+html[data-theme="mythic"] .lobby-seat.is-you {
   filter: brightness(1.12);
   box-shadow:
     inset 0 2px 0 var(--panel-line),
@@ -466,12 +452,12 @@ html[data-theme="phantom"] .lobby-seat.is-you {
     0 0 0 2px var(--red-bright),
     0 0 22px var(--red-tint);
 }
-html[data-theme="phantom"] .seat-number {
+html[data-theme="mythic"] .seat-number {
   color: rgba(255, 255, 255, 0.35);
   font-family: var(--font-game);
   font-size: 0.7rem;
 }
-html[data-theme="phantom"] .seat-avatar {
+html[data-theme="mythic"] .seat-avatar {
   border: 2px solid #fff;
   border-radius: 8px;
   background: linear-gradient(180deg, var(--card-face), var(--card-face-lo));
@@ -482,17 +468,17 @@ html[data-theme="phantom"] .seat-avatar {
   font-weight: 700;
   transform: rotate(-4deg);
 }
-html[data-theme="phantom"] .lobby-seat strong {
+html[data-theme="mythic"] .lobby-seat strong {
   font-family: var(--font-game);
   font-size: 0.88rem;
   letter-spacing: 0.02em;
   text-shadow: 0 2px 0 rgba(0, 0, 0, 0.4);
 }
-html[data-theme="phantom"] .lobby-seat small {
+html[data-theme="mythic"] .lobby-seat small {
   color: var(--text-soft);
 }
 /* Approval stamp, slapped on crooked. */
-html[data-theme="phantom"] .ready-stamp {
+html[data-theme="mythic"] .ready-stamp {
   border: 2px solid var(--red-bright);
   border-radius: 4px;
   background: rgba(229, 22, 54, 0.14);
@@ -502,19 +488,19 @@ html[data-theme="phantom"] .ready-stamp {
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
-html[data-theme="phantom"] .lobby-footer strong {
+html[data-theme="mythic"] .lobby-footer strong {
   font-family: var(--font-game);
   font-size: 0.88rem;
   color: var(--gold);
   letter-spacing: 0.08em;
 }
-html[data-theme="phantom"] .lobby-footer span {
+html[data-theme="mythic"] .lobby-footer span {
   color: var(--muted);
   font-size: 0.7rem;
 }
 
 /* Table chrome */
-html[data-theme="phantom"] .side-panel {
+html[data-theme="mythic"] .side-panel {
   border-right: 2px solid var(--panel-edge);
   background:
     linear-gradient(170deg, rgba(229, 22, 54, 0.12) 0, transparent 90px),
@@ -522,34 +508,34 @@ html[data-theme="phantom"] .side-panel {
   box-shadow: 4px 0 0 var(--edge-shadow);
 }
 @media (max-width: 960px) {
-  html[data-theme="phantom"] .side-panel {
+  html[data-theme="mythic"] .side-panel {
     border-right: 0;
     border-bottom: 2px solid var(--panel-edge);
     box-shadow: 0 4px 0 var(--edge-shadow);
   }
 }
-html[data-theme="phantom"] .bottom-tab {
+html[data-theme="mythic"] .bottom-tab {
   border: 2px solid var(--panel-edge);
   border-radius: 7px;
   background: var(--well-deep);
   box-shadow: inset 0 3px 0 rgba(0, 0, 0, 0.4);
 }
-html[data-theme="phantom"] .bottom-tab small {
+html[data-theme="mythic"] .bottom-tab small {
   color: var(--faint);
   font-family: var(--font-game);
   font-size: 0.64rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
-html[data-theme="phantom"] .bottom-tab strong {
+html[data-theme="mythic"] .bottom-tab strong {
   color: var(--gold);
   font-family: var(--font-num);
   font-size: 1.05rem;
 }
-html[data-theme="phantom"] .bottom-tab.is-open {
+html[data-theme="mythic"] .bottom-tab.is-open {
   border-color: var(--gold);
 }
-html[data-theme="phantom"] .buried-panel {
+html[data-theme="mythic"] .buried-panel {
   border: 2px solid #f5f2f4;
   border-radius: 12px;
   background: linear-gradient(180deg, var(--panel), var(--panel-deep));
@@ -557,7 +543,7 @@ html[data-theme="phantom"] .buried-panel {
     0 8px 0 var(--red-deep),
     0 18px 40px rgba(0, 0, 0, 0.5);
 }
-html[data-theme="phantom"] .buried-panel small {
+html[data-theme="mythic"] .buried-panel small {
   color: var(--gold);
   font-family: var(--font-game);
   font-size: 0.7rem;
@@ -565,27 +551,27 @@ html[data-theme="phantom"] .buried-panel small {
   text-transform: uppercase;
 }
 /* Sidebar readout wells. */
-html[data-theme="phantom"] .round-pills > span,
-html[data-theme="phantom"] .team-score-pills > span,
-html[data-theme="phantom"] .round-overview-row > span {
+html[data-theme="mythic"] .round-pills > span,
+html[data-theme="mythic"] .team-score-pills > span,
+html[data-theme="mythic"] .round-overview-row > span {
   border: 2px solid var(--panel-edge);
   border-radius: 7px;
   background: var(--well-deep);
   box-shadow: inset 0 3px 0 rgba(0, 0, 0, 0.4);
 }
-html[data-theme="phantom"] .round-pills small {
+html[data-theme="mythic"] .round-pills small {
   color: var(--faint);
   font-family: var(--font-game);
   font-size: 0.64rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
-html[data-theme="phantom"] .round-pills strong {
+html[data-theme="mythic"] .round-pills strong {
   color: var(--gold);
   font-family: var(--font-num);
   font-size: 1rem;
 }
-html[data-theme="phantom"] .icon-button {
+html[data-theme="mythic"] .icon-button {
   border: 0;
   border-radius: 7px;
   background: var(--slate);
@@ -593,11 +579,11 @@ html[data-theme="phantom"] .icon-button {
   color: #fff;
   transform: skewX(-6deg);
 }
-html[data-theme="phantom"] .icon-button:not(:disabled):active {
+html[data-theme="mythic"] .icon-button:not(:disabled):active {
   transform: skewX(-6deg) translateY(2px);
   box-shadow: 0 1px 0 var(--slate-deep);
 }
-html[data-theme="phantom"] .throw-banner {
+html[data-theme="mythic"] .throw-banner {
   border: 2px solid var(--panel-edge);
   border-radius: 9px;
   background: var(--panel);
@@ -605,29 +591,29 @@ html[data-theme="phantom"] .throw-banner {
   box-shadow: 0 4px 0 var(--edge-shadow);
   font-size: 0.66rem;
 }
-html[data-theme="phantom"] .throw-banner strong {
+html[data-theme="mythic"] .throw-banner strong {
   font-family: var(--font-game);
   font-size: 0.74rem;
   color: var(--gold);
   text-transform: uppercase;
 }
-html[data-theme="phantom"] .throw-banner span {
+html[data-theme="mythic"] .throw-banner span {
   color: var(--text-soft);
 }
-html[data-theme="phantom"] .throw-banner b {
+html[data-theme="mythic"] .throw-banner b {
   color: var(--gold);
 }
-html[data-theme="phantom"] .throw-banner i {
+html[data-theme="mythic"] .throw-banner i {
   color: var(--muted);
 }
-html[data-theme="phantom"] .throw-failed {
+html[data-theme="mythic"] .throw-failed {
   border-color: var(--red-deep);
   background: var(--danger-panel);
 }
 
 /* The board: black baize under a red spotlight, halftone dust settling
    toward the edges, rimmed in true black. */
-html[data-theme="phantom"] .board {
+html[data-theme="mythic"] .board {
   margin: 10px 10px 0;
   border: 8px solid var(--felt-rim);
   border-bottom: 0;
@@ -642,10 +628,10 @@ html[data-theme="phantom"] .board {
     inset 0 0 0 1px var(--felt-ring-line),
     inset 0 0 80px rgba(0, 0, 0, 0.45);
 }
-html[data-theme="phantom"] .hand-dock {
+html[data-theme="mythic"] .hand-dock {
   background: transparent;
 }
-html[data-theme="phantom"] .player-chip {
+html[data-theme="mythic"] .player-chip {
   border: 2px solid var(--panel-edge);
   border-radius: 8px;
   background: linear-gradient(180deg, var(--panel), var(--panel-deep));
@@ -653,14 +639,14 @@ html[data-theme="phantom"] .player-chip {
   transition: box-shadow 150ms;
 }
 /* Turn cue: red ring + pulsing glow. All eyes on you. */
-html[data-theme="phantom"] .is-turn .player-chip {
+html[data-theme="mythic"] .is-turn .player-chip {
   box-shadow:
     0 4px 0 var(--edge-shadow),
     0 0 0 2px var(--red-bright),
     0 0 18px var(--red-tint);
-  animation: phantom-turn-pulse 1.6s ease-in-out infinite;
+  animation: mythic-turn-pulse 1.6s ease-in-out infinite;
 }
-html[data-theme="phantom"] .leader-badge {
+html[data-theme="mythic"] .leader-badge {
   border-radius: 4px;
   background: var(--gold);
   box-shadow: 0 2px 0 var(--gold-deep);
@@ -669,7 +655,7 @@ html[data-theme="phantom"] .leader-badge {
   font-size: 0.72rem;
   transform: rotate(-6deg);
 }
-html[data-theme="phantom"] .player-avatar {
+html[data-theme="mythic"] .player-avatar {
   border: 2px solid #fff;
   border-radius: 7px;
   background: linear-gradient(180deg, var(--card-face), var(--card-face-lo));
@@ -679,28 +665,28 @@ html[data-theme="phantom"] .player-avatar {
   font-weight: 700;
   transform: rotate(-4deg);
 }
-html[data-theme="phantom"] .seat-count {
+html[data-theme="mythic"] .seat-count {
   color: var(--gold);
   font-family: var(--font-num);
   font-size: 0.95rem;
 }
-html[data-theme="phantom"] .player-chip strong {
+html[data-theme="mythic"] .player-chip strong {
   font-family: var(--font-game);
   font-size: 0.92rem;
   letter-spacing: 0.01em;
   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
 }
-html[data-theme="phantom"] .player-chip small {
+html[data-theme="mythic"] .player-chip small {
   color: var(--muted);
   font-size: 0.7rem;
 }
-html[data-theme="phantom"] .offline-dot {
+html[data-theme="mythic"] .offline-dot {
   width: 8px;
   height: 8px;
   background: var(--red-bright);
   transform: rotate(45deg);
 }
-html[data-theme="phantom"] .card-count {
+html[data-theme="mythic"] .card-count {
   border-radius: 6px;
   background: var(--red);
   box-shadow: 0 2px 0 var(--red-deep);
@@ -709,10 +695,10 @@ html[data-theme="phantom"] .card-count {
   font-size: 0.6rem;
   transform: rotate(6deg);
 }
-html[data-theme="phantom"] .phase-message {
+html[data-theme="mythic"] .phase-message {
   color: var(--text-bright);
 }
-html[data-theme="phantom"] .phase-message strong {
+html[data-theme="mythic"] .phase-message strong {
   font-family: var(--font-game);
   font-size: 1.05rem;
   color: var(--text-bright);
@@ -722,12 +708,12 @@ html[data-theme="phantom"] .phase-message strong {
     1px 1px 0 #0b090d,
     3px 3px 0 var(--red);
 }
-html[data-theme="phantom"] .phase-message small {
+html[data-theme="mythic"] .phase-message small {
   color: var(--text-soft);
   font-size: 0.66rem;
 }
-html[data-theme="phantom"] .deal-spinner,
-html[data-theme="phantom"] .bottom-icon {
+html[data-theme="mythic"] .deal-spinner,
+html[data-theme="mythic"] .bottom-icon {
   border: 2px solid #fff;
   border-radius: 9px;
   background: linear-gradient(160deg, var(--red-bright), var(--red-deep));
@@ -736,9 +722,9 @@ html[data-theme="phantom"] .bottom-icon {
   font-family: Georgia, serif;
   text-shadow: 0 2px 0 rgba(0, 0, 0, 0.4);
   transform: rotate(-6deg);
-  animation: phantom-bob 1.5s infinite;
+  animation: mythic-bob 1.5s infinite;
 }
-html[data-theme="phantom"] .countdown {
+html[data-theme="mythic"] .countdown {
   border: 2px solid var(--panel-edge);
   border-radius: 9px;
   background: var(--well-deep);
@@ -747,18 +733,18 @@ html[data-theme="phantom"] .countdown {
   font-family: var(--font-num);
   font-size: 1rem;
 }
-html[data-theme="phantom"] .countdown.is-urgent {
+html[data-theme="mythic"] .countdown.is-urgent {
   border-color: var(--red);
   color: var(--red-bright);
-  animation: phantom-bob 0.8s infinite;
+  animation: mythic-bob 0.8s infinite;
 }
-html[data-theme="phantom"] .playing-card.is-hinted {
+html[data-theme="mythic"] .playing-card.is-hinted {
   box-shadow:
     0 0 0 2px var(--gold),
     0 0 16px var(--gold-tint),
     0 4px 0 var(--edge-shadow);
 }
-html[data-theme="phantom"] .throw-warning {
+html[data-theme="mythic"] .throw-warning {
   border: 2px solid var(--panel-edge);
   border-radius: 9px;
   background: linear-gradient(180deg, var(--panel), var(--panel-deep));
@@ -769,7 +755,7 @@ html[data-theme="phantom"] .throw-warning {
   line-height: 1.4;
 }
 /* Trump declaration: a red tag slapped on the nameplate. */
-html[data-theme="phantom"] .bid-badge {
+html[data-theme="mythic"] .bid-badge {
   border: 2px solid #fff;
   border-radius: 6px;
   background: var(--red);
@@ -779,142 +765,203 @@ html[data-theme="phantom"] .bid-badge {
   box-shadow: 0 3px 0 var(--red-deep);
   transform: rotate(4deg);
 }
-html[data-theme="phantom"] .center-play > span {
+html[data-theme="mythic"] .center-play > span {
   color: rgba(255, 255, 255, 0.55);
   font-family: var(--font-game);
   font-size: 0.6rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
-html[data-theme="phantom"] .table-watermark {
+html[data-theme="mythic"] .table-watermark {
   color: var(--watermark);
 }
-html[data-theme="phantom"] .table-watermark span {
+html[data-theme="mythic"] .table-watermark span {
   font-family: Georgia, serif;
   font-size: 5rem;
   text-shadow: 0 3px 0 rgba(0, 0, 0, 0.3);
 }
-html[data-theme="phantom"] .table-watermark small {
+html[data-theme="mythic"] .table-watermark small {
   color: var(--text-soft);
   font-family: var(--font-game);
   font-size: 0.72rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
-html[data-theme="phantom"] .hand-meta-label {
+html[data-theme="mythic"] .hand-meta-label {
   color: var(--faint);
   font-family: var(--font-game);
   font-size: 0.64rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
-html[data-theme="phantom"] .hand-meta-label b {
+html[data-theme="mythic"] .hand-meta-label b {
   color: var(--gold);
   font-family: var(--font-num);
 }
 
-/* Cards: bright faces with a heavy black frame so they punch out of the
-   dark table like collectibles. Corners tilt with the punk lean. */
-html[data-theme="phantom"] .playing-card {
+/* Cards: mythic parchment faces with House accents. Court cards and aces use
+   generated full-bleed art; number cards carry the same parchment and frame. */
+html[data-theme="mythic"] .playing-card {
+  --house-accent: var(--gold);
+  --house-ink: var(--card-ink);
+
   border: 2px solid var(--card-line);
   border-radius: 7px;
   background:
+    radial-gradient(circle at 50% 44%, rgba(255, 255, 255, 0.5), transparent 44%),
     repeating-linear-gradient(
       115deg,
       transparent 0 14px,
-      rgba(22, 19, 28, 0.03) 14px 16px
+      rgba(54, 34, 13, 0.045) 14px 16px
     ),
     linear-gradient(168deg, var(--card-face), var(--card-face-lo));
-  box-shadow: 0 4px 0 var(--edge-shadow);
-  color: var(--card-ink);
+  box-shadow:
+    inset 0 0 0 2px color-mix(in srgb, var(--house-accent) 72%, transparent),
+    inset 0 0 0 5px rgba(65, 38, 12, 0.18),
+    0 4px 0 var(--edge-shadow);
+  color: var(--house-ink);
 }
-html[data-theme="phantom"] .playing-card.is-selected {
+html[data-theme="mythic"] .playing-card.is-selected {
   border-color: var(--red);
   box-shadow:
     0 0 0 3px var(--red),
     0 0 18px var(--red-tint),
     0 7px 0 var(--edge-shadow);
 }
-html[data-theme="phantom"] .card-corner {
+html[data-theme="mythic"] .card-corner {
+  z-index: 3;
+  min-width: 28px;
+  border: 1px solid var(--card-chip-line);
+  border-radius: 6px 2px 6px 2px;
+  background: var(--card-chip);
+  padding: 3px 4px 4px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.34),
+    0 2px 5px rgba(0, 0, 0, 0.24);
+  color: var(--house-ink);
   font-family: var(--font-num);
   transform: skewX(-5deg);
 }
-html[data-theme="phantom"] .card-corner strong {
-  font-size: 1.4rem;
-  letter-spacing: -0.03em;
+html[data-theme="mythic"] .card-corner strong {
+  font-size: 1.1rem;
+  letter-spacing: 0;
 }
-html[data-theme="phantom"] .card-corner span {
-  font-size: 1.15rem;
+html[data-theme="mythic"] .card-corner span {
+  color: var(--house-accent);
+  font-size: 0.98rem;
 }
-html[data-theme="phantom"] .card-center {
+html[data-theme="mythic"] .card-center {
   font-family: var(--font-game);
-  font-size: 2.5rem;
-  opacity: 0.94;
-  text-shadow: 2px 3px 0 rgba(22, 19, 28, 0.14);
+  font-size: 4.8rem;
+  opacity: 0.12;
+  text-shadow: none;
+  transform: rotate(-8deg);
 }
-html[data-theme="phantom"] .card-hearts {
+html[data-theme="mythic"] .card-hearts {
+  --house-accent: var(--house-hearts);
+  --house-ink: #631018;
+
   color: var(--card-red);
 }
-html[data-theme="phantom"] .card-diamonds {
+html[data-theme="mythic"] .card-diamonds {
+  --house-accent: var(--house-diamonds);
+  --house-ink: #68100f;
+
   color: var(--card-diamond);
 }
-html[data-theme="phantom"] .card-clubs {
+html[data-theme="mythic"] .card-clubs {
+  --house-accent: var(--house-clubs);
+  --house-ink: #064b46;
+
   color: var(--card-club);
 }
-html[data-theme="phantom"] .card-spades {
+html[data-theme="mythic"] .card-spades {
+  --house-accent: var(--house-spades);
+  --house-ink: #123e57;
+
   color: var(--card-spade);
 }
 
-/* Jokers go full Persona: black card, starburst radiating from the glyph
-   corner. Big joker burns red, small joker keeps a cold white/steel burst. */
-html[data-theme="phantom"] .playing-card.card-big,
-html[data-theme="phantom"] .playing-card.card-small {
-  border-color: #000;
-  background:
-    repeating-conic-gradient(
-      from 8deg at 72% 68%,
-      var(--joker-ray, rgba(229, 22, 54, 0.2)) 0deg 9deg,
-      transparent 9deg 26deg
-    ),
-    linear-gradient(165deg, #17141d, #0c0a10);
+html[data-theme="mythic"] .playing-card.is-compact .card-corner {
+  top: 6px;
+  left: 6px;
+  min-width: 23px;
+  border-radius: 5px 2px 5px 2px;
+  padding: 2px 3px 3px;
 }
-html[data-theme="phantom"] .playing-card.card-big {
-  --joker-ray: rgba(229, 22, 54, 0.24);
+html[data-theme="mythic"] .playing-card.is-compact .card-corner strong {
+  font-size: 0.82rem;
+}
+html[data-theme="mythic"] .playing-card.is-compact .card-corner span {
+  font-size: 0.74rem;
+}
+html[data-theme="mythic"] .playing-card.is-compact .card-center {
+  font-size: 3.35rem;
+}
+
+/* Jokers are wildcard art cards; their DOM text stays as an overlaid title. */
+html[data-theme="mythic"] .playing-card.card-big,
+html[data-theme="mythic"] .playing-card.card-small {
+  --house-accent: var(--gold);
+  --house-ink: #3a0d12;
+
+  border-color: #000;
+  background-size: cover;
+  background-position: center;
+}
+html[data-theme="mythic"] .playing-card.card-big {
+  background-image: image-set(
+    url("/art/cards/joker-big.webp") 1x,
+    url("/art/cards/joker-big@2x.webp") 2x
+  );
   color: var(--card-joker-big);
 }
-html[data-theme="phantom"] .playing-card.card-small {
-  --joker-ray: rgba(233, 228, 242, 0.14);
+html[data-theme="mythic"] .playing-card.card-small {
+  --house-ink: #142c38;
+
+  background-image: image-set(
+    url("/art/cards/joker-small.webp") 1x,
+    url("/art/cards/joker-small@2x.webp") 2x
+  );
   color: var(--card-joker-small);
 }
-html[data-theme="phantom"] .card-center.is-joker-center {
-  font-size: 0.92rem;
+html[data-theme="mythic"] .card-center.is-joker-center {
+  z-index: 2;
+  right: 9px;
+  bottom: 38px;
+  color: #fff3d4;
+  font-size: 0.72rem;
   letter-spacing: 0.22em;
-  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.6);
+  opacity: 1;
+  text-shadow:
+    1px 1px 0 #120806,
+    0 0 8px rgba(0, 0, 0, 0.8);
+  transform: rotate(-5deg);
 }
-html[data-theme="phantom"] .joker-script {
+html[data-theme="mythic"] .joker-script {
+  z-index: 2;
   color: var(--gold);
   font-family: var(--font-game);
   font-size: 0.95rem;
-  text-shadow: 1px 2px 0 rgba(0, 0, 0, 0.6);
+  text-shadow:
+    1px 1px 0 #120806,
+    0 0 8px rgba(0, 0, 0, 0.82);
 }
-html[data-theme="phantom"] .playing-card.is-compact,
-html[data-theme="phantom"] .card-back.is-compact {
+html[data-theme="mythic"] .playing-card.is-compact,
+html[data-theme="mythic"] .card-back.is-compact {
   border-radius: 6px;
 }
-html[data-theme="phantom"] .playing-card.is-compact .card-center {
-  font-size: 1.55rem;
-}
 
-/* Deck backs carry the Joker-mask starburst art. */
-html[data-theme="phantom"] .card-back {
-  border: 2px solid #17141d;
+/* Deck backs carry the lacquer-and-gold mask art. */
+html[data-theme="mythic"] .card-back {
+  border: 2px solid #050403;
   border-radius: 7px;
-  background: #0c0a0f url("/phantom/card-back.svg") center / 100% 100% no-repeat;
+  background: #080604 url("/art/ui/card-back.svg") center / 100% 100% no-repeat;
   box-shadow: 0 3px 0 var(--edge-shadow);
   color: var(--card-back-ink);
   font-family: Georgia, serif;
 }
-html[data-theme="phantom"] .card-back::after {
+html[data-theme="mythic"] .card-back::after {
   position: absolute;
   inset: 3px;
   border: 1px solid rgba(247, 245, 240, 0.3);
@@ -924,17 +971,17 @@ html[data-theme="phantom"] .card-back::after {
 /* Dense fans and piles: only the exposed top card wears the mask art —
    covered backs go plain dark, so an opponent's 25-card fan reads as the
    edge of a deck instead of 25 sliced starbursts. */
-html[data-theme="phantom"] .mini-card:not(.is-top) .card-back,
-html[data-theme="phantom"] .buried-pile .card-back:not(:last-child) {
+html[data-theme="mythic"] .mini-card:not(.is-top) .card-back,
+html[data-theme="mythic"] .buried-pile .card-back:not(:last-child) {
   background-image: none;
-  background-color: #14111a;
+  background-color: #121009;
 }
-html[data-theme="phantom"] .mini-card:not(.is-top) .card-back::after,
-html[data-theme="phantom"] .buried-pile .card-back:not(:last-child)::after {
+html[data-theme="mythic"] .mini-card:not(.is-top) .card-back::after,
+html[data-theme="mythic"] .buried-pile .card-back:not(:last-child)::after {
   border-color: rgba(247, 245, 240, 0.12);
 }
 /* The 升 crest rides the corner like a maker's chop, not over the mask. */
-html[data-theme="phantom"] .card-back > span {
+html[data-theme="mythic"] .card-back > span {
   position: absolute;
   right: 8px;
   bottom: 7px;
@@ -947,7 +994,7 @@ html[data-theme="phantom"] .card-back > span {
 }
 
 /* Overlays and status */
-html[data-theme="phantom"] .connection-pill {
+html[data-theme="mythic"] .connection-pill {
   border: 2px solid var(--panel-edge);
   border-radius: 7px;
   background: var(--panel-deep);
@@ -957,20 +1004,20 @@ html[data-theme="phantom"] .connection-pill {
   letter-spacing: 0.06em;
   box-shadow: 0 3px 0 var(--edge-shadow);
 }
-html[data-theme="phantom"] .connection-pill i {
+html[data-theme="mythic"] .connection-pill i {
   width: 8px;
   height: 8px;
   background: var(--gold);
   transform: rotate(45deg);
 }
-html[data-theme="phantom"] .connection-connected i {
+html[data-theme="mythic"] .connection-connected i {
   background: var(--ok);
   box-shadow: 0 0 8px var(--ok);
 }
-html[data-theme="phantom"] .connection-offline i {
+html[data-theme="mythic"] .connection-offline i {
   background: var(--red);
 }
-html[data-theme="phantom"] .notice-toast {
+html[data-theme="mythic"] .notice-toast {
   border: 2px solid var(--panel-edge);
   border-radius: 9px;
   background: var(--panel);
@@ -978,15 +1025,15 @@ html[data-theme="phantom"] .notice-toast {
   font-size: 0.72rem;
   box-shadow: 0 4px 0 var(--edge-shadow);
 }
-html[data-theme="phantom"] .notice-toast i {
+html[data-theme="mythic"] .notice-toast i {
   color: var(--muted);
 }
-html[data-theme="phantom"] .leave-button.is-confirming {
+html[data-theme="mythic"] .leave-button.is-confirming {
   background: var(--red);
   box-shadow: 0 4px 0 var(--red-deep);
   color: #fff;
 }
-html[data-theme="phantom"] .clear-selection {
+html[data-theme="mythic"] .clear-selection {
   color: var(--gold);
   font-family: var(--font-game);
   font-size: 0.64rem;
@@ -995,34 +1042,34 @@ html[data-theme="phantom"] .clear-selection {
   text-transform: uppercase;
   text-underline-offset: 3px;
 }
-html[data-theme="phantom"] .error-toast {
+html[data-theme="mythic"] .error-toast {
   border: 2px solid var(--red);
   border-radius: 9px;
   background: var(--danger-panel);
   color: var(--danger-soft);
   box-shadow: 0 5px 0 var(--edge-shadow);
 }
-html[data-theme="phantom"] .error-toast strong {
+html[data-theme="mythic"] .error-toast strong {
   font-family: var(--font-game);
   font-size: 0.8rem;
   letter-spacing: 0.03em;
   text-transform: uppercase;
 }
-html[data-theme="phantom"] .error-toast span {
+html[data-theme="mythic"] .error-toast span {
   color: var(--danger-muted);
   font-size: 0.72rem;
 }
-html[data-theme="phantom"] .modal-scrim {
+html[data-theme="mythic"] .modal-scrim {
   background: var(--overlay);
 }
-html[data-theme="phantom"] .bottom-reveal small {
+html[data-theme="mythic"] .bottom-reveal small {
   color: var(--gold);
   font-family: var(--font-game);
   font-size: 0.68rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
-html[data-theme="phantom"] .victory-mark {
+html[data-theme="mythic"] .victory-mark {
   color: var(--gold);
   font-family: Georgia, serif;
   font-size: 4.4rem;
@@ -1032,7 +1079,7 @@ html[data-theme="phantom"] .victory-mark {
 }
 /* Round verdict: the results card, white-framed on a hard red drop with a
    diagonal red slash cutting through — maximum "RESULTS" energy. */
-html[data-theme="phantom"] .round-summary {
+html[data-theme="mythic"] .round-summary {
   border: 2px solid #f5f2f4;
   border-radius: 14px;
   background:
@@ -1048,7 +1095,7 @@ html[data-theme="phantom"] .round-summary {
     0 10px 0 var(--red-deep),
     0 24px 48px rgba(0, 0, 0, 0.55);
 }
-html[data-theme="phantom"] .round-summary h2 {
+html[data-theme="mythic"] .round-summary h2 {
   font-family: var(--font-game);
   font-size: 1.5rem;
   line-height: 1.4;
@@ -1057,20 +1104,20 @@ html[data-theme="phantom"] .round-summary h2 {
     2px 2px 0 #0b090d,
     4px 4px 0 var(--red);
 }
-html[data-theme="phantom"] .round-summary > p:not(.eyebrow) {
+html[data-theme="mythic"] .round-summary > p:not(.eyebrow) {
   color: var(--muted);
   font-size: 0.8rem;
 }
-html[data-theme="phantom"] .summary-score {
+html[data-theme="mythic"] .summary-score {
   border: 2px solid var(--panel-edge);
   border-radius: 9px;
   background: var(--well-deep);
   box-shadow: inset 0 3px 0 rgba(0, 0, 0, 0.4);
 }
-html[data-theme="phantom"] .summary-score span + span {
+html[data-theme="mythic"] .summary-score span + span {
   border-left: 2px solid var(--panel-edge);
 }
-html[data-theme="phantom"] .summary-score small {
+html[data-theme="mythic"] .summary-score small {
   color: var(--muted);
   font-family: var(--font-game);
   font-size: 0.62rem;
@@ -1078,25 +1125,25 @@ html[data-theme="phantom"] .summary-score small {
   text-transform: uppercase;
 }
 /* Chips × mult: points read blue, the level jump reads red. */
-html[data-theme="phantom"] .summary-score strong {
+html[data-theme="mythic"] .summary-score strong {
   font-family: var(--font-num);
   font-size: 1.55rem;
   text-shadow: 0 2px 0 rgba(0, 0, 0, 0.5);
 }
-html[data-theme="phantom"] .summary-score span:first-child strong {
+html[data-theme="mythic"] .summary-score span:first-child strong {
   color: var(--blue);
 }
-html[data-theme="phantom"] .summary-score span:last-child strong {
+html[data-theme="mythic"] .summary-score span:last-child strong {
   color: var(--red-bright);
 }
 
 @media (max-width: 620px) {
-  html[data-theme="phantom"] .board {
+  html[data-theme="mythic"] .board {
     margin: 0;
     border-width: 5px;
     border-radius: 0;
   }
-  html[data-theme="phantom"] .menu-title {
+  html[data-theme="mythic"] .menu-title {
     font-size: 2.7rem;
   }
 }
@@ -1106,38 +1153,39 @@ html[data-theme="phantom"] .summary-score span:last-child strong {
 /* portrait avatars, face-card art, and trump gilding.                     */
 /* ---------------------------------------------------------------------- */
 
-/* The brand tiles carry the full emblem instead of a bare glyph. */
-html[data-theme="phantom"] .brand-mark,
-html[data-theme="phantom"] .menu-mark,
-html[data-theme="phantom"] .loading-mark {
+/* The brand tiles carry the full emblem instead of a bare glyph.
+   TODO(art): logo migration in a later task. */
+html[data-theme="mythic"] .brand-mark,
+html[data-theme="mythic"] .menu-mark,
+html[data-theme="mythic"] .loading-mark {
   background: #0c0a0f url("/phantom/logo.svg") center / cover no-repeat;
   color: transparent;
   text-shadow: none;
 }
 
 /* Team-role badges: the Chinese character leads, icon and English follow. */
-html[data-theme="phantom"] .team-score-pill em {
+html[data-theme="mythic"] .team-score-pill em {
   display: flex;
   align-items: center;
   gap: 5px;
   padding: 4px 9px;
 }
-html[data-theme="phantom"] .role-icon {
+html[data-theme="mythic"] .role-icon {
   flex-shrink: 0;
 }
-html[data-theme="phantom"] .role-char {
+html[data-theme="mythic"] .role-char {
   font-family: var(--font-game);
   font-size: 1rem;
   line-height: 1;
 }
-html[data-theme="phantom"] .role-en {
+html[data-theme="mythic"] .role-en {
   font-size: 0.5rem;
   letter-spacing: 0.1em;
   opacity: 0.75;
 }
 
 /* Nameplate 攻/守 tag. */
-html[data-theme="phantom"] .role-tag {
+html[data-theme="mythic"] .role-tag {
   display: inline-grid;
   place-items: center;
   margin-left: 5px;
@@ -1147,17 +1195,17 @@ html[data-theme="phantom"] .role-tag {
   line-height: 1.2;
   vertical-align: 1px;
 }
-html[data-theme="phantom"] .role-tag.role-attacking {
+html[data-theme="mythic"] .role-tag.role-attacking {
   background: var(--red-tint);
   color: var(--red-bright);
 }
-html[data-theme="phantom"] .role-tag.role-defending {
+html[data-theme="mythic"] .role-tag.role-defending {
   background: rgba(79, 149, 255, 0.18);
   color: #86b7ff;
 }
 
 /* Points projection: the verdict if the round stopped right here. */
-html[data-theme="phantom"] .points-projection {
+html[data-theme="mythic"] .points-projection {
   display: grid;
   gap: 2px;
   justify-items: center;
@@ -1170,13 +1218,13 @@ html[data-theme="phantom"] .points-projection {
   font-style: normal;
   line-height: 1;
 }
-html[data-theme="phantom"] .points-projection.is-attackers {
+html[data-theme="mythic"] .points-projection.is-attackers {
   color: var(--red-bright);
 }
-html[data-theme="phantom"] .points-projection.is-defenders {
+html[data-theme="mythic"] .points-projection.is-defenders {
   color: #86b7ff;
 }
-html[data-theme="phantom"] .points-projection i {
+html[data-theme="mythic"] .points-projection i {
   color: var(--faint);
   font-size: 0.5rem;
   font-style: normal;
@@ -1184,8 +1232,8 @@ html[data-theme="phantom"] .points-projection i {
 }
 
 /* Opera-mask portraits replace the letter tiles, one per seat. */
-html[data-theme="phantom"] .player-avatar[class*="avatar-seat-"],
-html[data-theme="phantom"] .seat-avatar[class*="avatar-seat-"] {
+html[data-theme="mythic"] .player-avatar[class*="avatar-seat-"],
+html[data-theme="mythic"] .seat-avatar[class*="avatar-seat-"] {
   color: transparent;
   text-shadow: none;
   background-color: #16131b;
@@ -1193,84 +1241,145 @@ html[data-theme="phantom"] .seat-avatar[class*="avatar-seat-"] {
   background-size: cover;
   background-repeat: no-repeat;
 }
-html[data-theme="phantom"] .avatar-seat-0 {
+/* TODO(art): avatar migration in a later task. */
+html[data-theme="mythic"] .avatar-seat-0 {
   background-image: url("/phantom/avatar-0.svg") !important;
 }
-html[data-theme="phantom"] .avatar-seat-1 {
+html[data-theme="mythic"] .avatar-seat-1 {
   background-image: url("/phantom/avatar-1.svg") !important;
 }
-html[data-theme="phantom"] .avatar-seat-2 {
+html[data-theme="mythic"] .avatar-seat-2 {
   background-image: url("/phantom/avatar-2.svg") !important;
 }
-html[data-theme="phantom"] .avatar-seat-3 {
+html[data-theme="mythic"] .avatar-seat-3 {
   background-image: url("/phantom/avatar-3.svg") !important;
 }
 
-/* Face-card art: silhouette masks tinted by the suit color. The corner
-   index stays; the big center pip shrinks to make room for the art. */
-html[data-theme="phantom"] .playing-card.rank-A::after,
-html[data-theme="phantom"] .playing-card.rank-K::after,
-html[data-theme="phantom"] .playing-card.rank-Q::after,
-html[data-theme="phantom"] .playing-card.rank-J::after {
-  content: "";
-  position: absolute;
-  top: 25%;
-  right: 14%;
-  bottom: 26%;
-  left: 14%;
-  background-color: currentColor;
-  opacity: 0.9;
-  mask-position: center;
-  mask-repeat: no-repeat;
-  mask-size: contain;
-  -webkit-mask-position: center;
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-size: contain;
-  pointer-events: none;
+/* Face-card art replaces the large center pip; the corner chip remains as
+   the readable game index over arbitrary illustration values. */
+html[data-theme="mythic"] .playing-card.rank-A,
+html[data-theme="mythic"] .playing-card.rank-K,
+html[data-theme="mythic"] .playing-card.rank-Q,
+html[data-theme="mythic"] .playing-card.rank-J {
+  background-size: cover;
+  background-position: center;
 }
-html[data-theme="phantom"] .playing-card.rank-A::after {
-  mask-image: url("/phantom/face-ace.svg");
-  -webkit-mask-image: url("/phantom/face-ace.svg");
+html[data-theme="mythic"] .playing-card.card-hearts.rank-A {
+  background-image: image-set(
+    url("/art/cards/hearts-ace.webp") 1x,
+    url("/art/cards/hearts-ace@2x.webp") 2x
+  );
 }
-html[data-theme="phantom"] .playing-card.rank-K::after {
-  mask-image: url("/phantom/face-king.svg");
-  -webkit-mask-image: url("/phantom/face-king.svg");
+html[data-theme="mythic"] .playing-card.card-hearts.rank-K {
+  background-image: image-set(
+    url("/art/cards/hearts-king.webp") 1x,
+    url("/art/cards/hearts-king@2x.webp") 2x
+  );
 }
-html[data-theme="phantom"] .playing-card.rank-Q::after {
-  mask-image: url("/phantom/face-queen.svg");
-  -webkit-mask-image: url("/phantom/face-queen.svg");
+html[data-theme="mythic"] .playing-card.card-hearts.rank-Q {
+  background-image: image-set(
+    url("/art/cards/hearts-queen.webp") 1x,
+    url("/art/cards/hearts-queen@2x.webp") 2x
+  );
 }
-html[data-theme="phantom"] .playing-card.rank-J::after {
-  mask-image: url("/phantom/face-jack.svg");
-  -webkit-mask-image: url("/phantom/face-jack.svg");
+html[data-theme="mythic"] .playing-card.card-hearts.rank-J {
+  background-image: image-set(
+    url("/art/cards/hearts-jack.webp") 1x,
+    url("/art/cards/hearts-jack@2x.webp") 2x
+  );
 }
-html[data-theme="phantom"] .playing-card.rank-A .card-center,
-html[data-theme="phantom"] .playing-card.rank-K .card-center,
-html[data-theme="phantom"] .playing-card.rank-Q .card-center,
-html[data-theme="phantom"] .playing-card.rank-J .card-center {
-  font-size: 1.15rem;
-  opacity: 0.8;
+html[data-theme="mythic"] .playing-card.card-spades.rank-A {
+  background-image: image-set(
+    url("/art/cards/spades-ace.webp") 1x,
+    url("/art/cards/spades-ace@2x.webp") 2x
+  );
 }
-html[data-theme="phantom"] .playing-card.is-compact.rank-A .card-center,
-html[data-theme="phantom"] .playing-card.is-compact.rank-K .card-center,
-html[data-theme="phantom"] .playing-card.is-compact.rank-Q .card-center,
-html[data-theme="phantom"] .playing-card.is-compact.rank-J .card-center {
-  font-size: 0.85rem;
+html[data-theme="mythic"] .playing-card.card-spades.rank-K {
+  background-image: image-set(
+    url("/art/cards/spades-king.webp") 1x,
+    url("/art/cards/spades-king@2x.webp") 2x
+  );
+}
+html[data-theme="mythic"] .playing-card.card-spades.rank-Q {
+  background-image: image-set(
+    url("/art/cards/spades-queen.webp") 1x,
+    url("/art/cards/spades-queen@2x.webp") 2x
+  );
+}
+html[data-theme="mythic"] .playing-card.card-spades.rank-J {
+  background-image: image-set(
+    url("/art/cards/spades-jack.webp") 1x,
+    url("/art/cards/spades-jack@2x.webp") 2x
+  );
+}
+html[data-theme="mythic"] .playing-card.card-diamonds.rank-A {
+  background-image: image-set(
+    url("/art/cards/diamonds-ace.webp") 1x,
+    url("/art/cards/diamonds-ace@2x.webp") 2x
+  );
+}
+html[data-theme="mythic"] .playing-card.card-diamonds.rank-K {
+  background-image: image-set(
+    url("/art/cards/diamonds-king.webp") 1x,
+    url("/art/cards/diamonds-king@2x.webp") 2x
+  );
+}
+html[data-theme="mythic"] .playing-card.card-diamonds.rank-Q {
+  background-image: image-set(
+    url("/art/cards/diamonds-queen.webp") 1x,
+    url("/art/cards/diamonds-queen@2x.webp") 2x
+  );
+}
+html[data-theme="mythic"] .playing-card.card-diamonds.rank-J {
+  background-image: image-set(
+    url("/art/cards/diamonds-jack.webp") 1x,
+    url("/art/cards/diamonds-jack@2x.webp") 2x
+  );
+}
+html[data-theme="mythic"] .playing-card.card-clubs.rank-A {
+  background-image: image-set(
+    url("/art/cards/clubs-ace.webp") 1x,
+    url("/art/cards/clubs-ace@2x.webp") 2x
+  );
+}
+html[data-theme="mythic"] .playing-card.card-clubs.rank-K {
+  background-image: image-set(
+    url("/art/cards/clubs-king.webp") 1x,
+    url("/art/cards/clubs-king@2x.webp") 2x
+  );
+}
+html[data-theme="mythic"] .playing-card.card-clubs.rank-Q {
+  background-image: image-set(
+    url("/art/cards/clubs-queen.webp") 1x,
+    url("/art/cards/clubs-queen@2x.webp") 2x
+  );
+}
+html[data-theme="mythic"] .playing-card.card-clubs.rank-J {
+  background-image: image-set(
+    url("/art/cards/clubs-jack.webp") 1x,
+    url("/art/cards/clubs-jack@2x.webp") 2x
+  );
+}
+html[data-theme="mythic"] .playing-card.rank-A .card-center,
+html[data-theme="mythic"] .playing-card.rank-K .card-center,
+html[data-theme="mythic"] .playing-card.rank-Q .card-center,
+html[data-theme="mythic"] .playing-card.rank-J .card-center {
+  display: none;
 }
 
 /* Trump gilding: trump cards wear a gold frame and a 主 seal — power you
    can spot across the table. */
-html[data-theme="phantom"] .playing-card.is-trump {
+html[data-theme="mythic"] .playing-card.is-trump {
   border-color: var(--gold-deep);
   box-shadow:
     0 0 0 1px color-mix(in srgb, var(--gold) 55%, transparent),
     0 0 14px rgba(255, 182, 61, 0.16),
     0 4px 0 var(--edge-shadow);
 }
-html[data-theme="phantom"] .playing-card.is-trump::before {
+html[data-theme="mythic"] .playing-card.is-trump::before {
   content: "主";
   position: absolute;
-  z-index: 1;
+  z-index: 4;
   top: 6px;
   right: 6px;
   display: grid;
@@ -1287,7 +1396,25 @@ html[data-theme="phantom"] .playing-card.is-trump::before {
   transform: rotate(6deg);
   pointer-events: none;
 }
-html[data-theme="phantom"] .playing-card.is-compact.is-trump::before {
+html[data-theme="mythic"] .playing-card.is-trump::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: -28%;
+  background: linear-gradient(
+    110deg,
+    transparent 0 38%,
+    rgba(255, 244, 190, 0.08) 44%,
+    rgba(255, 202, 76, 0.34) 50%,
+    rgba(255, 244, 190, 0.08) 56%,
+    transparent 62% 100%
+  );
+  mix-blend-mode: screen;
+  opacity: 0.55;
+  animation: mythic-foil-shimmer 4.8s ease-in-out infinite;
+  pointer-events: none;
+}
+html[data-theme="mythic"] .playing-card.is-compact.is-trump::before {
   top: 4px;
   right: 4px;
   width: 16px;
@@ -1295,14 +1422,14 @@ html[data-theme="phantom"] .playing-card.is-compact.is-trump::before {
   font-size: 0.54rem;
 }
 /* Selection and hint cues must still outrank the gilding. */
-html[data-theme="phantom"] .playing-card.is-trump.is-selected {
+html[data-theme="mythic"] .playing-card.is-trump.is-selected {
   border-color: var(--red);
   box-shadow:
     0 0 0 3px var(--red),
     0 0 18px var(--red-tint),
     0 7px 0 var(--edge-shadow);
 }
-html[data-theme="phantom"] .playing-card.is-trump.is-hinted {
+html[data-theme="mythic"] .playing-card.is-trump.is-hinted {
   box-shadow:
     0 0 0 2px var(--gold),
     0 0 16px var(--gold-tint),
@@ -1310,7 +1437,7 @@ html[data-theme="phantom"] .playing-card.is-trump.is-hinted {
 }
 
 /* The trump panel reads as a shrine for the round's power card. */
-html[data-theme="phantom"] .level-trump-pill {
+html[data-theme="mythic"] .level-trump-pill {
   border-color: color-mix(in srgb, var(--gold) 40%, var(--panel-edge)) !important;
   background:
     repeating-conic-gradient(
@@ -1320,12 +1447,12 @@ html[data-theme="phantom"] .level-trump-pill {
     ),
     var(--well-deep);
 }
-html[data-theme="phantom"] .trump-panel-label {
+html[data-theme="mythic"] .trump-panel-label {
   color: var(--gold);
 }
 /* Undeclared trump: a dark mystery card instead of the paper placeholder. */
-html[data-theme="phantom"] .pending-trump-card,
-html[data-theme="phantom"] .generic-joker-card {
+html[data-theme="mythic"] .pending-trump-card,
+html[data-theme="mythic"] .generic-joker-card {
   border: 2px solid #000;
   border-radius: 7px;
   background:
@@ -1337,20 +1464,24 @@ html[data-theme="phantom"] .generic-joker-card {
     linear-gradient(165deg, #17141d, #0c0a10);
   box-shadow: 0 5px 0 var(--edge-shadow);
 }
-html[data-theme="phantom"] .pending-trump-card strong {
+html[data-theme="mythic"] .pending-trump-card strong {
   color: #f5f2f4 !important;
 }
-html[data-theme="phantom"] .pending-trump-card b {
+html[data-theme="mythic"] .pending-trump-card b {
   color: var(--red-bright);
 }
-html[data-theme="phantom"] .generic-joker-card {
+html[data-theme="mythic"] .generic-joker-card {
   color: var(--red-bright);
 }
 
 /* The starburst and pulses hold still for reduced-motion users; the global
    rule already freezes animation, this just drops the leans that imply it. */
 @media (prefers-reduced-motion: reduce) {
-  html[data-theme="phantom"] .orb-one {
+  html[data-theme="mythic"] .orb-one {
     animation: none;
+  }
+  html[data-theme="mythic"] .playing-card.is-trump::after {
+    animation: none;
+    opacity: 0;
   }
 }

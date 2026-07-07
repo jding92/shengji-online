@@ -27,7 +27,6 @@ import { HandDock } from "./hand-dock";
 import { LeaveButton } from "./leave-button";
 import { RoundSummaryModal } from "./round-summary-modal";
 import { TableSeat } from "./table-seat";
-import { ThemeSwitcher } from "./theme-switcher";
 import { TrickCenter } from "./trick-center";
 
 type GameTableProps = {
@@ -512,7 +511,6 @@ export function GameTable({
         </div>
 
         <div className="side-actions">
-          <ThemeSwitcher />
           <LeaveButton onLeave={onLeave} />
         </div>
       </aside>

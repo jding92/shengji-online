@@ -4,7 +4,6 @@ import type { BotDifficulty } from "@shengji/protocol";
 import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import { ThemeSwitcher } from "../components/theme-switcher";
 import { safeStorage } from "../lib/safe-storage";
 import { sessionKey } from "../lib/session";
 
@@ -152,7 +151,6 @@ export default function HomePage() {
         </div>
 
         {error && <p className="inline-error">{error}</p>}
-        <ThemeSwitcher />
       </motion.section>
     </main>
   );
