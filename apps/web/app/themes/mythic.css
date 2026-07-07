@@ -515,12 +515,26 @@ html[data-theme="mythic"] .side-panel {
   }
 }
 html[data-theme="mythic"] .bottom-tab {
+  grid-template-columns: auto 1fr;
+  align-items: center;
   border: 2px solid var(--panel-edge);
   border-radius: 7px;
   background: var(--well-deep);
   box-shadow: inset 0 3px 0 rgba(0, 0, 0, 0.4);
 }
+html[data-theme="mythic"] .bottom-tab-icon {
+  grid-row: 1 / span 2;
+  width: 42px;
+  height: 42px;
+  border: 2px solid var(--gold);
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow:
+    0 0 0 1px var(--gold-deep),
+    0 3px 0 var(--edge-shadow);
+}
 html[data-theme="mythic"] .bottom-tab small {
+  justify-self: start;
   color: var(--faint);
   font-family: var(--font-game);
   font-size: 0.64rem;
@@ -528,6 +542,7 @@ html[data-theme="mythic"] .bottom-tab small {
   text-transform: uppercase;
 }
 html[data-theme="mythic"] .bottom-tab strong {
+  justify-self: start;
   color: var(--gold);
   font-family: var(--font-num);
   font-size: 1.05rem;
@@ -723,6 +738,20 @@ html[data-theme="mythic"] .bottom-icon {
   text-shadow: 0 2px 0 rgba(0, 0, 0, 0.4);
   transform: rotate(-6deg);
   animation: mythic-bob 1.5s infinite;
+}
+html[data-theme="mythic"] .deal-spinner:has(img) {
+  overflow: hidden;
+  border-color: var(--gold);
+  border-radius: 50%;
+  background: #17120f;
+  box-shadow:
+    0 0 0 1px var(--gold-deep),
+    0 4px 0 var(--edge-shadow);
+}
+html[data-theme="mythic"] .deal-spinner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 html[data-theme="mythic"] .countdown {
   border: 2px solid var(--panel-edge);
@@ -1153,25 +1182,32 @@ html[data-theme="mythic"] .summary-score span:last-child strong {
 /* portrait avatars, face-card art, and trump gilding.                     */
 /* ---------------------------------------------------------------------- */
 
-/* The brand tiles carry the full emblem instead of a bare glyph.
-   TODO(art): logo migration in a later task. */
+/* The brand tiles carry the full emblem instead of a bare glyph. */
 html[data-theme="mythic"] .brand-mark,
 html[data-theme="mythic"] .menu-mark,
 html[data-theme="mythic"] .loading-mark {
-  background: #0c0a0f url("/phantom/logo.svg") center / cover no-repeat;
+  background: #0c0a0f url("/art/ui/mythic-logo.svg") center / cover no-repeat;
   color: transparent;
   text-shadow: none;
 }
 
-/* Team-role badges: the Chinese character leads, icon and English follow. */
+/* Team-role badges: square art cropped into table medallions. */
 html[data-theme="mythic"] .team-score-pill em {
   display: flex;
   align-items: center;
   gap: 5px;
-  padding: 4px 9px;
+  padding: 3px 9px 3px 4px;
 }
-html[data-theme="mythic"] .role-icon {
+html[data-theme="mythic"] .role-medallion {
   flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--gold);
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow:
+    0 0 0 1px var(--gold-deep),
+    0 2px 0 var(--edge-shadow);
 }
 html[data-theme="mythic"] .role-char {
   font-family: var(--font-game);
@@ -1189,19 +1225,21 @@ html[data-theme="mythic"] .role-tag {
   display: inline-grid;
   place-items: center;
   margin-left: 5px;
-  border-radius: 3px;
+  border: 1px solid rgba(242, 184, 75, 0.45);
+  border-radius: 50%;
   padding: 1px 4px;
   font-size: 0.68rem;
   line-height: 1.2;
+  box-shadow: 0 1px 0 var(--edge-shadow);
   vertical-align: 1px;
 }
 html[data-theme="mythic"] .role-tag.role-attacking {
-  background: var(--red-tint);
-  color: var(--red-bright);
+  background: radial-gradient(circle at 35% 30%, var(--house-hearts), var(--red-deep));
+  color: #fff;
 }
 html[data-theme="mythic"] .role-tag.role-defending {
-  background: rgba(79, 149, 255, 0.18);
-  color: #86b7ff;
+  background: radial-gradient(circle at 35% 30%, var(--house-spades), #12253c);
+  color: #fff;
 }
 
 /* Points projection: the verdict if the round stopped right here. */
@@ -1231,28 +1269,56 @@ html[data-theme="mythic"] .points-projection i {
   letter-spacing: 0.14em;
 }
 
-/* Opera-mask portraits replace the letter tiles, one per seat. */
+/* House medallions: seat 0 has portrait art, the rest keep readable initials. */
 html[data-theme="mythic"] .player-avatar[class*="avatar-seat-"],
 html[data-theme="mythic"] .seat-avatar[class*="avatar-seat-"] {
-  color: transparent;
-  text-shadow: none;
+  overflow: hidden;
+  border: 2px solid var(--gold);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 1px var(--gold-deep),
+    0 3px 0 var(--edge-shadow);
+  color: #fff;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.55);
   background-color: #16131b;
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
 }
-/* TODO(art): avatar migration in a later task. */
 html[data-theme="mythic"] .avatar-seat-0 {
-  background-image: url("/phantom/avatar-0.svg") !important;
+  background-image: image-set(
+    url("/art/avatars/hades-king-yan.webp") 1x,
+    url("/art/avatars/hades-king-yan@2x.webp") 2x
+  ) !important;
+  color: transparent;
+  text-shadow: none;
 }
+/* TODO(art): replace with a generated avatar portrait — prompts in docs/prompt-batches/07-avatars-greek-court.md / 08-avatars-cross-pantheon.md; add the file to the manifest in apps/web/scripts/build-art.mjs */
 html[data-theme="mythic"] .avatar-seat-1 {
-  background-image: url("/phantom/avatar-1.svg") !important;
+  background-image: radial-gradient(
+    circle at 36% 28%,
+    color-mix(in srgb, var(--house-spades) 88%, white 12%),
+    #183147 58%,
+    #080906 100%
+  ) !important;
 }
+/* TODO(art): replace with a generated avatar portrait — prompts in docs/prompt-batches/07-avatars-greek-court.md / 08-avatars-cross-pantheon.md; add the file to the manifest in apps/web/scripts/build-art.mjs */
 html[data-theme="mythic"] .avatar-seat-2 {
-  background-image: url("/phantom/avatar-2.svg") !important;
+  background-image: radial-gradient(
+    circle at 36% 28%,
+    color-mix(in srgb, var(--house-diamonds) 88%, white 12%),
+    #7e1118 58%,
+    #080906 100%
+  ) !important;
 }
+/* TODO(art): replace with a generated avatar portrait — prompts in docs/prompt-batches/07-avatars-greek-court.md / 08-avatars-cross-pantheon.md; add the file to the manifest in apps/web/scripts/build-art.mjs */
 html[data-theme="mythic"] .avatar-seat-3 {
-  background-image: url("/phantom/avatar-3.svg") !important;
+  background-image: radial-gradient(
+    circle at 36% 28%,
+    color-mix(in srgb, var(--house-clubs) 88%, white 12%),
+    #07564f 58%,
+    #080906 100%
+  ) !important;
 }
 
 /* Face-card art replaces the large center pip; the corner chip remains as

@@ -5,6 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { cardFaceLabel, relativeSeatPosition, type TablePosition } from "../lib/cards";
 import { TRICK_RESULT_HOLD_MS, TRICK_SWEEP_MS } from "../lib/constants";
+import { ART, art2x } from "../lib/art";
 import { PlayingCard } from "./card";
 
 type PublicCompletedTrick = NonNullable<
@@ -89,7 +90,14 @@ function phaseMessage(view: PrivateGameView): { key: string; node: ReactNode } |
       key: "dealing",
       node: (
         <div className="phase-message">
-          <span className="deal-spinner">升</span>
+          <span className="deal-spinner">
+            <img
+              src={ART.ui.cardDeck}
+              srcSet={`${art2x(ART.ui.cardDeck)} 2x`}
+              alt=""
+              aria-hidden="true"
+            />
+          </span>
           <strong>Dealing the cards</strong>
           <small>
             {bid

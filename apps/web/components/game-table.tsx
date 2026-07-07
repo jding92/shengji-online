@@ -18,6 +18,7 @@ import {
   sumCardPoints,
 } from "@shengji/engine";
 import { useCardSelection } from "../hooks/use-card-selection";
+import { ART, art2x } from "../lib/art";
 import { THROW_BANNER_MS } from "../lib/constants";
 import { compareForHandDisplay, relativeSeatPosition } from "../lib/cards";
 import { teamClassForSeat } from "../lib/strings";
@@ -54,35 +55,13 @@ function TeamRoleBadge({ role }: { role: TeamRole }) {
   }
   return (
     <>
-      {role === "attacking" ? (
-        <svg
-          className="role-icon"
-          viewBox="0 0 16 16"
-          width="12"
-          height="12"
-          aria-hidden="true"
-        >
-          {/* Crossed blades. */}
-          <path
-            fill="currentColor"
-            d="M2 2l7.2 5.8 1.4-1.4L3.4 1 2 2zm12 0L6.8 7.8l1.4 1.4L15 3.4 14 2zM4.6 10l-2.2 2.8L4 14.4 6.6 12l-2-2zm6.8 0l2 2-2.6 2.4-1.6-1.6 2.2-2.8z"
-          />
-        </svg>
-      ) : (
-        <svg
-          className="role-icon"
-          viewBox="0 0 16 16"
-          width="12"
-          height="12"
-          aria-hidden="true"
-        >
-          {/* Shield. */}
-          <path
-            fill="currentColor"
-            d="M8 1l5.5 2v4.2c0 3.4-2.2 6.1-5.5 7.8-3.3-1.7-5.5-4.4-5.5-7.8V3L8 1zm0 2.1L4.5 4.4v2.8c0 2.5 1.5 4.5 3.5 5.8 2-1.3 3.5-3.3 3.5-5.8V4.4L8 3.1z"
-          />
-        </svg>
-      )}
+      <img
+        className="role-medallion"
+        src={role === "attacking" ? ART.ui.attackBadge : ART.ui.defendBadge}
+        srcSet={`${art2x(role === "attacking" ? ART.ui.attackBadge : ART.ui.defendBadge)} 2x`}
+        alt=""
+        aria-hidden="true"
+      />
       <span className="role-char">{role === "attacking" ? "攻" : "守"}</span>
       <span className="role-en">{role === "attacking" ? "ATTACK" : "DEFEND"}</span>
     </>
@@ -504,6 +483,13 @@ export function GameTable({
               className={`bottom-tab ${showBuried ? "is-open" : ""}`}
               onClick={() => setShowBuried((open) => !open)}
             >
+              <img
+                className="bottom-tab-icon"
+                src={ART.ui.buriedCards}
+                srcSet={`${art2x(ART.ui.buriedCards)} 2x`}
+                alt=""
+                aria-hidden="true"
+              />
               <small>底牌 · BOTTOM</small>
               <strong>{sumCardPoints(buried)} pts</strong>
             </button>
