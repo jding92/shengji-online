@@ -5,7 +5,7 @@ import type {
   PrivateGameView,
   WireClientCommand,
 } from "@shengji/protocol";
-import { AnimatePresence, LayoutGroup, motion } from "motion/react";
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   canHandOutbid,
@@ -19,6 +19,7 @@ import {
 } from "@shengji/engine";
 import { useCardSelection } from "../hooks/use-card-selection";
 import { useGameMoments } from "../hooks/use-game-moments";
+import { useSoundEffects, useSoundPreference } from "../hooks/use-sound-effects";
 import { ART, art2x } from "../lib/art";
 import { THROW_BANNER_MS, TRICK_WINNER_GLOW_MS } from "../lib/constants";
 import {
@@ -86,6 +87,9 @@ export function GameTable({
 }: GameTableProps) {
   const round = view.publicRound;
   const { moments, dismiss } = useGameMoments(view);
+  useSoundEffects(moments);
+  const { muted, toggleMuted } = useSoundPreference();
+  const reducedMotion = useReducedMotion() ?? false;
   const splashPrefetched = useRef<HTMLImageElement[]>([]);
   const actions = useMemo(() => new Set(view.legalActions), [view.legalActions]);
   // Sort trump-aware: before a suit is declared, treat the level rank as
@@ -531,6 +535,15 @@ export function GameTable({
         </div>
 
         <div className="side-actions">
+          <button
+            type="button"
+            className="icon-button sound-toggle"
+            aria-label={muted ? "Unmute sounds" : "Mute sounds"}
+            aria-pressed={muted}
+            onClick={toggleMuted}
+          >
+            {muted ? "静" : "音"}
+          </button>
           <LeaveButton onLeave={onLeave} />
         </div>
       </aside>
@@ -544,8 +557,8 @@ export function GameTable({
               type="button"
               className={`throw-banner throw-${round.lastThrow.kind}`}
               onClick={() => setDismissedThrow(throwKey)}
-              initial={{ opacity: 0, y: -12 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={reducedMotion ? { opacity: 0 } : { opacity: 0, y: -12 }}
+              animate={reducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
             >
               <strong>
@@ -654,10 +667,24 @@ export function GameTable({
                         setShowBuried(false);
                       }
                     }}
-                    initial={{ opacity: 0, y: 14, scale: 0.92 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    transition={{ type: "spring", stiffness: 380, damping: 28 }}
+                    initial={
+                      reducedMotion
+                        ? { opacity: 0 }
+                        : { opacity: 0, y: 14, scale: 0.92 }
+                    }
+                    animate={
+                      reducedMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }
+                    }
+                    exit={
+                      reducedMotion
+                        ? { opacity: 0 }
+                        : { opacity: 0, y: 10, scale: 0.95 }
+                    }
+                    transition={
+                      reducedMotion
+                        ? { duration: 0.18 }
+                        : { type: "spring", stiffness: 380, damping: 28 }
+                    }
                   >
                     <small>
                       YOUR BOTTOM · {buried.length} cards · {sumCardPoints(buried)} pts

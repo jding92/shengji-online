@@ -52,3 +52,19 @@ STYLE: Persona 5 × Hades hybrid illustration — heavy black ink outlines, high
 
 Aspect / size target: 1:1 square, generate large enough to crop to 1024 × 1024, 512 × 512, 192 × 192, 180 × 180, 32 × 32, and 16 × 16.
 ```
+
+## Portrait victory/defeat splash variants (9:16)
+
+```
+Match the established art style of the previous designs in this conversation, especially the existing landscape Victory splash and Defeat splash.
+
+Design sheet, portrait 9:16, two full-screen mobile splash variants stacked or side by side with clean separation so each can be cut out individually. Keep the subjects centered and readable so tall crops survive on mobile screens, with score text space reserved in the lower third of each splash.
+
+Top / left splash — VICTORY: Sun Wukong's triumphant silhouette centered on his somersault cloud above a vertical burst of playing cards and gold coins, blazing gold flame FX rising behind him. A large red seal stamp of 勝 anchors the middle-lower composition, framed by laurel branches and auspicious clouds. Leave breathing room around the figure so UI overlays do not cover the face or seal.
+
+Bottom / right splash — DEFEAT: Loki's grin centered and looming half-lit by cold emerald witch-fire in tall dark storm clouds, with playing cards scattered face-down down the vertical frame. Muted, desaturated palette. A large dark seal stamp of 敗 anchors the middle-lower composition. Leave breathing room around the face and seal so mobile UI overlays survive.
+
+STYLE: Persona 5 × Hades hybrid illustration — heavy black ink outlines, high-contrast cel shading with painted rim light, lacquer black, vermilion red, imperial gold on off-white aged-parchment background; defeat uses muted red, tarnished gold, and cold emerald accent. Gold filigree ornamentation, graphic ink-splatter and speedline energy. No photorealism. Clean edges suitable for cutting out as game assets.
+
+Aspect / size target: 9:16 portrait at 1080 × 1920.
+```

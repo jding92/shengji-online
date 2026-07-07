@@ -12,9 +12,8 @@ ruleset is an engine/schema fixture only. The server always clones the
 four-player preset when it creates a room, and several web layout helpers
 assume exactly four seats.
 
-Practice mode is not a separate engine mode and has no bots. It creates a
-normal room, opens four independent sessions/WebSockets in one browser, and
-lets the user switch which private view is active.
+Practice mode is not a separate engine mode. It creates a normal room with
+server-side bot seats, then the web client auto-sits and readies the human.
 
 There is no player-removal command. “Leave” closes the socket and forgets the
 local resume token; it does not free the joined player or seat. New joins are
@@ -22,13 +21,13 @@ allowed only in the lobby, up to the configured player count.
 
 ## Workspace and dependency direction
 
-| Path                    | Owns                                                                       | Notes                                                                     |
-| ----------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| `packages/engine/src`   | All authoritative game behavior                                            | Pure TypeScript; receives timestamps and random seeds from callers        |
-| `packages/protocol/src` | Wire command schema and shared envelope/view types                         | Depends on the engine's public types                                      |
-| `apps/server/src`       | Transport, serialization, timers, persistence, authentication, projections | Depends on built engine and protocol packages                             |
-| `apps/web`              | Presentation and client transport                                          | Uses protocol types and selected engine helpers only for previews/sorting |
-| `apps/e2e`              | Browser-level flow                                                         | Starts server and web itself                                              |
+| Path                    | Owns                                                                       | Notes                                                                                         |
+| ----------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `packages/engine/src`   | All authoritative game behavior                                            | Pure TypeScript; receives timestamps and random seeds from callers                            |
+| `packages/protocol/src` | Wire command schema and shared envelope/view types                         | Depends on the engine's public types                                                          |
+| `apps/server/src`       | Transport, serialization, timers, persistence, authentication, projections | Depends on built engine and protocol packages                                                 |
+| `apps/web`              | Presentation and client transport                                          | Single mythic skin; uses protocol types and selected engine helpers only for previews/sorting |
+| `apps/e2e`              | Browser-level flow                                                         | Starts server and web itself                                                                  |
 
 Important engine entry points:
 
@@ -65,7 +64,8 @@ Important web entry points:
 - `hooks/use-game-room.ts` owns session storage, REST join, WebSocket
   reconnect/backoff, revisioned command envelopes, and server-time offset.
 - `components/room-client.tsx` switches among join, lobby, and game views.
-- `components/practice-room-client.tsx` runs the four local practice sessions.
+- `components/room-client.tsx` also auto-sits/readies practice tables when the
+  room was created with server-side bots.
 - `components/game-table.tsx` sorts the private hand and computes visual hints;
   `hand-dock.tsx` emits commands.
 - `app/page.tsx` creates/joins rooms. `next.config.ts` proxies only `/api/*`;
@@ -260,10 +260,13 @@ pnpm dev
 pnpm check
 pnpm test:e2e
 pnpm --filter @shengji/server simulate
+pnpm art:build
 ```
 
 `pnpm check` runs, in order, formatting verification, typed lint, strict
 typechecking, Vitest tests, and production builds. Playwright is separate.
+`pnpm art:build` regenerates committed `apps/web/public/art` WebPs from the
+`/assets` masters; run it after adding source art.
 
 Useful focused commands:
 

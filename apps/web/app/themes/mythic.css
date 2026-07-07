@@ -625,6 +625,13 @@ html[data-theme="mythic"] .icon-button {
   color: #fff;
   transform: skewX(-6deg);
 }
+html[data-theme="mythic"] .sound-toggle {
+  min-width: 44px;
+  min-height: 40px;
+  cursor: pointer;
+  font-family: var(--font-game);
+  font-size: 1rem;
+}
 html[data-theme="mythic"] .icon-button:not(:disabled):active {
   transform: skewX(-6deg) translateY(2px);
   box-shadow: 0 1px 0 var(--slate-deep);
