@@ -1325,11 +1325,6 @@ button:disabled {
   width: clamp(5rem, 18vw, 6rem);
   justify-self: center;
 }
-.victory-mark {
-  display: block;
-  margin: 14px auto 8px;
-  line-height: 1;
-}
 .round-summary {
   position: relative;
   overflow: hidden;
