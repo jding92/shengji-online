@@ -68,8 +68,9 @@ export function PlayingCard({
     : entrance === "deal"
       ? { opacity: 0, y: -90, rotate: -5 }
       : { opacity: 0, scale: 0.82 };
-  const transition =
-    entrance === "deal" && !reducedMotion
+  const transition = reducedMotion
+    ? { duration: 0.01 }
+    : entrance === "deal"
       ? { type: "spring" as const, stiffness: 420, damping: 30 }
       : { duration: 0.16 };
   const entranceTransition =
@@ -80,7 +81,7 @@ export function PlayingCard({
   return (
     <motion.button
       type="button"
-      layout
+      layout={!reducedMotion}
       layoutId={card.id}
       aria-label={display.label}
       aria-pressed={selected}
@@ -89,7 +90,7 @@ export function PlayingCard({
       onClick={onSelect}
       initial={initial}
       animate={{ opacity: 1, y: selected ? -18 : 0, scale: 1, rotate: 0 }}
-      {...(onSelect === undefined ? {} : { whileHover: { y: -18 } })}
+      {...(onSelect === undefined || reducedMotion ? {} : { whileHover: { y: -18 } })}
       transition={entranceTransition}
     >
       <span className="card-corner">

@@ -86,9 +86,13 @@ export function RoundSummaryModal({
         >
           <motion.section
             className={`round-summary ${yourTeamWon ? "is-victory" : "is-defeat"}`}
-            initial={{ y: 24, scale: 0.96 }}
-            animate={{ y: 0, scale: 1 }}
-            transition={{ type: "spring", stiffness: 320, damping: 26 }}
+            initial={reducedMotion ? { opacity: 0 } : { y: 24, scale: 0.96 }}
+            animate={reducedMotion ? { opacity: 1 } : { y: 0, scale: 1 }}
+            transition={
+              reducedMotion
+                ? { duration: 0.18 }
+                : { type: "spring", stiffness: 320, damping: 26 }
+            }
           >
             {!gameOver && yourTeamWon && <ConfettiBurst />}
             {gameOver ? (
@@ -127,14 +131,18 @@ export function RoundSummaryModal({
               <span>
                 <small>Level change</small>
                 <motion.strong
-                  initial={{ scale: 1.6, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{
-                    type: "spring",
-                    stiffness: 380,
-                    damping: 20,
-                    delay: 0.7,
-                  }}
+                  initial={reducedMotion ? { opacity: 0 } : { scale: 1.6, opacity: 0 }}
+                  animate={reducedMotion ? { opacity: 1 } : { scale: 1, opacity: 1 }}
+                  transition={
+                    reducedMotion
+                      ? { duration: 0.18 }
+                      : {
+                          type: "spring",
+                          stiffness: 380,
+                          damping: 20,
+                          delay: 0.7,
+                        }
+                  }
                 >
                   +{outcome.levelDelta}
                 </motion.strong>
