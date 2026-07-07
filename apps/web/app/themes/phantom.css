@@ -115,8 +115,8 @@ html[data-theme="phantom"] {
 html[data-theme="phantom"] body,
 html[data-theme="phantom"] .game-shell {
   background:
-    radial-gradient(circle, rgba(255, 255, 255, 0.03) 1px, transparent 1.5px) 0 0 /
-      22px 22px,
+    radial-gradient(circle, rgba(255, 255, 255, 0.03) 1px, transparent 1.5px) 0 0 / 22px
+      22px,
     radial-gradient(55% 45% at 88% 6%, rgba(229, 22, 54, 0.1), transparent 62%),
     radial-gradient(50% 42% at 6% 94%, rgba(229, 22, 54, 0.09), transparent 65%),
     linear-gradient(162deg, #14101a, var(--night));
@@ -517,11 +517,7 @@ html[data-theme="phantom"] .lobby-footer span {
 html[data-theme="phantom"] .side-panel {
   border-right: 2px solid var(--panel-edge);
   background:
-    linear-gradient(
-      170deg,
-      rgba(229, 22, 54, 0.12) 0,
-      transparent 90px
-    ),
+    linear-gradient(170deg, rgba(229, 22, 54, 0.12) 0, transparent 90px),
     linear-gradient(180deg, var(--panel), var(--panel-deep));
   box-shadow: 4px 0 0 var(--edge-shadow);
 }

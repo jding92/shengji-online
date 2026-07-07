@@ -321,8 +321,7 @@ export function GameTable({
   // What the scoreboard would do if the round ended on the current points —
   // shown once cards are actually being played, so the stakes stay visible.
   const projectedOutcome =
-    round !== undefined &&
-    (view.phase === "playing" || view.phase === "round-scoring")
+    round !== undefined && (view.phase === "playing" || view.phase === "round-scoring")
       ? scoreRound(attackerPoints, fourPlayerTwoDeckFixedTeamRuleset.scoring)
       : null;
 
@@ -468,7 +467,10 @@ export function GameTable({
             >
               <small className="trump-panel-label">主牌 · ROUND TRUMP</small>
               {trumpCard !== undefined ? (
-                <PlayingCard card={trumpCard} {...(standingTrump === undefined ? {} : { trump: standingTrump })} />
+                <PlayingCard
+                  card={trumpCard}
+                  {...(standingTrump === undefined ? {} : { trump: standingTrump })}
+                />
               ) : standingTrump?.mode === "no-trump" ? (
                 <span className="generic-joker-card" aria-hidden="true">
                   王

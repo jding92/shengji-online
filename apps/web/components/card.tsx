@@ -41,8 +41,7 @@ export function PlayingCard({
 }: CardProps) {
   const reducedMotion = useReducedMotion() ?? false;
   const face = card.face;
-  const isTrump =
-    trump !== undefined && getEffectiveSuit(card, trump) === "trump";
+  const isTrump = trump !== undefined && getEffectiveSuit(card, trump) === "trump";
   const rankClass = face.kind === "standard" ? `rank-${face.rank}` : "";
   const display =
     face.kind === "joker"
