@@ -16,6 +16,10 @@ export default tseslint.config(
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
   {
+    files: ["**/*.mjs"],
+    extends: [tseslint.configs.disableTypeChecked],
+  },
+  {
     files: ["**/*.ts", "**/*.tsx"],
     languageOptions: {
       parserOptions: {
