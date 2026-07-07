@@ -69,8 +69,8 @@ html[data-theme="mythic"] {
   --card-ink: #21170f;
   --card-red: #b81d2b;
   --card-diamond: #ba1a24;
-  --card-club: #075a55;
-  --card-spade: #164a65;
+  --card-club: #1c1710;
+  --card-spade: #15110d;
   --card-joker-small: #dfe9ef;
   --card-joker-big: #ff4b55;
   --card-back-ink: var(--gold);
@@ -816,12 +816,6 @@ html[data-theme="mythic"] .countdown.is-urgent {
   color: var(--red-bright);
   animation: mythic-bob 0.8s infinite;
 }
-html[data-theme="mythic"] .playing-card.is-hinted {
-  box-shadow:
-    0 0 0 2px var(--gold),
-    0 0 16px var(--gold-tint),
-    0 4px 0 var(--edge-shadow);
-}
 html[data-theme="mythic"] .throw-warning {
   border: 2px solid var(--panel-edge);
   border-radius: 9px;
@@ -916,6 +910,9 @@ html[data-theme="mythic"] .playing-card {
     inset 0 0 0 5px rgba(65, 38, 12, 0.18),
     0 4px 0 var(--edge-shadow);
   color: var(--house-ink);
+  transition:
+    filter 200ms ease,
+    opacity 200ms ease;
 }
 html[data-theme="mythic"] .playing-card.is-selected {
   border-color: var(--red);
@@ -966,16 +963,23 @@ html[data-theme="mythic"] .card-diamonds {
   color: var(--card-diamond);
 }
 html[data-theme="mythic"] .card-clubs {
-  --house-accent: var(--house-clubs);
-  --house-ink: #064b46;
+  --house-accent: var(--card-club);
+  --house-ink: var(--card-club);
 
   color: var(--card-club);
 }
 html[data-theme="mythic"] .card-spades {
-  --house-accent: var(--house-spades);
-  --house-ink: #123e57;
+  --house-accent: var(--card-spade);
+  --house-ink: var(--card-spade);
 
   color: var(--card-spade);
+}
+
+html[data-theme="mythic"]
+  .hand-scroll.has-hints
+  .playing-card:not(.is-hinted, .is-selected) {
+  opacity: 0.55;
+  filter: opacity(0.55) saturate(0.6);
 }
 
 html[data-theme="mythic"] .playing-card.is-compact .card-corner {
@@ -995,7 +999,7 @@ html[data-theme="mythic"] .playing-card.is-compact .card-center {
   font-size: 3.35rem;
 }
 
-/* Jokers are wildcard art cards; their DOM text stays as an overlaid title. */
+/* Jokers are wildcard art cards; the poker index now carries identity. */
 html[data-theme="mythic"] .playing-card.card-big,
 html[data-theme="mythic"] .playing-card.card-small {
   --house-accent: var(--gold);
@@ -1022,26 +1026,10 @@ html[data-theme="mythic"] .playing-card.card-small {
   color: var(--card-joker-small);
 }
 html[data-theme="mythic"] .card-center.is-joker-center {
-  z-index: 2;
-  right: 9px;
-  bottom: 38px;
-  color: #fff3d4;
-  font-size: 0.72rem;
-  letter-spacing: 0.22em;
-  opacity: 1;
-  text-shadow:
-    1px 1px 0 #120806,
-    0 0 8px rgba(0, 0, 0, 0.8);
-  transform: rotate(-5deg);
+  display: none;
 }
 html[data-theme="mythic"] .joker-script {
-  z-index: 2;
-  color: var(--gold);
-  font-family: var(--font-game);
-  font-size: 0.95rem;
-  text-shadow:
-    1px 1px 0 #120806,
-    0 0 8px rgba(0, 0, 0, 0.82);
+  display: none;
 }
 html[data-theme="mythic"] .playing-card.is-compact,
 html[data-theme="mythic"] .card-back.is-compact {
@@ -1633,6 +1621,40 @@ html[data-theme="mythic"] .playing-card.rank-Q .card-center,
 html[data-theme="mythic"] .playing-card.rank-J .card-center {
   display: none;
 }
+html[data-theme="mythic"]
+  .playing-card:is(.rank-A, .rank-K, .rank-Q, .rank-J, .card-big, .card-small)
+  .card-corner {
+  min-width: auto;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+  color: var(--house-ink);
+  text-shadow:
+    0 0 5px rgba(246, 229, 193, 0.95),
+    1px 1px 1px rgba(0, 0, 0, 0.9),
+    0 2px 3px rgba(0, 0, 0, 0.65);
+  transform: none;
+}
+html[data-theme="mythic"]
+  .playing-card:is(.rank-A, .rank-K, .rank-Q, .rank-J, .card-big, .card-small)
+  .card-corner
+  span {
+  color: var(--house-accent);
+}
+html[data-theme="mythic"]
+  .playing-card:is(
+    .rank-A,
+    .rank-K,
+    .rank-Q,
+    .rank-J,
+    .card-big,
+    .card-small
+  ).is-compact
+  .card-corner {
+  top: 6px;
+  left: 7px;
+}
 
 /* Trump gilding: trump cards wear a gold frame and a 主 seal — power you
    can spot across the table. */
@@ -1688,19 +1710,13 @@ html[data-theme="mythic"] .playing-card.is-compact.is-trump::before {
   height: 16px;
   font-size: 0.54rem;
 }
-/* Selection and hint cues must still outrank the gilding. */
+/* Selection cues must still outrank the gilding. */
 html[data-theme="mythic"] .playing-card.is-trump.is-selected {
   border-color: var(--red);
   box-shadow:
     0 0 0 3px var(--red),
     0 0 18px var(--red-tint),
     0 7px 0 var(--edge-shadow);
-}
-html[data-theme="mythic"] .playing-card.is-trump.is-hinted {
-  box-shadow:
-    0 0 0 2px var(--gold),
-    0 0 16px var(--gold-tint),
-    0 4px 0 var(--edge-shadow);
 }
 
 /* The trump panel reads as a shrine for the round's power card. */

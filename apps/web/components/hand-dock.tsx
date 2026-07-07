@@ -50,7 +50,7 @@ export function HandDock({
   return (
     <section className={`hand-dock ${isYourTurn ? "is-your-turn" : ""}`}>
       <div
-        className="hand-scroll"
+        className={`hand-scroll ${hinted.size > 0 ? "has-hints" : ""}`}
         role="group"
         aria-label="Your hand"
         style={{ "--hand-count": Math.max(cards.length, 1) } as CSSProperties}
