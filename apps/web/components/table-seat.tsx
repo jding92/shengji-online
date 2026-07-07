@@ -65,6 +65,7 @@ export function TableSeat({
   bid,
   roomId,
   timer,
+  trickWinner = false,
 }: {
   seat: PrivateGameView["seats"][number];
   position: TablePosition;
@@ -81,6 +82,8 @@ export function TableSeat({
   roomId: string;
   /** Local player's active decision clock, overlaid on their nameplate. */
   timer?: { deadline: string; now: () => number };
+  /** A just-won trick pulse, driven by snapshot-diffed moments. */
+  trickWinner?: boolean;
 }) {
   const [showTakeover, setShowTakeover] = useState(false);
   const [difficulty, setDifficulty] = useState<BotDifficulty>("intermediate");
@@ -106,7 +109,7 @@ export function TableSeat({
 
   return (
     <div
-      className={`table-seat seat-${position} ${teamClassForSeat(seat.seat)} ${currentTurn ? "is-turn" : ""}`}
+      className={`table-seat seat-${position} ${teamClassForSeat(seat.seat)} ${currentTurn ? "is-turn" : ""} ${trickWinner ? "is-trick-winner" : ""}`}
     >
       {/* Your own hand is face-up in the dock below — no backs needed. */}
       {!isYou && (

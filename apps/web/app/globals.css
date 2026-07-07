@@ -15,6 +15,7 @@
   --z-topbar: 20;
   --z-banner: 45;
   --z-connection: 50;
+  --z-moment: 60;
   --z-toast: 70;
   --z-modal: 80;
   /* Fixed-team colors shared by seats and score tiles. */
@@ -452,6 +453,50 @@ button:disabled {
   flex: 1;
   min-width: 0;
   flex-direction: column;
+}
+.moment-layer {
+  position: absolute;
+  z-index: var(--z-moment);
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.moment-trump-declared,
+.moment-points-float {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+.moment-trump-declared {
+  top: 40%;
+  left: 50%;
+  width: clamp(7rem, 20vw, 13rem);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+}
+.moment-trump-vignette,
+.moment-trump-stamp,
+.moment-points-art {
+  grid-area: 1 / 1;
+}
+.moment-trump-stamp {
+  width: 72%;
+  height: 72%;
+  object-fit: cover;
+}
+.moment-points-float {
+  top: 48%;
+  left: 52%;
+  min-width: 7rem;
+}
+.moment-points-art {
+  width: clamp(7.5rem, 18vw, 12rem);
+  height: auto;
+}
+.moment-points-float strong {
+  grid-area: 1 / 1;
+  white-space: nowrap;
 }
 /* Two-column round panel; the hero card and primary readouts span both. */
 .round-pills {

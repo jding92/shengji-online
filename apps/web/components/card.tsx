@@ -21,6 +21,8 @@ type CardProps = {
   hinted?: boolean;
   /** "deal" drops in from above (hand cards); "pop" scales in (table plays). */
   entrance?: "deal" | "pop";
+  /** Seconds to stagger the initial entrance animation. */
+  entranceDelay?: number;
   /**
    * The round's finalized trump. When set, cards that count as trump get an
    * is-trump class so skins can mark their power (gilded frame, 主 seal).
@@ -36,6 +38,7 @@ export function PlayingCard({
   disabled = false,
   hinted = false,
   entrance = "pop",
+  entranceDelay = 0,
   trump,
   onSelect,
 }: CardProps) {
@@ -69,6 +72,10 @@ export function PlayingCard({
     entrance === "deal" && !reducedMotion
       ? { type: "spring" as const, stiffness: 420, damping: 30 }
       : { duration: 0.16 };
+  const entranceTransition =
+    entranceDelay > 0 && !reducedMotion
+      ? { ...transition, delay: entranceDelay }
+      : transition;
 
   return (
     <motion.button
@@ -83,7 +90,7 @@ export function PlayingCard({
       initial={initial}
       animate={{ opacity: 1, y: selected ? -18 : 0, scale: 1, rotate: 0 }}
       {...(onSelect === undefined ? {} : { whileHover: { y: -18 } })}
-      transition={transition}
+      transition={entranceTransition}
     >
       <span className="card-corner">
         <strong>{display.rank}</strong>

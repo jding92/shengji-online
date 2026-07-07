@@ -18,14 +18,16 @@ import {
   sumCardPoints,
 } from "@shengji/engine";
 import { useCardSelection } from "../hooks/use-card-selection";
+import { useGameMoments } from "../hooks/use-game-moments";
 import { ART, art2x } from "../lib/art";
-import { THROW_BANNER_MS } from "../lib/constants";
+import { THROW_BANNER_MS, TRICK_WINNER_GLOW_MS } from "../lib/constants";
 import { compareForHandDisplay, relativeSeatPosition } from "../lib/cards";
 import { teamClassForSeat } from "../lib/strings";
 import { CardBack, PlayingCard } from "./card";
 import { HandActions } from "./hand-actions";
 import { HandDock } from "./hand-dock";
 import { LeaveButton } from "./leave-button";
+import { MomentLayer } from "./moment-layer";
 import { RoundSummaryModal } from "./round-summary-modal";
 import { TableSeat } from "./table-seat";
 import { TrickCenter } from "./trick-center";
@@ -76,6 +78,7 @@ export function GameTable({
   serverNow,
 }: GameTableProps) {
   const round = view.publicRound;
+  const { moments, dismiss } = useGameMoments(view);
   const actions = useMemo(() => new Set(view.legalActions), [view.legalActions]);
   // Sort trump-aware: before a suit is declared, treat the level rank as
   // no-trump so level cards group with the jokers instead of their suits.
@@ -230,6 +233,31 @@ export function GameTable({
       submit({ type: "PASS_BID" });
     }
   }, [actions, round, submit, view.phase, view.you.hand, view.you.seat]);
+
+  const [trickWinnerSeat, setTrickWinnerSeat] = useState<number | null>(null);
+  const lastTrickWinnerMoment = useRef<string | null>(null);
+  const trickWinnerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    const trickMoment = [...moments]
+      .reverse()
+      .find((moment) => moment.type === "TRICK_WON");
+    if (trickMoment === undefined || trickMoment.id === lastTrickWinnerMoment.current) {
+      return;
+    }
+    lastTrickWinnerMoment.current = trickMoment.id;
+    setTrickWinnerSeat(trickMoment.winnerSeat);
+    if (trickWinnerTimer.current !== null) clearTimeout(trickWinnerTimer.current);
+    trickWinnerTimer.current = setTimeout(() => {
+      setTrickWinnerSeat(null);
+      trickWinnerTimer.current = null;
+    }, TRICK_WINNER_GLOW_MS);
+  }, [moments]);
+  useEffect(
+    () => () => {
+      if (trickWinnerTimer.current !== null) clearTimeout(trickWinnerTimer.current);
+    },
+    [],
+  );
 
   const primaryAction = useCallback((): WireClientCommand | null => {
     const cardIds = selectedCards.map(({ id }) => id);
@@ -502,6 +530,7 @@ export function GameTable({
       </aside>
 
       <section className="board">
+        <MomentLayer moments={moments} dismiss={dismiss} />
         <AnimatePresence>
           {round?.lastThrow && dismissedThrow !== throwKey && (
             <motion.button
@@ -537,6 +566,7 @@ export function GameTable({
                     seat={seat}
                     position={relativeSeatPosition(seat.seat, view.you.seat)}
                     currentTurn={round?.currentTurnSeat === seat.seat}
+                    trickWinner={trickWinnerSeat === seat.seat}
                     isYou={false}
                     isLeader={round?.leaderSeat === seat.seat}
                     role={roleForSeat(seat)}
@@ -564,6 +594,7 @@ export function GameTable({
                     seat={youSeat}
                     position="south"
                     currentTurn={round?.currentTurnSeat === youSeat.seat}
+                    trickWinner={trickWinnerSeat === youSeat.seat}
                     isYou
                     isLeader={round?.leaderSeat === youSeat.seat}
                     role={roleForSeat(youSeat)}
@@ -648,6 +679,8 @@ export function GameTable({
             selected={selected}
             hinted={hinted}
             trump={round?.trumpSpec}
+            isDealing={view.phase === "dealing"}
+            isYourTurn={round?.currentTurnSeat === view.you.seat}
             onToggle={toggle}
           />
         </LayoutGroup>

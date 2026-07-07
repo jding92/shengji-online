@@ -112,6 +112,37 @@ html[data-theme="mythic"] {
       0 0 34px rgba(229, 22, 54, 0.55);
   }
 }
+@keyframes mythic-trick-winner-pulse {
+  50% {
+    box-shadow:
+      0 4px 0 var(--edge-shadow),
+      0 0 0 3px var(--gold),
+      0 0 34px var(--gold-tint);
+  }
+}
+@keyframes mythic-hand-turn-pulse {
+  50% {
+    filter: drop-shadow(0 -10px 22px rgba(255, 182, 61, 0.34));
+  }
+}
+@keyframes mythic-card-impact-ring {
+  from {
+    opacity: 0.65;
+    transform: scale(0.84);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.32);
+  }
+}
+@keyframes mythic-trump-impact {
+  50% {
+    box-shadow:
+      0 0 0 2px color-mix(in srgb, var(--house-accent) 70%, transparent),
+      0 0 24px color-mix(in srgb, var(--house-accent) 46%, transparent),
+      0 4px 0 var(--edge-shadow);
+  }
+}
 @keyframes mythic-foil-shimmer {
   from {
     transform: translateX(-160%) skewX(-18deg);
@@ -661,6 +692,17 @@ html[data-theme="mythic"] .is-turn .player-chip {
     0 0 18px var(--red-tint);
   animation: mythic-turn-pulse 1.6s ease-in-out infinite;
 }
+html[data-theme="mythic"] .is-trick-winner .player-chip {
+  box-shadow:
+    0 4px 0 var(--edge-shadow),
+    0 0 0 2px var(--gold),
+    0 0 24px var(--gold-tint);
+  animation: mythic-trick-winner-pulse 1.5s ease-out;
+}
+html[data-theme="mythic"] .hand-dock.is-your-turn {
+  filter: drop-shadow(0 -8px 16px rgba(255, 182, 61, 0.22));
+  animation: mythic-hand-turn-pulse 1.5s ease-in-out infinite;
+}
 html[data-theme="mythic"] .leader-badge {
   border-radius: 4px;
   background: var(--gold);
@@ -800,6 +842,24 @@ html[data-theme="mythic"] .center-play > span {
   font-size: 0.6rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+html[data-theme="mythic"] .center-play::after {
+  position: absolute;
+  z-index: 0;
+  inset: -18px;
+  border: 2px solid color-mix(in srgb, var(--gold) 60%, transparent);
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(255, 182, 61, 0.2), transparent 62%);
+  content: "";
+  opacity: 0;
+  pointer-events: none;
+  animation: mythic-card-impact-ring 400ms ease-out forwards;
+}
+html[data-theme="mythic"] .center-play .playing-card {
+  z-index: 1;
+}
+html[data-theme="mythic"] .center-play .playing-card.is-trump {
+  animation: mythic-trump-impact 420ms ease-out;
 }
 html[data-theme="mythic"] .table-watermark {
   color: var(--watermark);
@@ -1056,6 +1116,33 @@ html[data-theme="mythic"] .notice-toast {
 }
 html[data-theme="mythic"] .notice-toast i {
   color: var(--muted);
+}
+html[data-theme="mythic"] .moment-trump-vignette {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--gold-tint), transparent 64%);
+  filter: blur(2px);
+}
+html[data-theme="mythic"] .moment-trump-stamp {
+  overflow: hidden;
+  border: 3px solid var(--gold);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 2px var(--gold-deep),
+    0 8px 0 rgba(0, 0, 0, 0.34),
+    0 0 38px var(--gold-tint);
+}
+html[data-theme="mythic"] .moment-points-float {
+  color: var(--gold);
+  font-family: var(--font-game);
+  font-size: clamp(1.1rem, 3.6vw, 2rem);
+  text-shadow:
+    1px 1px 0 #0b090d,
+    3px 3px 0 var(--red);
+}
+html[data-theme="mythic"] .moment-points-art {
+  filter: drop-shadow(0 0 20px var(--gold-tint));
 }
 html[data-theme="mythic"] .leave-button.is-confirming {
   background: var(--red);
@@ -1549,5 +1636,11 @@ html[data-theme="mythic"] .generic-joker-card {
   html[data-theme="mythic"] .playing-card.is-trump::after {
     animation: none;
     opacity: 0;
+  }
+  html[data-theme="mythic"] .center-play::after,
+  html[data-theme="mythic"] .center-play .playing-card.is-trump,
+  html[data-theme="mythic"] .is-trick-winner .player-chip,
+  html[data-theme="mythic"] .hand-dock.is-your-turn {
+    animation: none;
   }
 }

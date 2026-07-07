@@ -14,6 +14,14 @@ export const LEAVE_CONFIRM_MS = 3_000;
 export const TRICK_RESULT_HOLD_MS = 3_000;
 /** Total lifetime of a completed trick, including its 600ms sweep animation. */
 export const TRICK_SWEEP_MS = TRICK_RESULT_HOLD_MS + 600;
+/** How long a trump declaration stamp stays in the moments layer. */
+export const MOMENT_TRUMP_STAMP_MS = 1_400;
+/** How long a captured-points chip floats before dismissing. */
+export const MOMENT_POINTS_FLOAT_MS = 1_200;
+/** Leak guard for fire-and-forget game moments. */
+export const MOMENT_MAX_AGE_MS = 8_000;
+/** Temporary pulse duration for the seat that won the latest trick. */
+export const TRICK_WINNER_GLOW_MS = 1_500;
 /** How long the throw result banner stays before auto-dismissing. */
 export const THROW_BANNER_MS = 8_000;
 /** How long error toasts stay before auto-dismissing. */
