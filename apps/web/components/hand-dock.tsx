@@ -3,7 +3,10 @@
 import type { TrumpSpec } from "@shengji/engine";
 import type { CardInstance } from "@shengji/protocol";
 import type { CSSProperties } from "react";
+import { useEffect, useRef } from "react";
 import { PlayingCard } from "./card";
+
+const DEAL_STAGGER_SECONDS = 0.035;
 
 /**
  * The face-up fan of your own hand. Action buttons live up on the seat row
@@ -15,6 +18,8 @@ export function HandDock({
   selected,
   hinted,
   trump,
+  isDealing,
+  isYourTurn,
   onToggle,
 }: {
   cards: readonly CardInstance[];
@@ -22,10 +27,28 @@ export function HandDock({
   hinted: ReadonlySet<string>;
   /** Finalized trump, so trump cards in the fan can wear their gilding. */
   trump?: TrumpSpec | undefined;
+  isDealing: boolean;
+  isYourTurn: boolean;
   onToggle: (card: CardInstance, index: number, shift: boolean) => void;
 }) {
+  const previousHandIds = useRef<Set<string> | null>(null);
+  let addedIndex = 0;
+  const entranceDelays = new Map<string, number>();
+  if (isDealing && previousHandIds.current !== null) {
+    for (const card of cards) {
+      if (!previousHandIds.current.has(card.id)) {
+        entranceDelays.set(card.id, addedIndex * DEAL_STAGGER_SECONDS);
+        addedIndex += 1;
+      }
+    }
+  }
+
+  useEffect(() => {
+    previousHandIds.current = new Set(cards.map(({ id }) => id));
+  }, [cards]);
+
   return (
-    <section className="hand-dock">
+    <section className={`hand-dock ${isYourTurn ? "is-your-turn" : ""}`}>
       <div
         className="hand-scroll"
         role="group"
@@ -37,6 +60,7 @@ export function HandDock({
             key={card.id}
             card={card}
             entrance="deal"
+            entranceDelay={entranceDelays.get(card.id) ?? 0}
             selected={selected.has(card.id)}
             hinted={hinted.has(card.id)}
             {...(trump === undefined ? {} : { trump })}
