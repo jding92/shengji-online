@@ -8,6 +8,7 @@ import {
   type TrickFormat,
   type TrumpSpec,
 } from "@shengji/engine";
+import type { PrivateGameView } from "@shengji/protocol";
 
 const SUIT_GLYPHS = { spades: "♠", hearts: "♥", clubs: "♣", diamonds: "♦" } as const;
 
@@ -114,6 +115,41 @@ export function describePlaySelection(
 }
 
 export type TablePosition = "south" | "east" | "north" | "west";
+export type TeamRole = "attacking" | "defending" | "pending";
+
+export function defendingTeamIdForRound(view: PrivateGameView): string | undefined {
+  const defendingSeatIndex =
+    view.publicRound?.leaderSeat ?? view.publicRound?.currentBid?.seat;
+  return defendingSeatIndex === undefined
+    ? undefined
+    : view.seats.find((seat) => seat.seat === defendingSeatIndex)?.teamId;
+}
+
+export function teamRoleForSeat(
+  view: PrivateGameView,
+  seat: PrivateGameView["seats"][number],
+): Exclude<TeamRole, "pending"> | null {
+  const defendingTeamId = defendingTeamIdForRound(view);
+  if (defendingTeamId === undefined || seat.teamId === undefined) return null;
+  return seat.teamId === defendingTeamId ? "defending" : "attacking";
+}
+
+export function teamRoleForTeam(
+  teamId: string | undefined,
+  defendingTeamId: string | undefined,
+): TeamRole {
+  if (teamId === undefined || defendingTeamId === undefined) return "pending";
+  return teamId === defendingTeamId ? "defending" : "attacking";
+}
+
+export function didLocalTeamWin(
+  view: PrivateGameView,
+  winner: "defenders" | "attackers",
+): boolean {
+  const defendingTeamId = defendingTeamIdForRound(view);
+  if (defendingTeamId === undefined || view.you.teamId === undefined) return false;
+  return (winner === "defenders") === (view.you.teamId === defendingTeamId);
+}
 
 /** Rotates absolute seat indexes so the local player is always south. */
 export function relativeSeatPosition(seat: number, you: number | null): TablePosition {

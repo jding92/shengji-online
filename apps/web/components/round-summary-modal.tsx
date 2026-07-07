@@ -3,7 +3,10 @@
 import type { PrivateGameView, WireClientCommand } from "@shengji/protocol";
 import { AnimatePresence, animate, motion, useReducedMotion } from "motion/react";
 import { useEffect, useState } from "react";
+import { ART, art2x } from "../lib/art";
+import { didLocalTeamWin } from "../lib/cards";
 import { PlayingCard } from "./card";
+import { GameOverSplash } from "./game-over-splash";
 
 const CONFETTI_COLORS = ["var(--gold)", "var(--accent-bright)", "var(--ink)"];
 
@@ -63,46 +66,52 @@ export function RoundSummaryModal({
   actions: ReadonlySet<PrivateGameView["legalActions"][number]>;
   submit: (command: WireClientCommand) => void;
 }) {
+  const reducedMotion = useReducedMotion() ?? false;
   const round = view.publicRound;
   const gameOver = view.phase === "game-over";
   const outcome =
     view.phase === "round-scoring" || gameOver ? round?.outcome : undefined;
+  const yourTeamWon =
+    outcome === undefined ? false : didLocalTeamWin(view, outcome.winner);
+  const banner =
+    outcome?.winner === "attackers" ? ART.ui.attackersBanner : ART.ui.defendersBanner;
   return (
     <AnimatePresence>
       {round !== undefined && outcome !== undefined && (
         <motion.div
-          className="modal-scrim"
+          className={`modal-scrim ${yourTeamWon ? "is-victory" : "is-defeat"}`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
           <motion.section
-            className="round-summary"
+            className={`round-summary ${yourTeamWon ? "is-victory" : "is-defeat"}`}
             initial={{ y: 24, scale: 0.96 }}
             animate={{ y: 0, scale: 1 }}
             transition={{ type: "spring", stiffness: 320, damping: 26 }}
           >
-            <ConfettiBurst />
+            {!gameOver && yourTeamWon && <ConfettiBurst />}
             {gameOver ? (
               <>
-                <p className="eyebrow">GAME OVER · 升级</p>
-                <motion.span
-                  className="victory-mark"
-                  initial={{ scale: 0.6, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ type: "spring", stiffness: 260, damping: 18 }}
-                >
-                  升
-                </motion.span>
-                <h2>
+                <GameOverSplash victory={yourTeamWon} />
+                <p className="game-over-side-result">
                   {outcome.winner === "defenders"
                     ? "Defenders win the game"
                     : "Attackers win the game"}
-                </h2>
+                </p>
               </>
             ) : (
               <>
-                <p className="eyebrow">ROUND {round.roundNumber} COMPLETE</p>
+                <img
+                  className="round-summary-banner"
+                  src={banner}
+                  srcSet={`${art2x(banner)} 2x`}
+                  alt=""
+                />
+                <p className="eyebrow">
+                  {yourTeamWon ? "VICTORY · 胜" : "DEFEAT · 败"}
+                  <span>ROUND {round.roundNumber} COMPLETE</span>
+                </p>
                 <h2>
                   {outcome.winner === "defenders"
                     ? "Defenders hold"
@@ -129,6 +138,14 @@ export function RoundSummaryModal({
                 >
                   +{outcome.levelDelta}
                 </motion.strong>
+                {outcome.levelDelta > 0 && (
+                  <img
+                    className="level-up-score-art"
+                    src={ART.ui.levelUpScore}
+                    srcSet={`${art2x(ART.ui.levelUpScore)} 2x`}
+                    alt=""
+                  />
+                )}
               </span>
             </div>
             {round.bottomReveal && (
@@ -140,8 +157,29 @@ export function RoundSummaryModal({
                     : " → no points (defenders took the last trick)"}
                 </small>
                 <div className="bottom-reveal-cards">
-                  {round.bottomReveal.cards.map((card) => (
-                    <PlayingCard key={card.id} card={card} compact />
+                  {round.bottomReveal.cards.map((card, index) => (
+                    <motion.div
+                      key={card.id}
+                      className="bottom-reveal-card"
+                      initial={
+                        reducedMotion ? { opacity: 0 } : { rotateY: 90, opacity: 0 }
+                      }
+                      animate={
+                        reducedMotion ? { opacity: 1 } : { rotateY: 0, opacity: 1 }
+                      }
+                      transition={
+                        reducedMotion
+                          ? { duration: 0.18, delay: index * 0.03 }
+                          : {
+                              type: "spring",
+                              stiffness: 360,
+                              damping: 24,
+                              delay: index * 0.08,
+                            }
+                      }
+                    >
+                      <PlayingCard card={card} compact />
+                    </motion.div>
                   ))}
                 </div>
               </div>

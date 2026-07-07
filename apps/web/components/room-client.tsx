@@ -1,5 +1,6 @@
 "use client";
 
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useGameRoom } from "../hooks/use-game-room";
 import { NOTICE_DISMISS_MS, TOAST_DISMISS_MS } from "../lib/constants";
@@ -82,6 +83,7 @@ export function RoomClient({
   // stalled sit/ready never leaves the player on a dead loading screen.
   const [autoStartStalled, setAutoStartStalled] = useState(false);
   const { notice, clearNotice } = useConnectionNotices(view?.seats);
+  const reducedMotion = useReducedMotion() ?? false;
 
   useEffect(() => {
     if (view?.phase !== "lobby" || view.you.seat !== null || autoSitAttempted.current) {
@@ -141,8 +143,24 @@ export function RoomClient({
     }
   }
 
-  if (status === "join-required") {
-    return (
+  const autoStarting = autoStart && view?.phase === "lobby" && !autoStartStalled;
+  const screenKey =
+    status === "join-required"
+      ? "join"
+      : view === null || autoStarting
+        ? "loading"
+        : view.phase === "lobby"
+          ? "lobby"
+          : "table";
+  const screenMotion = {
+    initial: reducedMotion ? { opacity: 0 } : { opacity: 0, y: 8 },
+    animate: reducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 },
+    exit: reducedMotion ? { opacity: 0 } : { opacity: 0, y: -8 },
+    transition: { duration: reducedMotion ? 0.18 : 0.22, ease: "easeOut" },
+  } as const;
+
+  const screen =
+    status === "join-required" ? (
       <main className="join-shell">
         <div className="ambient-orb orb-one" />
         <div className="ambient-orb orb-two" />
@@ -182,11 +200,7 @@ export function RoomClient({
           </button>
         )}
       </main>
-    );
-  }
-
-  if (view === null) {
-    return (
+    ) : view === null ? (
       <main className="join-shell">
         <div className="loading-mark">升</div>
         <strong>
@@ -194,45 +208,50 @@ export function RoomClient({
         </strong>
         <small>Your seat and hand are restored from the server.</small>
       </main>
+    ) : autoStarting ? (
+      <main className="join-shell">
+        <div className="loading-mark">升</div>
+        <strong>Dealing you in…</strong>
+        <small>Shuffling the deck and seating your bots.</small>
+      </main>
+    ) : view.phase === "lobby" ? (
+      <Lobby view={view} sendCommand={sendCommand} onLeave={leaveSession} />
+    ) : (
+      <GameTable
+        view={view}
+        sendCommand={sendCommand}
+        onLeave={leaveSession}
+        turnDeadline={turnDeadline}
+        serverNow={serverNow}
+      />
     );
-  }
-
-  const autoStarting = autoStart && view.phase === "lobby" && !autoStartStalled;
 
   return (
     <>
-      {autoStarting ? (
-        <main className="join-shell">
-          <div className="loading-mark">升</div>
-          <strong>Dealing you in…</strong>
-          <small>Shuffling the deck and seating your bots.</small>
-        </main>
-      ) : view.phase === "lobby" ? (
-        <Lobby view={view} sendCommand={sendCommand} onLeave={leaveSession} />
-      ) : (
-        <GameTable
-          view={view}
-          sendCommand={sendCommand}
-          onLeave={leaveSession}
-          turnDeadline={turnDeadline}
-          serverNow={serverNow}
-        />
-      )}
-      <div className={`connection-pill connection-${status}`}>
-        <i /> {status === "connected" ? "Live" : status}
-      </div>
-      {notice && (
-        <button type="button" className="notice-toast" onClick={clearNotice}>
-          <span>{notice}</span>
-          <i>×</i>
-        </button>
-      )}
-      {error && (
-        <button type="button" className="error-toast" onClick={clearError}>
-          <strong>That move didn’t work</strong>
-          <span>{error}</span>
-          <i>×</i>
-        </button>
+      <AnimatePresence mode="wait">
+        <motion.div key={screenKey} className="room-screen" {...screenMotion}>
+          {screen}
+        </motion.div>
+      </AnimatePresence>
+      {view !== null && status !== "join-required" && (
+        <>
+          <div className={`connection-pill connection-${status}`}>
+            <i /> {status === "connected" ? "Live" : status}
+          </div>
+          {notice && (
+            <button type="button" className="notice-toast" onClick={clearNotice}>
+              <span>{notice}</span>
+              <i>×</i>
+            </button>
+          )}
+          {error && (
+            <button type="button" className="error-toast" onClick={clearError}>
+              <strong>That move didn’t work</strong>
+              <span>{error}</span>
+              <i>×</i>
+            </button>
+          )}
+        </>
       )}
     </>
   );

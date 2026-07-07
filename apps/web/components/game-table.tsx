@@ -21,9 +21,18 @@ import { useCardSelection } from "../hooks/use-card-selection";
 import { useGameMoments } from "../hooks/use-game-moments";
 import { ART, art2x } from "../lib/art";
 import { THROW_BANNER_MS, TRICK_WINNER_GLOW_MS } from "../lib/constants";
-import { compareForHandDisplay, relativeSeatPosition } from "../lib/cards";
+import {
+  compareForHandDisplay,
+  defendingTeamIdForRound,
+  didLocalTeamWin,
+  relativeSeatPosition,
+  teamRoleForSeat,
+  teamRoleForTeam,
+  type TeamRole,
+} from "../lib/cards";
 import { teamClassForSeat } from "../lib/strings";
 import { CardBack, PlayingCard } from "./card";
+import { FxCanvas } from "./fx-canvas";
 import { HandActions } from "./hand-actions";
 import { HandDock } from "./hand-dock";
 import { LeaveButton } from "./leave-button";
@@ -39,8 +48,6 @@ type GameTableProps = {
   turnDeadline: string | null;
   serverNow: () => number;
 };
-
-type TeamRole = "attacking" | "defending" | "pending";
 
 /**
  * Team-role badge: the Chinese character carries the meaning (攻 attack,
@@ -79,6 +86,7 @@ export function GameTable({
 }: GameTableProps) {
   const round = view.publicRound;
   const { moments, dismiss } = useGameMoments(view);
+  const splashPrefetched = useRef<HTMLImageElement[]>([]);
   const actions = useMemo(() => new Set(view.legalActions), [view.legalActions]);
   // Sort trump-aware: before a suit is declared, treat the level rank as
   // no-trump so level cards group with the jokers instead of their suits.
@@ -259,6 +267,22 @@ export function GameTable({
     [],
   );
 
+  useEffect(() => {
+    if (view.phase !== "playing" || splashPrefetched.current.length > 0) return;
+    // The end-state splash is an emotional peak; prefetch both densities before
+    // scoring so the modal does not pop from a blurry placeholder.
+    splashPrefetched.current = [
+      ART.splash.victory,
+      art2x(ART.splash.victory),
+      ART.splash.defeat,
+      art2x(ART.splash.defeat),
+    ].map((src) => {
+      const image = new Image();
+      image.src = src;
+      return image;
+    });
+  }, [view.phase]);
+
   const primaryAction = useCallback((): WireClientCommand | null => {
     const cardIds = selectedCards.map(({ id }) => id);
     if (
@@ -356,23 +380,9 @@ export function GameTable({
       view.you.teamId !== undefined &&
       seat.teamId !== view.you.teamId,
   );
-  const defendingSeatIndex = round?.leaderSeat ?? round?.currentBid?.seat;
-  const defendingTeamId =
-    defendingSeatIndex === undefined
-      ? undefined
-      : view.seats.find((seat) => seat.seat === defendingSeatIndex)?.teamId;
-  const yourTeamRole =
-    defendingTeamId === undefined || view.you.teamId === undefined
-      ? "pending"
-      : defendingTeamId === view.you.teamId
-        ? "defending"
-        : "attacking";
-  const enemyTeamRole =
-    defendingTeamId === undefined || enemySeat?.teamId === undefined
-      ? "pending"
-      : defendingTeamId === enemySeat.teamId
-        ? "defending"
-        : "attacking";
+  const defendingTeamId = defendingTeamIdForRound(view);
+  const yourTeamRole = teamRoleForTeam(view.you.teamId, defendingTeamId);
+  const enemyTeamRole = teamRoleForTeam(enemySeat?.teamId, defendingTeamId);
   const previousRound = round?.roundStats.previousRound;
   const previousWinner =
     previousRound === undefined
@@ -401,14 +411,10 @@ export function GameTable({
   const yourTeamClass = youSeat === undefined ? "" : teamClassForSeat(youSeat.seat);
   const enemyTeamClass =
     enemySeat === undefined ? "" : teamClassForSeat(enemySeat.seat);
-  const roleForSeat = (
-    seat: PrivateGameView["seats"][number],
-  ): "attacking" | "defending" | null =>
-    defendingTeamId === undefined || seat.teamId === undefined
-      ? null
-      : seat.teamId === defendingTeamId
-        ? "defending"
-        : "attacking";
+  const gameVictory =
+    view.phase === "game-over" && round?.outcome !== undefined
+      ? didLocalTeamWin(view, round.outcome.winner)
+      : false;
 
   return (
     <main className="game-shell">
@@ -531,6 +537,7 @@ export function GameTable({
 
       <section className="board">
         <MomentLayer moments={moments} dismiss={dismiss} />
+        <FxCanvas moments={moments} gameVictory={gameVictory} />
         <AnimatePresence>
           {round?.lastThrow && dismissedThrow !== throwKey && (
             <motion.button
@@ -569,7 +576,7 @@ export function GameTable({
                     trickWinner={trickWinnerSeat === seat.seat}
                     isYou={false}
                     isLeader={round?.leaderSeat === seat.seat}
-                    role={roleForSeat(seat)}
+                    role={teamRoleForSeat(view, seat)}
                     bid={bidFor(seat.seat)}
                     roomId={view.roomId}
                   />
@@ -597,7 +604,7 @@ export function GameTable({
                     trickWinner={trickWinnerSeat === youSeat.seat}
                     isYou
                     isLeader={round?.leaderSeat === youSeat.seat}
-                    role={roleForSeat(youSeat)}
+                    role={teamRoleForSeat(view, youSeat)}
                     handTotal={fullHandSize}
                     bid={bidFor(youSeat.seat)}
                     roomId={view.roomId}

@@ -1178,6 +1178,9 @@ html[data-theme="mythic"] .error-toast span {
 html[data-theme="mythic"] .modal-scrim {
   background: var(--overlay);
 }
+html[data-theme="mythic"] .modal-scrim.is-defeat {
+  background: rgba(7, 8, 12, 0.88);
+}
 html[data-theme="mythic"] .bottom-reveal small {
   color: var(--gold);
   font-family: var(--font-game);
@@ -1211,6 +1214,47 @@ html[data-theme="mythic"] .round-summary {
     0 10px 0 var(--red-deep),
     0 24px 48px rgba(0, 0, 0, 0.55);
 }
+html[data-theme="mythic"] .round-summary.is-defeat {
+  border-color: #c2c6cd;
+  background:
+    linear-gradient(
+      115deg,
+      transparent 0 70%,
+      rgba(87, 96, 112, 0.22) 70.5% 78%,
+      transparent 78.5% 84%,
+      rgba(115, 123, 137, 0.12) 84.5% 100%
+    ),
+    linear-gradient(180deg, #1a1b1d, #101216);
+  box-shadow:
+    0 10px 0 #343944,
+    0 24px 48px rgba(0, 0, 0, 0.6);
+}
+html[data-theme="mythic"] .round-summary-banner {
+  border-bottom: 2px solid var(--gold);
+  filter: saturate(1.08) contrast(1.08);
+  box-shadow:
+    inset 0 -1px 0 rgba(255, 240, 185, 0.75),
+    0 9px 0 rgba(5, 4, 5, 0.62);
+}
+html[data-theme="mythic"] .round-summary.is-defeat .round-summary-banner {
+  filter: grayscale(0.65) saturate(0.45) contrast(0.95);
+  border-bottom-color: #aeb7c8;
+  box-shadow:
+    inset 0 -1px 0 rgba(224, 232, 246, 0.38),
+    0 9px 0 rgba(0, 0, 0, 0.58);
+}
+html[data-theme="mythic"] .round-summary .eyebrow span {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 0.58rem;
+}
+html[data-theme="mythic"] .round-summary.is-victory .eyebrow {
+  color: var(--gold);
+}
+html[data-theme="mythic"] .round-summary.is-defeat .eyebrow {
+  color: #aeb7c8;
+}
 html[data-theme="mythic"] .round-summary h2 {
   font-family: var(--font-game);
   font-size: 1.5rem;
@@ -1220,9 +1264,61 @@ html[data-theme="mythic"] .round-summary h2 {
     2px 2px 0 #0b090d,
     4px 4px 0 var(--red);
 }
+html[data-theme="mythic"] .round-summary.is-defeat h2 {
+  color: #dde2ed;
+  text-shadow:
+    2px 2px 0 #050609,
+    4px 4px 0 #3d4655;
+}
 html[data-theme="mythic"] .round-summary > p:not(.eyebrow) {
   color: var(--muted);
   font-size: 0.8rem;
+}
+html[data-theme="mythic"] .game-over-side-result {
+  font-family: var(--font-game);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+html[data-theme="mythic"] .game-over-splash {
+  border-bottom: 2px solid var(--gold);
+  background: var(--well-deep);
+  box-shadow:
+    inset 0 -1px 0 rgba(255, 240, 185, 0.55),
+    0 10px 0 rgba(0, 0, 0, 0.58);
+}
+html[data-theme="mythic"] .round-summary.is-defeat .game-over-splash {
+  border-bottom-color: #9ba6b8;
+  filter: saturate(0.78);
+}
+html[data-theme="mythic"] .game-over-splash::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.05), rgba(5, 4, 5, 0.78));
+}
+html[data-theme="mythic"] .round-summary.is-defeat .game-over-splash::after {
+  background: linear-gradient(180deg, rgba(6, 8, 13, 0.12), rgba(5, 7, 12, 0.82));
+}
+html[data-theme="mythic"] .game-over-splash-title {
+  text-align: left;
+  text-shadow:
+    2px 2px 0 #050305,
+    0 0 34px rgba(0, 0, 0, 0.62);
+}
+html[data-theme="mythic"] .game-over-splash-title .eyebrow {
+  color: var(--gold);
+}
+html[data-theme="mythic"] .round-summary.is-defeat .game-over-splash-title .eyebrow {
+  color: #c7d0df;
+}
+html[data-theme="mythic"] .game-over-splash-title h2 {
+  color: var(--text-bright);
+  font-family: var(--font-game);
+  font-size: clamp(2rem, 8vw, 4.5rem);
+  line-height: 0.95;
+}
+html[data-theme="mythic"] .round-summary.is-defeat .game-over-splash-title h2 {
+  color: #e3e7ef;
 }
 html[data-theme="mythic"] .summary-score {
   border: 2px solid var(--panel-edge);
@@ -1251,6 +1347,17 @@ html[data-theme="mythic"] .summary-score span:first-child strong {
 }
 html[data-theme="mythic"] .summary-score span:last-child strong {
   color: var(--red-bright);
+}
+html[data-theme="mythic"] .level-up-score-art {
+  border: 2px solid var(--gold);
+  border-radius: 8px;
+  background: var(--well-deep);
+  box-shadow:
+    0 4px 0 var(--edge-shadow),
+    0 0 20px var(--gold-tint);
+}
+html[data-theme="mythic"] .round-summary.is-defeat .level-up-score-art {
+  filter: grayscale(0.45) saturate(0.6);
 }
 
 @media (max-width: 620px) {
