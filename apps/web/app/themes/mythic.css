@@ -6,8 +6,8 @@
 html[data-theme="mythic"] {
   /* Archivo Black for the shouting; CJK glyphs (升, 庄, 主) fall back to a
      brushy serif, which reads like a chop stamp against the punk type. */
-  --font-game: var(--font-display), "Kaiti SC", "STKaiti", sans-serif;
-  --font-num: var(--font-display), "Kaiti SC", "STKaiti", sans-serif;
+  --font-game: var(--font-display), var(--font-cjk), "Kaiti SC", "STKaiti", sans-serif;
+  --font-num: var(--font-display), var(--font-cjk), "Kaiti SC", "STKaiti", sans-serif;
 
   /* Text */
   --ink: #f5f2f4;
@@ -1183,14 +1183,6 @@ html[data-theme="mythic"] .bottom-reveal small {
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
-html[data-theme="mythic"] .victory-mark {
-  color: var(--gold);
-  font-family: Georgia, serif;
-  font-size: 4.4rem;
-  text-shadow:
-    0 4px 0 rgba(0, 0, 0, 0.5),
-    0 0 40px var(--gold-tint);
-}
 /* Round verdict: the results card, white-framed on a hard red drop with a
    diagonal red slash cutting through — maximum "RESULTS" energy. */
 html[data-theme="mythic"] .round-summary {
@@ -1621,39 +1613,11 @@ html[data-theme="mythic"] .playing-card.rank-Q .card-center,
 html[data-theme="mythic"] .playing-card.rank-J .card-center {
   display: none;
 }
+/* Number cards keep their chip as placeholder treatment until they get generated art. */
 html[data-theme="mythic"]
   .playing-card:is(.rank-A, .rank-K, .rank-Q, .rank-J, .card-big, .card-small)
   .card-corner {
-  min-width: auto;
-  border: 0;
-  background: transparent;
-  padding: 0;
-  box-shadow: none;
-  color: var(--house-ink);
-  text-shadow:
-    0 0 5px rgba(246, 229, 193, 0.95),
-    1px 1px 1px rgba(0, 0, 0, 0.9),
-    0 2px 3px rgba(0, 0, 0, 0.65);
-  transform: none;
-}
-html[data-theme="mythic"]
-  .playing-card:is(.rank-A, .rank-K, .rank-Q, .rank-J, .card-big, .card-small)
-  .card-corner
-  span {
-  color: var(--house-accent);
-}
-html[data-theme="mythic"]
-  .playing-card:is(
-    .rank-A,
-    .rank-K,
-    .rank-Q,
-    .rank-J,
-    .card-big,
-    .card-small
-  ).is-compact
-  .card-corner {
-  top: 6px;
-  left: 7px;
+  display: none;
 }
 
 /* Trump gilding: trump cards wear a gold frame and a 主 seal — power you

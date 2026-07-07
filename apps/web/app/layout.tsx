@@ -1,15 +1,20 @@
 import type { Metadata, Viewport } from "next";
-import { Archivo_Black } from "next/font/google";
+import { Archivo_Black, Ma_Shan_Zheng } from "next/font/google";
 import "./globals.css";
 
 /*
- * Mythic uses one poster display face. CJK glyphs (升级) fall back to a serif,
- * which reads like the hand-painted logos on old Chinese card clients.
+ * Mythic uses one poster display face plus brush-script CJK so seals and the
+ * 升级 wordmark keep ink character on machines without Kaiti installed.
  */
 const displayFont = Archivo_Black({
   weight: "400",
   subsets: ["latin"],
   variable: "--font-display",
+});
+const cjkFont = Ma_Shan_Zheng({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-cjk",
 });
 
 export const metadata: Metadata = {
@@ -27,7 +32,11 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" data-theme="mythic" className={displayFont.variable}>
+    <html
+      lang="en"
+      data-theme="mythic"
+      className={`${displayFont.variable} ${cjkFont.variable}`}
+    >
       <body>{children}</body>
     </html>
   );
