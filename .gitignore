@@ -13,3 +13,6 @@ test-results/
 .env
 .env.local
 !.env.example
+
+# macOS noise
+.DS_Store
