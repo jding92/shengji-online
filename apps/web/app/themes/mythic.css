@@ -1721,6 +1721,276 @@ html[data-theme="mythic"] .generic-joker-card {
   color: var(--red-bright);
 }
 
+/* ---------------------------------------------------------------------- */
+/* V1 generated-art integration. The CSS keeps control text selectable and */
+/* accessible while the painted assets replace the old placeholder surfaces. */
+/* ---------------------------------------------------------------------- */
+html[data-theme="mythic"] .menu-hero {
+  background:
+    linear-gradient(rgba(8, 9, 6, 0.28), rgba(8, 9, 6, 0.55)),
+    url("/art/home/hero-landscape.webp") center / cover no-repeat;
+}
+html[data-theme="mythic"] .menu-shell .ambient-orb {
+  opacity: 0.34;
+}
+html[data-theme="mythic"] .menu-card {
+  background-color: rgba(18, 19, 15, 0.9);
+  backdrop-filter: blur(3px);
+}
+html[data-theme="mythic"] .menu-wordmark {
+  filter: drop-shadow(0 5px 0 rgba(0, 0, 0, 0.5));
+}
+
+html[data-theme="mythic"] .seat-portrait {
+  border: 2px solid var(--gold);
+  border-radius: 50%;
+  background: #16131b;
+  box-shadow:
+    0 0 0 1px var(--gold-deep),
+    0 3px 0 var(--edge-shadow);
+  transform: rotate(-4deg);
+}
+html[data-theme="mythic"] .lobby-seat .seat-portrait {
+  width: 61px;
+  height: 61px;
+}
+
+html[data-theme="mythic"] .board {
+  background:
+    linear-gradient(rgba(8, 9, 6, 0.16), rgba(8, 9, 6, 0.22)),
+    url("/art/textures/table-felt.webp") center / 360px 360px repeat;
+}
+html[data-theme="mythic"] .felt-table::before {
+  position: absolute;
+  z-index: 0;
+  inset: 4%;
+  border-radius: 50%;
+  background: url("/art/ui/table-ring.webp") center / contain no-repeat;
+  content: "";
+  mix-blend-mode: screen;
+  opacity: 0.52;
+  pointer-events: none;
+}
+html[data-theme="mythic"] .glass-panel,
+html[data-theme="mythic"] .round-summary {
+  border-image: url("/art/ui/panel-frame.webp") 54 fill / 22px / 0 stretch;
+  background-color: #15130f;
+}
+html[data-theme="mythic"] .player-chip {
+  border: 0;
+  border-radius: 0;
+  background: #16130f url("/art/ui/nameplate.webp") center / 100% 100% no-repeat;
+  box-shadow: 0 4px 0 var(--edge-shadow);
+}
+html[data-theme="mythic"] .card-corner-opposite {
+  top: auto;
+  right: 10px;
+  bottom: 9px;
+  left: auto;
+  transform: rotate(180deg) skewX(-5deg);
+}
+html[data-theme="mythic"] .playing-card.rank-2,
+html[data-theme="mythic"] .playing-card.rank-3,
+html[data-theme="mythic"] .playing-card.rank-4,
+html[data-theme="mythic"] .playing-card.rank-5,
+html[data-theme="mythic"] .playing-card.rank-6,
+html[data-theme="mythic"] .playing-card.rank-7,
+html[data-theme="mythic"] .playing-card.rank-8,
+html[data-theme="mythic"] .playing-card.rank-9,
+html[data-theme="mythic"] .playing-card.rank-10 {
+  background-position: center;
+  background-size: cover;
+}
+html[data-theme="mythic"]
+  .playing-card.card-hearts:is(
+    .rank-2,
+    .rank-3,
+    .rank-4,
+    .rank-5,
+    .rank-6,
+    .rank-7,
+    .rank-8,
+    .rank-9,
+    .rank-10
+  ) {
+  background-image: image-set(
+    url("/art/cards/hearts-number-blank.webp") 1x,
+    url("/art/cards/hearts-number-blank@2x.webp") 2x
+  );
+}
+html[data-theme="mythic"]
+  .playing-card.card-spades:is(
+    .rank-2,
+    .rank-3,
+    .rank-4,
+    .rank-5,
+    .rank-6,
+    .rank-7,
+    .rank-8,
+    .rank-9,
+    .rank-10
+  ) {
+  background-image: image-set(
+    url("/art/cards/spades-number-blank.webp") 1x,
+    url("/art/cards/spades-number-blank@2x.webp") 2x
+  );
+}
+html[data-theme="mythic"]
+  .playing-card.card-diamonds:is(
+    .rank-2,
+    .rank-3,
+    .rank-4,
+    .rank-5,
+    .rank-6,
+    .rank-7,
+    .rank-8,
+    .rank-9,
+    .rank-10
+  ) {
+  background-image: image-set(
+    url("/art/cards/diamonds-number-blank.webp") 1x,
+    url("/art/cards/diamonds-number-blank@2x.webp") 2x
+  );
+}
+html[data-theme="mythic"]
+  .playing-card.card-clubs:is(
+    .rank-2,
+    .rank-3,
+    .rank-4,
+    .rank-5,
+    .rank-6,
+    .rank-7,
+    .rank-8,
+    .rank-9,
+    .rank-10
+  ) {
+  background-image: image-set(
+    url("/art/cards/clubs-number-blank.webp") 1x,
+    url("/art/cards/clubs-number-blank@2x.webp") 2x
+  );
+}
+html[data-theme="mythic"] .number-pips {
+  position: absolute;
+  z-index: 2;
+  inset: 33px 18px 29px;
+}
+html[data-theme="mythic"] .number-pip {
+  position: absolute;
+  display: grid;
+  width: 22%;
+  aspect-ratio: 1;
+  place-items: center;
+  background-position: center;
+  background-size: contain;
+  background-repeat: no-repeat;
+  color: transparent;
+  mix-blend-mode: multiply;
+}
+html[data-theme="mythic"] .card-hearts .number-pip {
+  background-image: url("/art/cards/hearts-pip.webp");
+}
+html[data-theme="mythic"] .card-spades .number-pip {
+  background-image: url("/art/cards/spades-pip.webp");
+}
+html[data-theme="mythic"] .card-diamonds .number-pip {
+  background-image: url("/art/cards/diamonds-pip.webp");
+}
+html[data-theme="mythic"] .card-clubs .number-pip {
+  background-image: url("/art/cards/clubs-pip.webp");
+}
+html[data-theme="mythic"] .pip-top-left {
+  top: 0;
+  left: 0;
+}
+html[data-theme="mythic"] .pip-top-center {
+  top: 0;
+  left: 39%;
+}
+html[data-theme="mythic"] .pip-top-right {
+  top: 0;
+  right: 0;
+}
+html[data-theme="mythic"] .pip-upper-left {
+  top: 22%;
+  left: 0;
+}
+html[data-theme="mythic"] .pip-upper-right {
+  top: 22%;
+  right: 0;
+}
+html[data-theme="mythic"] .pip-mid-left {
+  top: 39%;
+  left: 0;
+}
+html[data-theme="mythic"] .pip-center {
+  top: 39%;
+  left: 39%;
+}
+html[data-theme="mythic"] .pip-mid-right {
+  top: 39%;
+  right: 0;
+}
+html[data-theme="mythic"] .pip-lower-left {
+  bottom: 22%;
+  left: 0;
+}
+html[data-theme="mythic"] .pip-lower-right {
+  right: 0;
+  bottom: 22%;
+}
+html[data-theme="mythic"] .pip-bottom-left {
+  bottom: 0;
+  left: 0;
+}
+html[data-theme="mythic"] .pip-bottom-center {
+  bottom: 0;
+  left: 39%;
+}
+html[data-theme="mythic"] .pip-bottom-right {
+  right: 0;
+  bottom: 0;
+}
+html[data-theme="mythic"] .number-pip.is-inverted {
+  transform: rotate(180deg);
+}
+html[data-theme="mythic"] .playing-card.is-compact .number-pips {
+  inset: 27px 13px 20px;
+}
+
+html[data-theme="mythic"] .card-back {
+  background: #080604 url("/art/cards/card-back.webp") center / 100% 100% no-repeat;
+}
+html[data-theme="mythic"] .card-back-seal {
+  visibility: hidden;
+}
+
+html[data-theme="mythic"] .playing-card.is-trump::before {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 0;
+  background: url("/art/ui/trump-seal.webp") center / contain no-repeat;
+  box-shadow: none;
+  color: transparent;
+}
+html[data-theme="mythic"] .playing-card.is-trump::after {
+  inset: 0;
+  background: url("/art/ui/trump-frame.webp") center / 100% 100% no-repeat;
+  mix-blend-mode: screen;
+  opacity: 0.88;
+}
+html[data-theme="mythic"] .playing-card.is-compact.is-trump::after {
+  background-image: url("/art/ui/trump-frame-compact.webp");
+}
+
+@media (max-width: 620px) {
+  html[data-theme="mythic"] .menu-hero {
+    background-image:
+      linear-gradient(rgba(8, 9, 6, 0.28), rgba(8, 9, 6, 0.55)),
+      url("/art/home/hero-portrait.webp");
+  }
+}
+
 /* The starburst and pulses hold still for reduced-motion users; the global
    rule already freezes animation, this just drops the leans that imply it. */
 @media (prefers-reduced-motion: reduce) {

@@ -9,6 +9,7 @@ import { useState } from "react";
 import { addBot, removeBot } from "../lib/bot-api";
 import { teamLabelForSeat } from "../lib/strings";
 import { LeaveButton } from "./leave-button";
+import { SeatAvatar } from "./seat-avatar";
 
 type LobbyProps = {
   view: PrivateGameView;
@@ -93,11 +94,11 @@ export function Lobby({ view, sendCommand, onLeave }: LobbyProps) {
                   onClick={() => sendCommand({ type: "SIT", seat: seat.seat })}
                 >
                   <span className="seat-number">0{seat.seat + 1}</span>
-                  <span
-                    className={`seat-avatar ${seat.playerId === null ? "" : `avatar-seat-${seat.seat}`}`}
-                  >
-                    {seat.name?.slice(0, 1).toUpperCase() ?? "+"}
-                  </span>
+                  {seat.playerId === null ? (
+                    <span className="seat-avatar">+</span>
+                  ) : (
+                    <SeatAvatar seat={seat.seat} />
+                  )}
                   <strong>{seat.name ?? "Open seat"}</strong>
                   <small>
                     {isYou

@@ -4,6 +4,7 @@ import type { BotDifficulty } from "@shengji/protocol";
 import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { ART, art2x } from "../lib/art";
 import { safeStorage } from "../lib/safe-storage";
 import { sessionKey } from "../lib/session";
 
@@ -73,6 +74,7 @@ export default function HomePage() {
 
   return (
     <main className="menu-shell">
+      <div className="menu-hero" aria-hidden="true" />
       <div className="ambient-orb orb-one" />
       <div className="ambient-orb orb-two" />
       <motion.section
@@ -84,8 +86,13 @@ export default function HomePage() {
         <span className="menu-mark" aria-hidden="true">
           升
         </span>
-        <h1 className="menu-title">升级</h1>
-        <p className="menu-subtitle">SHENG JI</p>
+        <img
+          className="menu-wordmark"
+          src={ART.ui.wordmark}
+          srcSet={`${art2x(ART.ui.wordmark)} 2x`}
+          alt="Sheng Ji · 升级"
+        />
+        <h1 className="sr-only">Sheng Ji · 升级</h1>
 
         <div className="menu-actions">
           <button

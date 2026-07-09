@@ -129,7 +129,13 @@ describe("deriveMoments", () => {
     );
 
     expect(moments).toEqual([
-      { id: "trick-won:1:1", type: "TRICK_WON", winnerSeat: 2, points: 15 },
+      {
+        id: "trick-won:1:1",
+        type: "TRICK_WON",
+        winnerSeat: 2,
+        points: 15,
+        cards: [],
+      },
       {
         id: "points-captured:1:25",
         type: "POINTS_CAPTURED",

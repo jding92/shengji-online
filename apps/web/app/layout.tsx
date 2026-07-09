@@ -20,6 +20,14 @@ const cjkFont = Ma_Shan_Zheng({
 export const metadata: Metadata = {
   title: "Sheng Ji · 升级 Online",
   description: "A polished private online table for four-player Sheng Ji.",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [
+      { url: "/art/icons/favicon-16.png", sizes: "16x16", type: "image/png" },
+      { url: "/art/icons/favicon-32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: [{ url: "/art/icons/apple-touch-180.png", sizes: "180x180" }],
+  },
 };
 
 export const viewport: Viewport = {

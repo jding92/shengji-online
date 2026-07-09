@@ -1,0 +1,365 @@
+body {
+  font-family: sans-serif;
+  margin: 0;
+  padding: 0;
+}
+.dark-mode {
+  background: #000;
+}
+.dark-mode #root {
+  color: #fff;
+}
+button.big {
+  margin: 10px;
+  padding: 10px;
+}
+button.big,
+button.normal {
+  cursor: pointer;
+  line-height: 1em;
+}
+button.normal {
+  margin: 2px;
+  padding: 2px;
+}
+.dark-mode .icon-button {
+  color: #fff;
+}
+.header-message {
+  background-color: rgba(255, 255, 0, 0.7);
+  border-bottom: 1px solid #000;
+  cursor: pointer;
+  left: 0;
+  position: fixed;
+  text-align: center;
+  top: 0;
+  width: 100%;
+}
+.emoji-picker-react button {
+  margin: 0;
+}
+.players button {
+  margin: 0 5px;
+  padding: 2.5px;
+}
+.player {
+  border: 1px solid #000;
+  line-height: 1em;
+  padding: 10px;
+}
+.dark-mode .player {
+  border-color: #fff;
+}
+.errors {
+  background: red;
+  color: #fff;
+  padding: 0 10px;
+  position: fixed;
+  z-index: 100;
+}
+.trick {
+  padding: 10px;
+}
+.card {
+  background: transparent;
+  cursor: pointer;
+  display: inline-block;
+  font-family:
+    Apple Symbols,
+    Segoe UI Symbol,
+    Symbola,
+    DejaVu Sans,
+    system;
+  margin-top: 20px;
+  position: relative;
+  user-select: none;
+}
+.card.highlighted {
+  border-bottom: 1px solid;
+  margin-bottom: -1px;
+}
+.card > svg {
+  background: #fff;
+  margin-left: 1px;
+}
+.dark-mode .card > svg {
+  background: #000;
+}
+.card:first-child > svg {
+  padding: 0;
+}
+.card.unknown,
+.unknown {
+  color: #aaa;
+  cursor: default;
+}
+.card .card-label {
+  background: #fff;
+  display: none;
+  font-size: medium;
+  left: 0.35em;
+  position: absolute;
+  width: 1.5em;
+  z-index: 1;
+}
+.dark-mode .card .card-label {
+  background: #000;
+}
+.hand .unselected-cards.unclickable .card {
+  cursor: default;
+}
+.hand .unselected-cards .card {
+  margin-top: 30px;
+}
+.hand .unselected-cards .card:hover .card-label,
+.hand .unselected-cards .card:hover svg {
+  transform: translateY(-20px);
+}
+.card .card-icon {
+  font-size: medium;
+  left: 0.35em;
+  position: absolute;
+  z-index: 1;
+}
+.hand .unselected-cards .card:hover .card-icon {
+  transform: translateY(-20px);
+}
+.kitty {
+  margin-bottom: 20px;
+  margin-top: 20px;
+}
+.always-show-labels .card .card-label,
+.card:hover .card-label {
+  display: inline-block;
+}
+.ReactModal__Overlay {
+  z-index: 2;
+}
+.card.notify,
+.notify .card {
+  animation: blinkingText 1.5s 1;
+  color: #000;
+}
+@keyframes blinkingText {
+  0% {
+    color: #000;
+  }
+  50% {
+    color: #aaa;
+  }
+  to {
+    color: #000;
+  }
+}
+@keyframes blinkingTextDark {
+  0% {
+    color: #fff;
+  }
+  50% {
+    color: #555;
+  }
+  to {
+    color: #fff;
+  }
+}
+.dark-mode .card.notify,
+.dark-mode .notify .card {
+  animation: blinkingTextDark 1.5s 1;
+  color: #fff;
+}
+.♡,
+.♢ {
+  color: #bb0313;
+}
+.♤,
+.♧,
+.🃟 {
+  color: #000;
+}
+.🃏 {
+  color: #bb0313;
+}
+.points .card {
+  cursor: default;
+}
+.four-color .♢,
+.four-color.♢ {
+  color: #1933f9;
+}
+.four-color .♡,
+.four-color.♡ {
+  color: #bb0313;
+}
+.four-color .♤,
+.four-color.♤ {
+  color: #000;
+}
+.four-color .♧,
+.four-color.♧ {
+  color: #477e1b;
+}
+.four-color .🃟,
+.four-color.🃟 {
+  color: #000;
+}
+.four-color .🃏,
+.four-color.🃏 {
+  color: #bb0313;
+}
+.dark-mode .four-color .♤,
+.dark-mode .four-color .🃟,
+.dark-mode .four-color.♤,
+.dark-mode .four-color.🃟,
+.dark-mode .♤,
+.dark-mode .♧,
+.dark-mode .🃟,
+.dark-mode.♤,
+.dark-mode.♧,
+.dark-mode.🃟,
+.darkmode.four-color.🃟 {
+  color: #fff;
+}
+.hand p {
+  margin: 0;
+  text-align: center;
+}
+.hand .selected-cards,
+.hand .unselected-cards {
+  padding: 0 10px;
+}
+.next {
+  color: #1933f9;
+  font-weight: 700;
+}
+.dark-mode .next {
+  color: #96a2fa;
+}
+.landlord,
+.landlord .card svg {
+  background: #ddd;
+}
+.dark-mode .landlord,
+.dark-mode .landlord .card svg {
+  background: #333;
+}
+.observer {
+  border: 1px dashed #222;
+  color: #222;
+}
+.chat {
+  border: 1px solid #eee;
+  float: right;
+  margin-top: 20px;
+  min-width: 225px;
+  width: 20%;
+}
+.dark-mode .chat {
+  border: #222;
+}
+.game {
+  display: inline-block;
+  min-height: 660px;
+  min-width: 690px;
+  padding: 0 20px;
+  width: 70%;
+}
+.hide-chat-box .game {
+  width: 95%;
+}
+.messages {
+  height: 400px;
+  overflow-anchor: none;
+  overflow-y: auto;
+  padding-left: 10px;
+  padding-top: 10px;
+}
+.chat-anchor {
+  height: 1px;
+  overflow-anchor: auto;
+}
+.message {
+  margin: 0;
+}
+.game-message {
+  color: #00f;
+}
+.labeled-play {
+  border: 1px solid #000;
+  display: inline-block;
+  margin-bottom: 20px;
+  padding: 10px;
+}
+.dark-mode .labeled-play {
+  border-color: #fff;
+}
+.labeled-play .label {
+  line-height: 1em;
+  text-align: center;
+}
+.labeled-play .card-group {
+  display: inline-block;
+}
+.labeled-play .card {
+  cursor: default;
+}
+.labeled-play.clickable .card {
+  cursor: pointer;
+}
+.labeled-play.winning {
+  box-shadow: inset 0 0 0 2px #bb0313;
+}
+.always-show-labels .more .card.svg .card-label,
+.more .card.svg:hover .card-label {
+  bottom: 1.8em;
+}
+.labeled-play .play {
+  display: inline-block;
+  padding-bottom: 20px;
+}
+.labeled-play .play + .play {
+  margin-left: 10px;
+}
+.trump {
+  margin: 10px 0;
+}
+.pending-friends p {
+  margin: 0;
+}
+.pending-friends {
+  margin: 10px;
+}
+.reset-block {
+  float: right;
+  text-align: center;
+  width: 200px;
+}
+.reset-block p {
+  margin-block: 0;
+}
+.red {
+  color: #bb0313;
+}
+.join-room div {
+  padding: 5px;
+}
+.join-room span {
+  cursor: pointer;
+}
+.join-room h2 input {
+  font-size: 24px;
+}
+.kicker button {
+  margin: 3px;
+  padding: 3px;
+}
+label {
+  line-height: 25px;
+}
+.rules .card {
+  font-size: 8em;
+  margin-right: -0.4em;
+}
+.rules .card:last-child {
+  margin-right: 0;
+}
+/*# sourceMappingURL=style.css.map*/

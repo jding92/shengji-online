@@ -23,6 +23,17 @@ const UI = {
   attackersBanner: "/art/ui/attackers-banner.webp",
   defendersBanner: "/art/ui/defenders-banner.webp",
   levelUpScore: "/art/ui/level-up-score.webp",
+  wordmark: "/art/ui/sheng-ji-wordmark.webp",
+  trumpFrame: "/art/ui/trump-frame.webp",
+  trumpFrameCompact: "/art/ui/trump-frame-compact.webp",
+  trumpSeal: "/art/ui/trump-seal.webp",
+  trumpBurst: "/art/ui/trump-burst.webp",
+  panelFrame: "/art/ui/panel-frame.webp",
+  nameplate: "/art/ui/nameplate.webp",
+  tableRing: "/art/ui/table-ring.webp",
+  pointGlowFive: "/art/ui/point-glow-five.webp",
+  pointGlowTen: "/art/ui/point-glow-ten.webp",
+  pointGlowKing: "/art/ui/point-glow-king.webp",
 } as const;
 
 const SPLASH = {
@@ -30,8 +41,28 @@ const SPLASH = {
   defeat: "/art/splash/defeat.webp",
 } as const;
 
+const HOME = {
+  heroLandscape: "/art/home/hero-landscape.webp",
+  heroPortrait: "/art/home/hero-portrait.webp",
+} as const;
+
+const CARD = {
+  premiumBack: "/art/cards/card-back.webp",
+  heartsNumberBlank: "/art/cards/hearts-number-blank.webp",
+  spadesNumberBlank: "/art/cards/spades-number-blank.webp",
+  diamondsNumberBlank: "/art/cards/diamonds-number-blank.webp",
+  clubsNumberBlank: "/art/cards/clubs-number-blank.webp",
+  heartsPip: "/art/cards/hearts-pip.webp",
+  spadesPip: "/art/cards/spades-pip.webp",
+  diamondsPip: "/art/cards/diamonds-pip.webp",
+  clubsPip: "/art/cards/clubs-pip.webp",
+} as const;
+
 const AVATARS = {
   hadesKingYan: "/art/avatars/hades-king-yan.webp",
+  persephonePlumBlossom: "/art/avatars/persephone-plum-blossom.webp",
+  poseidonDragonKing: "/art/avatars/poseidon-dragon-king.webp",
+  athenaGrandStrategist: "/art/avatars/athena-grand-strategist.webp",
 } as const;
 
 export function art2x(path: string): string {
@@ -48,6 +79,8 @@ export function artCardFace2x(suit: ArtSuit, rank: ArtCardRank): string {
 
 export const ART = {
   ui: UI,
+  card: CARD,
+  home: HOME,
   splash: SPLASH,
   avatars: AVATARS,
 } as const;

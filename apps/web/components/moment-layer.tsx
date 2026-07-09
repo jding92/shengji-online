@@ -23,6 +23,15 @@ function isDisplayedMoment(moment: GameMoment): moment is DisplayedMoment {
   );
 }
 
+function pointGlowFor(moment: Extract<GameMoment, { type: "TRICK_WON" }>): string {
+  const ranks = moment.cards.flatMap(({ face }) =>
+    face.kind === "standard" ? [face.rank] : [],
+  );
+  if (ranks.includes("K")) return ART.ui.pointGlowKing;
+  if (ranks.includes("10")) return ART.ui.pointGlowTen;
+  return ART.ui.pointGlowFive;
+}
+
 export function MomentLayer({ moments, dismiss }: MomentLayerProps) {
   const reducedMotion = useReducedMotion() ?? false;
   const displayed = useMemo(() => moments.filter(isDisplayedMoment), [moments]);
@@ -62,7 +71,10 @@ export function MomentLayer({ moments, dismiss }: MomentLayerProps) {
                   : { type: "spring", stiffness: 420, damping: 18 }
               }
             >
-              <span className="moment-trump-vignette" />
+              <span
+                className="moment-trump-vignette"
+                style={{ backgroundImage: `url(${ART.ui.trumpBurst})` }}
+              />
               <img
                 className="moment-trump-stamp"
                 src={ART.ui.trumpDeclaration}
@@ -98,8 +110,8 @@ export function MomentLayer({ moments, dismiss }: MomentLayerProps) {
             >
               <img
                 className="moment-points-art"
-                src={ART.ui.pointsGlow}
-                srcSet={`${art2x(ART.ui.pointsGlow)} 2x`}
+                src={pointGlowFor(moment)}
+                srcSet={`${art2x(pointGlowFor(moment))} 2x`}
                 alt=""
               />
               <strong>+{moment.points} 分</strong>
