@@ -8,6 +8,7 @@ import { cardFaceLabel, type TablePosition } from "../lib/cards";
 import { teamClassForSeat, teamLabelForSeat } from "../lib/strings";
 import { CardBack } from "./card";
 import { Countdown } from "./countdown";
+import { SeatAvatar } from "./seat-avatar";
 
 type CurrentBid = NonNullable<
   NonNullable<PrivateGameView["publicRound"]>["currentBid"]
@@ -119,9 +120,7 @@ export function TableSeat({
         />
       )}
       <div className="player-chip">
-        <span className={`player-avatar avatar-seat-${seat.seat}`}>
-          {seat.name?.slice(0, 1).toUpperCase() ?? "·"}
-        </span>
+        <SeatAvatar seat={seat.seat} />
         <span className="player-ident">
           <strong>
             {isYou ? "You" : (seat.name ?? `Seat ${seat.seat + 1}`)}

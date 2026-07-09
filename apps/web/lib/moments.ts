@@ -5,7 +5,13 @@ type RoundView = NonNullable<PrivateGameView["publicRound"]>;
 export type GameMoment =
   | { id: string; type: "TRUMP_DECLARED"; seat?: number }
   | { id: string; type: "CARD_PLAYED"; seat: number; cards: CardInstance[] }
-  | { id: string; type: "TRICK_WON"; winnerSeat: number; points: number }
+  | {
+      id: string;
+      type: "TRICK_WON";
+      winnerSeat: number;
+      points: number;
+      cards: CardInstance[];
+    }
   | { id: string; type: "POINTS_CAPTURED"; delta: number; total: number }
   | {
       id: string;
@@ -138,6 +144,7 @@ export function deriveMoments(
       type: "TRICK_WON",
       winnerSeat: nextRound.lastCompletedTrick.winnerSeat,
       points: nextRound.lastCompletedTrick.points,
+      cards: nextRound.lastCompletedTrick.plays.flatMap(({ cards }) => cards),
     });
   }
 
