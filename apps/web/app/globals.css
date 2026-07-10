@@ -130,117 +130,143 @@ button:disabled {
   display: grid;
   min-height: 100vh;
   place-items: center;
-  overflow: hidden;
-  padding: 24px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: clamp(18px, 4vh, 38px) 24px;
 }
 .menu-hero {
   position: absolute;
   inset: 0;
+  display: block;
+  overflow: hidden;
   pointer-events: none;
 }
-.menu-brand {
-  display: grid;
-  justify-items: center;
-}
-.menu-wordmark {
+.menu-hero-image {
   display: block;
-  width: min(100%, 280px);
-  height: auto;
-  margin-top: 14px;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
-
-.menu-card {
+.menu-stage {
   position: relative;
   z-index: 1;
   display: grid;
-  width: min(100%, 420px);
-  justify-items: center;
-  padding: 44px 40px 40px;
-  text-align: center;
+  width: min(100%, 780px);
+  gap: clamp(12px, 2vh, 20px);
 }
-
-.menu-mark {
+.menu-brand {
   display: grid;
-  width: 92px;
-  height: 92px;
-  place-items: center;
+  width: min(100%, 520px);
+  margin: 0 auto;
+  justify-items: center;
 }
-
-.menu-title {
-  margin: 22px 0 0;
+.menu-wordmark-frame {
+  width: 100%;
+}
+.menu-wordmark {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.menu-console {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.82fr) minmax(360px, 1.18fr);
+  gap: 16px;
+  align-items: stretch;
+}
+.menu-mode-list {
+  display: grid;
+  gap: 7px;
+  align-content: center;
+}
+.arcade-mode {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: 9px;
+  align-items: center;
+  min-height: 66px;
+  padding: 0 24px;
+  cursor: pointer;
+  text-align: left;
+}
+.arcade-mode-caret {
   line-height: 1;
 }
-
-.menu-subtitle {
-  margin: 16px 0 0;
-}
-
-.menu-actions {
+.menu-mode-panel,
+.menu-panel-form {
   display: grid;
+  align-content: center;
+}
+.menu-mode-panel {
+  min-height: 286px;
+  padding: 30px 34px 32px;
+}
+.menu-panel-form {
+  height: 100%;
+}
+.menu-mode-panel h2,
+.menu-panel-kicker,
+.menu-panel-copy {
+  margin: 0;
+}
+.menu-panel-copy {
+  max-width: 30ch;
+}
+.menu-panel-kicker {
+  margin-bottom: 5px;
+}
+.menu-mode-panel h2 {
+  margin-bottom: 10px;
+}
+.menu-panel-form .arcade-field-label {
+  margin-top: 4px;
+}
+.arcade-field {
   width: 100%;
-  gap: 11px;
-  margin-top: 32px;
+  min-width: 0;
+  height: 52px;
+  padding: 0 16px;
 }
-
-.menu-button {
-  display: grid;
-  place-items: center;
-  text-decoration: none;
-}
-
-.practice-create {
+.arcade-action {
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: 7px;
+  gap: 18px;
   align-items: center;
+  width: 100%;
+  min-height: 52px;
+  margin-top: 22px;
+  padding: 0 20px;
+  cursor: pointer;
+  text-align: left;
+  text-decoration: none;
 }
-
-.practice-create label {
-  grid-column: 1 / -1;
-  color: var(--muted);
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.arcade-action b {
+  line-height: 1;
 }
-
-.practice-create select {
+.difficulty-picker {
   min-width: 0;
-  height: 100%;
-  border: 1px solid var(--line);
-  border-radius: 9px;
-  background: var(--frost);
-  color: var(--ink);
-  padding: 0 10px;
-  font: inherit;
+  margin: 3px 0 0;
+  padding: 0;
 }
-
-.practice-create .menu-button {
-  width: auto;
+.difficulty-picker legend {
+  padding: 0;
 }
-
-.menu-join {
-  display: flex;
-  min-height: 54px;
-  overflow: hidden;
+.difficulty-options {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+  margin-top: 8px;
 }
-
-.menu-join input {
+.difficulty-option {
   min-width: 0;
-  flex: 1;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  padding-left: 18px;
+  min-height: 40px;
+  padding: 0 5px;
+  cursor: pointer;
 }
-
-.menu-join .button {
-  min-height: 0;
-  margin: 5px;
-  padding-inline: 18px;
-}
-
-.menu-card .inline-error {
-  margin: 16px 0 0;
+.menu-error {
+  margin: -4px 0 0;
+  padding: 9px 13px;
+  text-align: center;
 }
 
 /* Join and lobby */
@@ -1453,6 +1479,36 @@ button:disabled {
   .trick-center {
     top: 50%;
     height: 56%;
+  }
+}
+
+@media (max-width: 660px) {
+  .menu-shell {
+    padding: 12px;
+  }
+  .menu-stage {
+    width: min(100%, 430px);
+  }
+  .menu-brand {
+    width: min(100%, 360px);
+  }
+  .menu-console {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .menu-mode-list {
+    gap: 4px;
+  }
+  .arcade-mode {
+    min-height: 48px;
+    padding-inline: 20px;
+  }
+  .menu-mode-panel {
+    min-height: 250px;
+    padding: 24px;
+  }
+  .difficulty-options {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 

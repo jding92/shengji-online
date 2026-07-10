@@ -4,8 +4,12 @@ test("practice drops the human straight into a game against three bots", async (
   page,
 }) => {
   await page.goto("/");
-  await page.getByLabel("Practice difficulty").selectOption("advanced");
-  await page.getByRole("button", { name: "Practice table · solo" }).click();
+  await page.getByRole("tab", { name: "Practice" }).click();
+  await page
+    .getByRole("group", { name: "Practice difficulty" })
+    .getByRole("button", { name: "Advanced" })
+    .click();
+  await page.getByRole("button", { name: "Start practice" }).click();
 
   // No manual lobby step: the human is auto-seated, auto-readied, and dealt in.
   await expect(page.locator(".hand-scroll .playing-card")).toHaveCount(25, {

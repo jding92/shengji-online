@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Archivo_Black, Ma_Shan_Zheng } from "next/font/google";
+import { Archivo_Black, Barlow_Condensed, Ma_Shan_Zheng } from "next/font/google";
 import "./globals.css";
 
 /*
@@ -15,6 +15,11 @@ const cjkFont = Ma_Shan_Zheng({
   weight: "400",
   subsets: ["latin"],
   variable: "--font-cjk",
+});
+const menuFont = Barlow_Condensed({
+  weight: ["500", "600", "700", "800"],
+  subsets: ["latin"],
+  variable: "--font-menu",
 });
 
 export const metadata: Metadata = {
@@ -43,7 +48,7 @@ export default function RootLayout({
     <html
       lang="en"
       data-theme="mythic"
-      className={`${displayFont.variable} ${cjkFont.variable}`}
+      className={`${displayFont.variable} ${cjkFont.variable} ${menuFont.variable}`}
     >
       <body>{children}</body>
     </html>

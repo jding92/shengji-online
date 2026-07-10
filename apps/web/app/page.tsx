@@ -3,7 +3,7 @@
 import type { BotDifficulty } from "@shengji/protocol";
 import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type KeyboardEvent } from "react";
 import { ART, art2x } from "../lib/art";
 import { safeStorage } from "../lib/safe-storage";
 import { sessionKey } from "../lib/session";
@@ -15,11 +15,21 @@ const DIFFICULTIES = [
   "expert",
 ] as const satisfies readonly BotDifficulty[];
 
+const MENU_MODES = [
+  { id: "create", label: "Create table" },
+  { id: "join", label: "Join table" },
+  { id: "practice", label: "Practice" },
+  { id: "guide", label: "How to play" },
+] as const;
+
+type MenuMode = (typeof MENU_MODES)[number]["id"];
+
 export default function HomePage() {
   const router = useRouter();
   const [roomCode, setRoomCode] = useState("");
   const [creating, setCreating] = useState(false);
   const [botDifficulty, setBotDifficulty] = useState<BotDifficulty>("intermediate");
+  const [menuMode, setMenuMode] = useState<MenuMode>("create");
   const [error, setError] = useState<string | null>(null);
 
   async function createRoom(practice = false) {
@@ -72,92 +82,210 @@ export default function HomePage() {
     if (normalized.length > 0) router.push(`/room/${normalized}`);
   }
 
+  function handleMenuKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    const currentIndex = MENU_MODES.findIndex(({ id }) => id === menuMode);
+    let nextIndex: number;
+
+    if (event.key === "ArrowDown") {
+      nextIndex = (currentIndex + 1) % MENU_MODES.length;
+    } else if (event.key === "ArrowUp") {
+      nextIndex = (currentIndex - 1 + MENU_MODES.length) % MENU_MODES.length;
+    } else if (event.key === "Home") {
+      nextIndex = 0;
+    } else if (event.key === "End") {
+      nextIndex = MENU_MODES.length - 1;
+    } else {
+      return;
+    }
+
+    event.preventDefault();
+    const nextMode = MENU_MODES[nextIndex]!;
+    setMenuMode(nextMode.id);
+    const tabs =
+      event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]');
+    tabs[nextIndex]?.focus();
+  }
+
   return (
     <main className="menu-shell">
-      <div className="menu-hero" aria-hidden="true" />
-      <div className="ambient-orb orb-one" />
-      <div className="ambient-orb orb-two" />
+      <picture className="menu-hero" aria-hidden="true">
+        <source
+          media="(max-width: 620px)"
+          sizes="100vw"
+          srcSet={`${ART.home.heroPortrait} 540w, ${art2x(ART.home.heroPortrait)} 1080w`}
+        />
+        <img
+          className="menu-hero-image"
+          src={ART.home.heroLandscape}
+          srcSet={`${ART.home.heroLandscape} 960w, ${art2x(ART.home.heroLandscape)} 1920w`}
+          sizes="100vw"
+          alt=""
+          fetchPriority="high"
+        />
+      </picture>
       <motion.section
-        className="menu-card"
+        className="menu-stage"
         initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, ease: "easeOut" }}
+        transition={{ duration: 0.28, ease: "easeOut" }}
       >
-        <span className="menu-mark" aria-hidden="true">
-          升
-        </span>
-        <img
-          className="menu-wordmark"
-          src={ART.ui.wordmark}
-          srcSet={`${art2x(ART.ui.wordmark)} 2x`}
-          alt="Sheng Ji · 升级"
-        />
-        <h1 className="sr-only">Sheng Ji · 升级</h1>
-
-        <div className="menu-actions">
-          <button
-            className="button button-primary button-large menu-button"
-            type="button"
-            disabled={creating}
-            onClick={() => void createRoom()}
-          >
-            {creating ? "Preparing table…" : "Create table"}
-          </button>
-
-          <form className="menu-join" onSubmit={joinRoom}>
-            <input
-              aria-label="Table code"
-              maxLength={8}
-              placeholder="TABLE CODE"
-              value={roomCode}
-              onChange={(event) => setRoomCode(event.target.value)}
+        <header className="menu-brand">
+          <div className="menu-wordmark-frame">
+            <img
+              className="menu-wordmark"
+              src={ART.ui.wordmark}
+              srcSet={`${art2x(ART.ui.wordmark)} 2x`}
+              alt="Sheng Ji · 升级"
             />
-            <button
-              className="button button-gold"
-              type="submit"
-              disabled={roomCode.trim().length === 0}
-            >
-              Join
-            </button>
-          </form>
-
-          <a
-            className="button button-ghost menu-button"
-            href="https://robertying.com/shengji/rules.html"
-            target="_blank"
-            rel="noreferrer"
-          >
-            How to play
-          </a>
-
-          <div className="practice-create">
-            <label htmlFor="practice-difficulty">Practice difficulty</label>
-            <select
-              id="practice-difficulty"
-              value={botDifficulty}
-              disabled={creating}
-              onChange={(event) =>
-                setBotDifficulty(event.target.value as BotDifficulty)
-              }
-            >
-              {DIFFICULTIES.map((difficulty) => (
-                <option key={difficulty} value={difficulty}>
-                  {difficulty[0]!.toUpperCase() + difficulty.slice(1)}
-                </option>
-              ))}
-            </select>
-            <button
-              className="button button-ghost menu-button"
-              type="button"
-              disabled={creating}
-              onClick={() => void createRoom(true)}
-            >
-              Practice table · solo
-            </button>
           </div>
+          <h1 className="sr-only">Sheng Ji · 升级</h1>
+        </header>
+
+        <div className="menu-console">
+          <div
+            className="menu-mode-list"
+            role="tablist"
+            aria-label="Game modes"
+            aria-orientation="vertical"
+            onKeyDown={handleMenuKeyDown}
+          >
+            {MENU_MODES.map(({ id, label }) => (
+              <button
+                key={id}
+                id={`menu-tab-${id}`}
+                className="arcade-mode"
+                type="button"
+                role="tab"
+                aria-controls="menu-mode-panel"
+                aria-selected={menuMode === id}
+                disabled={creating}
+                tabIndex={menuMode === id ? 0 : -1}
+                onClick={() => setMenuMode(id)}
+              >
+                <span className="arcade-mode-caret" aria-hidden="true">
+                  ▶
+                </span>
+                <span>{label}</span>
+              </button>
+            ))}
+          </div>
+
+          <motion.section
+            key={menuMode}
+            id="menu-mode-panel"
+            className="menu-mode-panel"
+            role="tabpanel"
+            aria-labelledby={`menu-tab-${menuMode}`}
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.16, ease: "easeOut" }}
+          >
+            {menuMode === "create" && (
+              <>
+                <p className="menu-panel-kicker">Private match</p>
+                <h2>Create a table</h2>
+                <p className="menu-panel-copy">
+                  Open an invite-only room and bring your crew to the table.
+                </p>
+                <button
+                  className="arcade-action"
+                  type="button"
+                  disabled={creating}
+                  onClick={() => void createRoom()}
+                >
+                  <span>{creating ? "Preparing table…" : "Create table"}</span>
+                  <b aria-hidden="true">→</b>
+                </button>
+              </>
+            )}
+
+            {menuMode === "join" && (
+              <form className="menu-panel-form" onSubmit={joinRoom}>
+                <p className="menu-panel-kicker">Enter the arena</p>
+                <h2>Join a table</h2>
+                <label className="arcade-field-label" htmlFor="table-code">
+                  Table code
+                </label>
+                <input
+                  id="table-code"
+                  className="arcade-field"
+                  autoCapitalize="characters"
+                  autoComplete="off"
+                  maxLength={8}
+                  placeholder="ENTER CODE"
+                  spellCheck={false}
+                  value={roomCode}
+                  onChange={(event) => setRoomCode(event.target.value)}
+                />
+                <button
+                  className="arcade-action"
+                  type="submit"
+                  disabled={roomCode.trim().length === 0}
+                >
+                  <span>Join table</span>
+                  <b aria-hidden="true">→</b>
+                </button>
+              </form>
+            )}
+
+            {menuMode === "practice" && (
+              <>
+                <p className="menu-panel-kicker">Solo training</p>
+                <h2>Choose your rivals</h2>
+                <fieldset className="difficulty-picker" disabled={creating}>
+                  <legend>Practice difficulty</legend>
+                  <div className="difficulty-options">
+                    {DIFFICULTIES.map((difficulty) => (
+                      <button
+                        key={difficulty}
+                        className="difficulty-option"
+                        type="button"
+                        aria-pressed={botDifficulty === difficulty}
+                        onClick={() => setBotDifficulty(difficulty)}
+                      >
+                        {difficulty[0]!.toUpperCase() + difficulty.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </fieldset>
+                <button
+                  className="arcade-action"
+                  type="button"
+                  disabled={creating}
+                  onClick={() => void createRoom(true)}
+                >
+                  <span>{creating ? "Preparing match…" : "Start practice"}</span>
+                  <b aria-hidden="true">→</b>
+                </button>
+              </>
+            )}
+
+            {menuMode === "guide" && (
+              <>
+                <p className="menu-panel-kicker">Field manual</p>
+                <h2>Learn the game</h2>
+                <p className="menu-panel-copy">
+                  Master bidding, trump, tractors, throws, and scoring before battle.
+                </p>
+                <a
+                  className="arcade-action"
+                  href="https://robertying.com/shengji/rules.html"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <span>Open game guide</span>
+                  <b aria-hidden="true">↗</b>
+                </a>
+              </>
+            )}
+          </motion.section>
         </div>
 
-        {error && <p className="inline-error">{error}</p>}
+        {error && (
+          <p className="inline-error menu-error" role="alert">
+            {error}
+          </p>
+        )}
       </motion.section>
     </main>
   );
