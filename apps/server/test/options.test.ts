@@ -13,7 +13,7 @@ import { RoomManager, RulesetResolutionError } from "../src/room-manager.js";
 import type { Room } from "../src/room.js";
 
 const now = "2026-07-10T12:00:00.000Z";
-const EXPERIMENTAL_6P = "shengji-6p-3d-fixed-experimental";
+const SIX_PLAYER_PRESET_ID = "shengji-6p-3d-fixed-v1";
 
 class FakeSocket extends EventEmitter {
   readyState: number = WebSocket.OPEN;
@@ -155,15 +155,15 @@ describe("host-controlled lobby options", () => {
 });
 
 describe("createRoom with presets and options", () => {
-  it("creates a room from an experimental preset", async () => {
+  it("creates a room from a non-default (6p/3d) preset", async () => {
     const store = new SqliteStore(":memory:");
     const manager = new RoomManager(store, { timersEnabled: false });
-    const room = await manager.createRoom({ at: now, presetId: EXPERIMENTAL_6P });
+    const room = await manager.createRoom({ at: now, presetId: SIX_PLAYER_PRESET_ID });
     expect(room.state.rulesetSnapshot.players.count).toBe(6);
-    expect(room.state.presetId).toBe(EXPERIMENTAL_6P);
+    expect(room.state.presetId).toBe(SIX_PLAYER_PRESET_ID);
     const summary = manager.roomSummary(room.state);
     expect(summary.ruleset).toMatchObject({
-      presetId: EXPERIMENTAL_6P,
+      presetId: SIX_PLAYER_PRESET_ID,
       teamsMode: "fixed",
     });
 
@@ -176,11 +176,11 @@ describe("createRoom with presets and options", () => {
     const manager = new RoomManager(store, { timersEnabled: false });
     const room = await manager.createRoom({
       at: now,
-      presetId: EXPERIMENTAL_6P,
+      presetId: SIX_PLAYER_PRESET_ID,
       options: { bottomSize: 12 },
     });
     expect(room.state.rulesetSnapshot.bottom.size).toBe(12);
-    expect(room.state.rulesetId).toBe(`${EXPERIMENTAL_6P}+custom`);
+    expect(room.state.rulesetId).toBe(`${SIX_PLAYER_PRESET_ID}+custom`);
 
     manager.close();
     store.close();
@@ -217,8 +217,15 @@ describe("createRoom with presets and options", () => {
         teamsMode: "fixed",
       }),
     );
-    // Experimental presets stay out of the production listing.
-    expect(payload.presets.some(({ id }) => id === EXPERIMENTAL_6P)).toBe(false);
+    // The promoted 6p/3d preset (and the other Phase 2 multi-deck presets)
+    // are production, so they surface in the listing.
+    expect(payload.presets.some(({ id }) => id === SIX_PLAYER_PRESET_ID)).toBe(true);
+    expect(payload.presets.some(({ id }) => id === "shengji-4p-3d-fixed-v1")).toBe(
+      true,
+    );
+    expect(payload.presets.some(({ id }) => id === "shengji-8p-4d-fixed-v1")).toBe(
+      true,
+    );
     expect(
       payload.optionMetadata.some(({ key }) => key === "timers.playTimeoutSeconds"),
     ).toBe(true);

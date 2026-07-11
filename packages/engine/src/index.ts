@@ -13,6 +13,8 @@ export * from "./bot/types.js";
 export * from "./cards/deck.js";
 export * from "./cards/shuffle.js";
 export * from "./rulesets/derive.js";
+export * from "./rulesets/eight-player-four-deck.js";
+export * from "./rulesets/four-player-three-deck.js";
 export * from "./rulesets/four-player-two-deck.js";
 export * from "./rulesets/options.js";
 export * from "./rulesets/options-metadata.js";

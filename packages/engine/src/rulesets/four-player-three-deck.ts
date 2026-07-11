@@ -1,12 +1,12 @@
 import { defaultBottomSize, defaultFixedTeams, defaultThresholds } from "./derive.js";
 import type { ShengJiRuleset } from "./schema.js";
 
-const players = 6;
+const players = 4;
 const decks = { count: 3, includeJokers: true };
 
-export const sixPlayerThreeDeckFixedTeamRuleset = {
-  id: "shengji-6p-3d-fixed-v1",
-  name: "Sheng Ji 6P Fixed Teams",
+export const fourPlayerThreeDeckFixedTeamRuleset = {
+  id: "shengji-4p-3d-fixed-v1",
+  name: "Sheng Ji 4P Fixed Teams (3 Decks)",
   version: "1.0.0",
   players: {
     count: players,

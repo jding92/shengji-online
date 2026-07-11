@@ -10,8 +10,8 @@ import {
   deriveCardKnowledge,
   inferVoidSuits,
   isKnownBoss,
-  partnerSeat,
   teamForSeat,
+  teammateSeats,
 } from "./knowledge.js";
 import type { BotObservation } from "./observation.js";
 import { noisyPick, type BotRng } from "./rng.js";
@@ -114,7 +114,7 @@ export function decideFollowAction(
   const seen = new Set<string>();
   const candidates: FollowCandidate[] = [];
   const currentWinner = currentWinningSeat(observation);
-  const partner = partnerSeat(observation);
+  const teammates = teammateSeats(observation);
   const knowledge = deriveCardKnowledge(observation, config);
   const inferredVoids = inferVoidSuits(observation, config);
   const laterSeats = seatsYetToPlay(
@@ -130,14 +130,20 @@ export function decideFollowAction(
             teamForSeat(observation, seat) !== observation.ownTeamId &&
             inferredVoids.get(seat)?.has(trick.ledFormat.effectiveSuit) === true,
         );
-  const partnerPlay = trick.plays.find(({ seat }) => seat === partner);
-  const partnerHasControl =
-    partnerPlay !== undefined &&
-    partnerPlay.cards.length > 0 &&
-    partnerPlay.cards.every((card) => isKnownBoss(card, observation, knowledge));
-  const partnerControlIsSecure =
-    currentWinner === partner &&
-    (laterSeats.length === 0 || (partnerHasControl && laterVoidOpponents.length === 0));
+  const currentWinnerIsTeammate =
+    currentWinner !== undefined && teammates.includes(currentWinner);
+  const winningTeammatePlay = trick.plays.find(({ seat }) => seat === currentWinner);
+  const teammateHasControl =
+    currentWinnerIsTeammate &&
+    winningTeammatePlay !== undefined &&
+    winningTeammatePlay.cards.length > 0 &&
+    winningTeammatePlay.cards.every((card) =>
+      isKnownBoss(card, observation, knowledge),
+    );
+  const teammateControlIsSecure =
+    currentWinnerIsTeammate &&
+    (laterSeats.length === 0 ||
+      (teammateHasControl && laterVoidOpponents.length === 0));
   for (const cards of candidateSelections(
     observation.ownHand,
     trick.ledFormat.cardCount,
@@ -164,10 +170,9 @@ export function decideFollowAction(
       const winnerTeam = teamForSeat(observation, winner.winnerSeat);
       const ownTeam = observation.ownTeamId;
       const wins = winner.winnerSeat === observation.ownSeat;
-      const partnerWinning = winner.winnerSeat === partner;
+      const teammateWinning = teammates.includes(winner.winnerSeat);
       const givesPointsToPartner =
-        winner.winnerSeat === partner ||
-        (winnerTeam !== undefined && winnerTeam === ownTeam);
+        teammateWinning || (winnerTeam !== undefined && winnerTeam === ownTeam);
       const actsLast = trick.plays.length + 1 === observation.ruleset.players.count;
       const controlled =
         play.cards.length > 0 &&
@@ -190,8 +195,8 @@ export function decideFollowAction(
           ? laterVoidOpponents.length * (config.difficulty === "expert" ? 0.3 : 0.22)
           : 0;
       const winProbability = Math.max(wins ? 0.15 : 0, baseWinProbability - ruffRisk);
-      const partnerProtection =
-        config.teamCoordination === "full" && wins && partnerControlIsSecure ? 1.4 : 0;
+      const teammateProtection =
+        config.teamCoordination === "full" && wins && teammateControlIsSecure ? 1.4 : 0;
       candidates.push({
         cards,
         score:
@@ -201,10 +206,10 @@ export function decideFollowAction(
             config,
             winProbability,
             trickPoints: winner.points,
-            partnerWinning,
+            partnerWinning: teammateWinning,
             givesPointsToPartner,
             isLastTrick: observation.ownHand.length === cards.length,
-          }) - partnerProtection,
+          }) - teammateProtection,
       });
     } catch {
       // Candidate construction intentionally overproduces; legality is final.

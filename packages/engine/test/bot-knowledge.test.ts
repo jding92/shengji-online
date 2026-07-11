@@ -6,7 +6,10 @@ import {
   fourPlayerTwoDeckFixedTeamRuleset,
   inferVoidSuits,
   parseTrickFormat,
+  partnerSeat,
   scoreBotCandidate,
+  sixPlayerThreeDeckFixedTeamRuleset,
+  teammateSeats,
   type BotConfig,
   type BotObservation,
   type CardInstance,
@@ -82,6 +85,84 @@ function observationWithHeartVoid(): BotObservation {
     },
   };
 }
+
+function seatsFor(playerCount: number, teams: number[][]): BotObservation["seats"] {
+  const teamOf = new Map<number, string>();
+  teams.forEach((team, index) =>
+    team.forEach((seat) => teamOf.set(seat, `team-${index}`)),
+  );
+  return Array.from({ length: playerCount }, (_, seat) => ({
+    seat,
+    playerId: `p${seat}`,
+    teamId: teamOf.get(seat)!,
+    connected: true,
+    ready: false,
+    cardCount: 0,
+  }));
+}
+
+function baseObservation(overrides: Partial<BotObservation>): BotObservation {
+  return {
+    roomId: "TEAMMATES",
+    revision: 1,
+    phase: "playing",
+    playerId: "p0",
+    ownSeat: 0,
+    ownHand: [],
+    seats: [],
+    ruleset: structuredClone(fourPlayerTwoDeckFixedTeamRuleset),
+    ...overrides,
+  };
+}
+
+describe("teammateSeats", () => {
+  it("returns the single partner for a 2-member (4p) team, matching the deprecated partnerSeat", () => {
+    const observation = baseObservation({
+      ownSeat: 0,
+      ownTeamId: "team-0",
+      seats: seatsFor(4, [
+        [0, 2],
+        [1, 3],
+      ]),
+    });
+    expect(teammateSeats(observation)).toEqual([2]);
+    expect(partnerSeat(observation)).toBe(2);
+  });
+
+  it("returns every other seat on a 3-member (6p) team", () => {
+    const observation = baseObservation({
+      ownSeat: 0,
+      ownTeamId: "team-0",
+      seats: seatsFor(6, [
+        [0, 2, 4],
+        [1, 3, 5],
+      ]),
+      ruleset: structuredClone(sixPlayerThreeDeckFixedTeamRuleset),
+    });
+    expect(teammateSeats(observation)).toEqual([2, 4]);
+    // The deprecated shim only ever surfaces the first teammate.
+    expect(partnerSeat(observation)).toBe(2);
+  });
+
+  it("is empty when the seat or team is unknown", () => {
+    const noSeat = baseObservation({
+      ownSeat: null,
+      seats: seatsFor(4, [
+        [0, 2],
+        [1, 3],
+      ]),
+    });
+    expect(teammateSeats(noSeat)).toEqual([]);
+    const noTeam = baseObservation({
+      ownSeat: 0,
+      seats: seatsFor(4, [
+        [0, 2],
+        [1, 3],
+      ]),
+    });
+    expect(teammateSeats(noTeam)).toEqual([]);
+  });
+});
 
 describe("bot knowledge configuration", () => {
   it("infers void suits only for configurations that enable the module", () => {

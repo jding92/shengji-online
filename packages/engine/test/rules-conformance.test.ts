@@ -15,7 +15,7 @@ import {
   parseTrickFormat,
   resolveThrowAttempt,
   scoreRound,
-  sixPlayerThreeDeckFutureRuleset,
+  sixPlayerThreeDeckFixedTeamRuleset,
   type CardInstance,
   type Rank,
   type Suit,
@@ -59,7 +59,9 @@ describe("play direction", () => {
     expect(fourPlayerTwoDeckFixedTeamRuleset.players.seatOrder).toBe(
       "counterclockwise",
     );
-    expect(sixPlayerThreeDeckFutureRuleset.players.seatOrder).toBe("counterclockwise");
+    expect(sixPlayerThreeDeckFixedTeamRuleset.players.seatOrder).toBe(
+      "counterclockwise",
+    );
   });
 });
 
@@ -109,7 +111,7 @@ describe("scoring table (n = 20 points per deck)", () => {
   });
 
   it("three decks (n = 60) scales the same bands", () => {
-    const { scoring } = sixPlayerThreeDeckFutureRuleset;
+    const { scoring } = sixPlayerThreeDeckFixedTeamRuleset;
     expect(scoreRound(0, scoring)).toMatchObject({
       winner: "defenders",
       levelDelta: 3,

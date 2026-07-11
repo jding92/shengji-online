@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   fourPlayerTwoDeckFixedTeamRuleset,
-  sixPlayerThreeDeckFutureRuleset,
+  sixPlayerThreeDeckFixedTeamRuleset,
   validateRuleset,
   type ShengJiRuleset,
 } from "../src/index.js";
@@ -21,9 +21,9 @@ function preWideningRuleset(): unknown {
 }
 
 describe("ruleset validation", () => {
-  it("accepts the v1 and future architecture presets", () => {
+  it("accepts the shipping 4p/2d and 6p/3d presets", () => {
     expect(validateRuleset(fourPlayerTwoDeckFixedTeamRuleset).success).toBe(true);
-    expect(validateRuleset(sixPlayerThreeDeckFutureRuleset).success).toBe(true);
+    expect(validateRuleset(sixPlayerThreeDeckFixedTeamRuleset).success).toBe(true);
   });
 
   it("rejects fixed teams that omit or duplicate seats", () => {

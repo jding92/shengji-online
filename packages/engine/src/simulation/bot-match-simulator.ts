@@ -3,6 +3,7 @@ import { deriveBotObservation } from "../bot/observation.js";
 import { decideBotAction } from "../bot/policy.js";
 import type { BotDifficulty } from "../bot/types.js";
 import { fourPlayerTwoDeckFixedTeamRuleset } from "../rulesets/four-player-two-deck.js";
+import type { ShengJiRuleset } from "../rulesets/schema.js";
 import {
   getFinalizeBiddingEvents,
   getNextDealEvents,
@@ -20,7 +21,10 @@ export type BotMatchSimulation = {
 };
 
 export type BotMatchSimulationOptions = {
-  difficulties?: readonly [BotDifficulty, BotDifficulty, BotDifficulty, BotDifficulty];
+  /** Defaults to the 4p/2d preset. */
+  ruleset?: ShengJiRuleset;
+  /** Length must equal the ruleset's player count; defaults to all-intermediate. */
+  difficulties?: readonly BotDifficulty[];
   maxRounds?: number;
 };
 
@@ -33,17 +37,21 @@ export function simulateBotMatch(
   seed: string,
   options: BotMatchSimulationOptions = {},
 ): BotMatchSimulation {
-  const difficulties = options.difficulties ?? [
-    "intermediate",
-    "intermediate",
-    "intermediate",
-    "intermediate",
-  ];
+  const ruleset = options.ruleset ?? fourPlayerTwoDeckFixedTeamRuleset;
+  const playerCount = ruleset.players.count;
+  const difficulties =
+    options.difficulties ??
+    Array.from({ length: playerCount }, (): BotDifficulty => "intermediate");
+  if (difficulties.length !== playerCount) {
+    throw new RangeError(
+      `difficulties must have exactly ${playerCount} entries, got ${difficulties.length}`,
+    );
+  }
   const maxRounds = options.maxRounds ?? 200;
   const at = "2026-01-01T00:00:00.000Z";
   let state = createGameState({
     roomId: "BOT-SIMULATION",
-    ruleset: fourPlayerTwoDeckFixedTeamRuleset,
+    ruleset,
     createdAt: at,
   });
   const events: GameEvent[] = [];
@@ -73,7 +81,7 @@ export function simulateBotMatch(
     return true;
   };
 
-  for (let seat = 0; seat < 4; seat += 1) {
+  for (let seat = 0; seat < playerCount; seat += 1) {
     const playerId = `bot-${seat}`;
     const joined: GameEvent = {
       type: "PLAYER_JOINED",
@@ -86,7 +94,7 @@ export function simulateBotMatch(
     state = applyEvent(state, joined);
     commit(validateCommand(state, playerId, { type: "SIT", seat }, { now: at }));
   }
-  for (let seat = 0; seat < 4; seat += 1) {
+  for (let seat = 0; seat < playerCount; seat += 1) {
     commit(
       validateCommand(
         state,
@@ -114,19 +122,19 @@ export function simulateBotMatch(
         state.round.undealt.length > state.rulesetSnapshot.bottom.size;
       commit(getNextDealEvents(state, at));
       if (dealtOneCard) {
-        for (let seat = 0; seat < 4; seat += 1) decideFor(seat);
+        for (let seat = 0; seat < playerCount; seat += 1) decideFor(seat);
       }
       continue;
     }
     if (state.phase === "post-deal-bidding") {
       for (let pass = 0; pass < 32; pass += 1) {
         let acted = false;
-        for (let seat = 0; seat < 4; seat += 1) {
+        for (let seat = 0; seat < playerCount; seat += 1) {
           acted = decideFor(seat) || acted;
         }
         if (!acted) break;
         const bid = state.round?.currentBid;
-        const requiredPasses = bid === undefined ? 4 : 3;
+        const requiredPasses = bid === undefined ? playerCount : playerCount - 1;
         if ((state.round?.passedBidSeats.length ?? 0) >= requiredPasses) break;
       }
       commit(getFinalizeBiddingEvents(state, at, nextRoundSeed()));

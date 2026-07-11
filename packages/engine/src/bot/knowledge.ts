@@ -115,14 +115,22 @@ export function teamForSeat(
   return observation.seats.find((candidate) => candidate.seat === seat)?.teamId;
 }
 
-export function partnerSeat(observation: BotObservation): SeatIndex | undefined {
+/** Every seat on the acting bot's team except its own; empty when unknown. */
+export function teammateSeats(observation: BotObservation): SeatIndex[] {
   if (observation.ownSeat === null || observation.ownTeamId === undefined) {
-    return undefined;
+    return [];
   }
-  return observation.seats.find(
-    ({ seat, teamId }) =>
-      seat !== observation.ownSeat && teamId === observation.ownTeamId,
-  )?.seat;
+  return observation.seats
+    .filter(
+      ({ seat, teamId }) =>
+        seat !== observation.ownSeat && teamId === observation.ownTeamId,
+    )
+    .map(({ seat }) => seat);
+}
+
+/** @deprecated use teammateSeats — kept as a thin shim for one release. */
+export function partnerSeat(observation: BotObservation): SeatIndex | undefined {
+  return teammateSeats(observation)[0];
 }
 
 export function currentWinningSeat(observation: BotObservation): SeatIndex | undefined {

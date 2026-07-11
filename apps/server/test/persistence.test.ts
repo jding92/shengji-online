@@ -67,7 +67,7 @@ describe("SQLite room persistence", () => {
     const firstManager = new RoomManager(store, { timersEnabled: false });
     const room = await firstManager.createRoom({
       at: "2026-07-10T12:00:00.000Z",
-      presetId: "shengji-6p-3d-fixed-experimental",
+      presetId: "shengji-6p-3d-fixed-v1",
       options: { bottomSize: 12 },
     });
     const roomId = room.state.roomId;
@@ -79,7 +79,7 @@ describe("SQLite room persistence", () => {
     const restored = restoredManager.getRoom(roomId);
     expect(restored?.state.rulesetSnapshot.players.count).toBe(6);
     expect(restored?.state.rulesetSnapshot.bottom.size).toBe(12);
-    expect(restored?.state.presetId).toBe("shengji-6p-3d-fixed-experimental");
+    expect(restored?.state.presetId).toBe("shengji-6p-3d-fixed-v1");
     // Migration stamps the schema version on load.
     expect(store.loadRoom(roomId)?.schemaVersion).toBe(1);
 
