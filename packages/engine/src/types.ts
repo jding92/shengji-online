@@ -1,3 +1,6 @@
+/** Standard-deck card count; multiplied by decks (+2 per deck when jokers are included). */
+export const CARDS_PER_DECK = 52;
+
 export const SUITS = ["spades", "hearts", "clubs", "diamonds"] as const;
 export type Suit = (typeof SUITS)[number];
 

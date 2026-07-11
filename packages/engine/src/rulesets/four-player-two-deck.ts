@@ -22,6 +22,7 @@ export const fourPlayerTwoDeckFixedTeamRuleset = {
   ranks: {
     sequence: ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"],
     gameEndsOnSuccessfulDefenseAt: "A",
+    mustDefendRanks: [],
   },
   bidding: {
     duringDeal: true,
@@ -34,6 +35,8 @@ export const fourPlayerTwoDeckFixedTeamRuleset = {
     minimumJokerBidCount: 2,
     tiers: ["level-card", "small-joker", "big-joker"],
     maxRedeals: 2,
+    noBidFallback: "bottom-card-declares",
+    declareRankSource: "round-rank",
   },
   trump: {
     jokersAlwaysTrump: true,
@@ -78,5 +81,6 @@ export const fourPlayerTwoDeckFixedTeamRuleset = {
   roundFlow: {
     firstRoundLeader: "winning-bidder",
     laterRoundLeader: "round-progression",
+    rankAdvancement: "winning-team-members",
   },
 } satisfies ShengJiRuleset;

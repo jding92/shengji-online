@@ -64,12 +64,12 @@ export type GameOptions = {
   playerCount?: number;
   deckCount?: number;
   teamsMode?: "fixed" | "finding-friends";
-  friendCallCount?: number;                       // FF only
-  bottomSize?: number;                            // must be in validBottomSizes()
+  friendCallCount?: number; // FF only
+  bottomSize?: number; // must be in validBottomSizes()
   startingRank?: Rank;
   gameEndsOnSuccessfulDefenseAt?: Rank;
-  mustDefendRanks?: Rank[];                       // e.g. ["5", "10", "K"]
-  scoring?: { bandSize?: number };                // thresholds regenerated
+  mustDefendRanks?: Rank[]; // e.g. ["5", "10", "K"]
+  scoring?: { bandSize?: number }; // thresholds regenerated
   throwPenalty?: { defenderFailedThrow: number; attackerFailedThrow: number };
   allowNoTrumpJokerBid?: boolean;
   minimumJokerBidCount?: number;
@@ -127,8 +127,8 @@ reproduce the 4p/2d (band 40) and 6p/3d (band 60) presets exactly.
 export type OptionEditability = {
   key: keyof GameOptions | `timers.${string}`;
   editableIn: ("lobby" | "in-game")[];
-  authority: "host";               // enum on purpose; "consensus" reserved
-  requiresReReady: boolean;        // true for everything except in-game-safe keys
+  authority: "host"; // enum on purpose; "consensus" reserved
+  requiresReReady: boolean; // true for everything except in-game-safe keys
 };
 export const OPTION_METADATA: readonly OptionEditability[];
 export function optionsEditableInPhase(phase: GamePhase): (keyof GameOptions)[];
@@ -145,13 +145,13 @@ bottom/scoring changes invalidate the live round.
 Widen now (each becomes a named strategy enum consumed by a `switch` in
 exactly one function; defaults reproduce current behavior bit-for-bit):
 
-| Field | Today | New |
-| --- | --- | --- |
-| `teams` | `{mode enum, teams: number[][]}` | discriminated union: `{mode:"fixed"; teams}` \| `{mode:"finding-friends"; friends: FriendsConfig}` |
-| `roundFlow.laterRoundLeader` | literal `"round-progression"` | `enum ["round-progression", "rebid-each-round"]` |
-| `bidding.noBidFallback` (new) | hardcoded forced-trump-from-bottom | `enum ["bottom-card-declares"]` with default — names the existing behavior per the standing TODO in `docs/rules-assumptions.md` |
-| `bidding.declareRankSource` (new) | implicit round rank | `enum ["round-rank", "bidder-own-rank"]` default `"round-rank"` |
-| `roundFlow.rankAdvancement` (new) | hardcoded team loop | `enum ["winning-team-members"]` with default |
+| Field                             | Today                              | New                                                                                                                             |
+| --------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `teams`                           | `{mode enum, teams: number[][]}`   | discriminated union: `{mode:"fixed"; teams}` \| `{mode:"finding-friends"; friends: FriendsConfig}`                              |
+| `roundFlow.laterRoundLeader`      | literal `"round-progression"`      | `enum ["round-progression", "rebid-each-round"]`                                                                                |
+| `bidding.noBidFallback` (new)     | hardcoded forced-trump-from-bottom | `enum ["bottom-card-declares"]` with default — names the existing behavior per the standing TODO in `docs/rules-assumptions.md` |
+| `bidding.declareRankSource` (new) | implicit round rank                | `enum ["round-rank", "bidder-own-rank"]` default `"round-rank"`                                                                 |
+| `roundFlow.rankAdvancement` (new) | hardcoded team loop                | `enum ["winning-team-members"]` with default                                                                                    |
 
 Keep as literals (deferred — no planned mode needs them; widening would be
 speculative): `players.seatOrder`, `trump.jokersAlwaysTrump`/
@@ -232,7 +232,10 @@ export type SeatRole = "declarer" | "friend" | "attacker" | "unknown";
 export function seatRole(state: GameState, seat: SeatIndex): SeatRole;
 /** "defenders" | "attackers" | undefined — undefined only in FF pre-reveal.
     The ONLY membership helper views and bots may use. */
-export function knownTeamIdForSeat(state: GameState, seat: SeatIndex): TeamId | undefined;
+export function knownTeamIdForSeat(
+  state: GameState,
+  seat: SeatIndex,
+): TeamId | undefined;
 /** End-of-round accounting: unknown ⇒ attacker. Scoring only.
     NOT exported from the package index so server code physically cannot leak it. */
 export function finalTeamIdForSeat(state: GameState, seat: SeatIndex): TeamId;
@@ -277,7 +280,14 @@ copies may sit in the buried bottom (the declarer's own informed choice).
 New command:
 
 ```ts
-{ type: "CALL_FRIENDS"; calls: { face: StandardCardFace; copyIndex: number }[] }
+{
+  type: "CALL_FRIENDS";
+  calls: {
+    face: StandardCardFace;
+    copyIndex: number;
+  }
+  [];
+}
 ```
 
 Validation: phase `friend-calling`; actor is declarer; `calls.length ===
@@ -371,17 +381,17 @@ bidder's own rank.
 
 ### B7. Edge-case rulings
 
-| Case | v1 ruling |
-| --- | --- |
-| Declarer plays the called copy | Legal; reveal fires on the declarer's seat; membership no-op (declarer effectively plays with fewer friends). |
-| Called copy buried in the bottom | Legal. That call can never reveal; the would-be friend stays unknown all round ⇒ scores as attacker. `BOTTOM_REVEALED` makes it publicly auditable at round end. |
-| Called face hoarded, never played | Seat stays unknown ⇒ attacker at scoring. Playing the copy is the only way in. |
-| Copy counting with multi-card plays | Cumulative count in event order; one play may reveal multiple calls (multiple `FRIEND_REVEALED`, same trick). |
-| Redeal | Fresh `ROUND_STARTED` clears everything; calls happen post-bury so a redeal can never have calls. |
-| Throw resolution | Unchanged — beatability already checks every non-thrower hand, which is exactly right under hidden identity. Penalty role uses `knownTeamIdForSeat(seat) ?? "attackers"`. |
-| Last-trick/bottom multiplier | Formula unchanged; the winning side resolves with final membership. |
-| Varying defender counts | No scoring adjustment in v1 (declarer-alone bonus multipliers deliberately excluded — see Flagged defaults). |
-| Disconnect / bot takeover of an unrevealed friend | Nothing special: takeover preserves the seat; the bot inherits the hand and the `isSecretFriend` inference. |
+| Case                                              | v1 ruling                                                                                                                                                                 |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Declarer plays the called copy                    | Legal; reveal fires on the declarer's seat; membership no-op (declarer effectively plays with fewer friends).                                                             |
+| Called copy buried in the bottom                  | Legal. That call can never reveal; the would-be friend stays unknown all round ⇒ scores as attacker. `BOTTOM_REVEALED` makes it publicly auditable at round end.          |
+| Called face hoarded, never played                 | Seat stays unknown ⇒ attacker at scoring. Playing the copy is the only way in.                                                                                            |
+| Copy counting with multi-card plays               | Cumulative count in event order; one play may reveal multiple calls (multiple `FRIEND_REVEALED`, same trick).                                                             |
+| Redeal                                            | Fresh `ROUND_STARTED` clears everything; calls happen post-bury so a redeal can never have calls.                                                                         |
+| Throw resolution                                  | Unchanged — beatability already checks every non-thrower hand, which is exactly right under hidden identity. Penalty role uses `knownTeamIdForSeat(seat) ?? "attackers"`. |
+| Last-trick/bottom multiplier                      | Formula unchanged; the winning side resolves with final membership.                                                                                                       |
+| Varying defender counts                           | No scoring adjustment in v1 (declarer-alone bonus multipliers deliberately excluded — see Flagged defaults).                                                              |
+| Disconnect / bot takeover of an unrevealed friend | Nothing special: takeover preserves the seat; the bot inherits the hand and the `isSecretFriend` inference.                                                               |
 
 ---
 
@@ -440,12 +450,14 @@ immutable-per-round card data out of the cloned hot path.
 ### D2. Room creation
 
 ```ts
-const createRoomBodySchema = z.object({
-  practice: z.boolean().optional(),
-  botDifficulty: botDifficultySchema.optional(),
-  presetId: z.string().optional(),        // default DEFAULT_PRESET_ID
-  options: gameOptionsSchema.optional(),  // runtime Zod mirror in @shengji/protocol
-}).optional();
+const createRoomBodySchema = z
+  .object({
+    practice: z.boolean().optional(),
+    botDifficulty: botDifficultySchema.optional(),
+    presetId: z.string().optional(), // default DEFAULT_PRESET_ID
+    options: gameOptionsSchema.optional(), // runtime Zod mirror in @shengji/protocol
+  })
+  .optional();
 ```
 
 `RoomManager.createRoom` replaces the pinned

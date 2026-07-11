@@ -114,20 +114,31 @@ function roundStartedEvent(input: {
 }
 
 function nextRoundEvents(state: GameState, seed: string, at: string): GameEvent[] {
-  const seat = state.leaderSeat;
-  const playerId = seat === undefined ? undefined : state.seats[seat];
-  const trumpRank =
-    playerId === null || playerId === undefined ? undefined : state.ranks[playerId];
-  if (trumpRank === undefined) throw new Error("Leader rank is unavailable");
-  return [
-    roundStartedEvent({
-      state,
-      seed,
-      roundNumber: (state.round?.roundNumber ?? 0) + 1,
-      trumpRank,
-      at,
-    }),
-  ];
+  const strategy = state.rulesetSnapshot.roundFlow.laterRoundLeader;
+  switch (strategy) {
+    case "round-progression": {
+      const seat = state.leaderSeat;
+      const playerId = seat === undefined ? undefined : state.seats[seat];
+      const trumpRank =
+        playerId === null || playerId === undefined ? undefined : state.ranks[playerId];
+      if (trumpRank === undefined) throw new Error("Leader rank is unavailable");
+      return [
+        roundStartedEvent({
+          state,
+          seed,
+          roundNumber: (state.round?.roundNumber ?? 0) + 1,
+          trumpRank,
+          at,
+        }),
+      ];
+    }
+    case "rebid-each-round":
+      throw new Error("rebid-each-round is not implemented yet");
+    default: {
+      const exhaustive: never = strategy;
+      throw new Error(`Unsupported laterRoundLeader: ${String(exhaustive)}`);
+    }
+  }
 }
 
 /**
@@ -256,15 +267,31 @@ export function finishRoundEvents(state: GameState, at: string): GameEvent[] {
   }
 
   const updatedRanks = { ...state.ranks };
-  for (let seat = 0; seat < state.rulesetSnapshot.players.count; seat += 1) {
-    if (teamIdForSeat(seat, state.rulesetSnapshot) !== winningTeamId) continue;
-    const playerId = state.seats[seat];
-    if (playerId === null || playerId === undefined) continue;
-    updatedRanks[playerId] = advanceRank(
-      updatedRanks[playerId]!,
-      outcome.levelDelta,
-      state.rulesetSnapshot.ranks,
-    );
+  const rankAdvancement = state.rulesetSnapshot.roundFlow.rankAdvancement;
+  switch (rankAdvancement) {
+    // Constant-true today: the enum has one member; the switch keeps future
+    // additions a compile error via the never check below.
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    case "winning-team-members": {
+      for (let seat = 0; seat < state.rulesetSnapshot.players.count; seat += 1) {
+        if (teamIdForSeat(seat, state.rulesetSnapshot) !== winningTeamId) continue;
+        const playerId = state.seats[seat];
+        if (playerId === null || playerId === undefined) continue;
+        updatedRanks[playerId] = advanceRank(
+          updatedRanks[playerId]!,
+          outcome.levelDelta,
+          state.rulesetSnapshot.ranks,
+          {
+            wasDefender: teamIdForSeat(seat, state.rulesetSnapshot) === defendingTeamId,
+          },
+        );
+      }
+      break;
+    }
+    default: {
+      const exhaustive: never = rankAdvancement;
+      throw new Error(`Unsupported rankAdvancement: ${String(exhaustive)}`);
+    }
   }
   const nextLeader = nextLeaderOnTeam(state, winningTeamId);
   events.push(
@@ -471,11 +498,24 @@ export function validateCommand(
           "You already passed; wait for another bid",
         );
       }
+      const declareRankSource = state.rulesetSnapshot.bidding.declareRankSource;
+      let currentRank: Rank;
+      switch (declareRankSource) {
+        case "round-rank":
+          currentRank = round.trumpRank;
+          break;
+        case "bidder-own-rank":
+          throw new Error("bidder-own-rank is not implemented yet");
+        default: {
+          const exhaustive: never = declareRankSource;
+          throw new Error(`Unsupported declareRankSource: ${String(exhaustive)}`);
+        }
+      }
       const bid = createAndValidateBid({
         seat,
         cards: cardsById(state, command.cards),
         hand: handCards(state, seat),
-        currentRank: round.trumpRank,
+        currentRank,
         ...(round.currentBid === undefined ? {} : { currentBid: round.currentBid }),
         placedAt: context.now,
         rules: state.rulesetSnapshot.bidding,
@@ -630,14 +670,26 @@ function trumpFinalizedEvents(input: {
  * the bottom declares trump (a joker declares no-trump).
  */
 function forcedTrumpFromBottom(state: GameState): TrumpSpec {
-  const round = state.round!;
-  const firstBottomCard = round.cards[round.bottom[0] ?? ""];
-  if (firstBottomCard === undefined) {
-    throw new Error("Cannot force trump from an empty bottom");
+  const strategy = state.rulesetSnapshot.bidding.noBidFallback;
+  switch (strategy) {
+    // Constant-true today: the enum has one member; the switch keeps future
+    // additions a compile error via the never check below.
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    case "bottom-card-declares": {
+      const round = state.round!;
+      const firstBottomCard = round.cards[round.bottom[0] ?? ""];
+      if (firstBottomCard === undefined) {
+        throw new Error("Cannot force trump from an empty bottom");
+      }
+      return firstBottomCard.face.kind === "joker"
+        ? { mode: "no-trump", rank: round.trumpRank }
+        : { mode: "suit", rank: round.trumpRank, suit: firstBottomCard.face.suit };
+    }
+    default: {
+      const exhaustive: never = strategy;
+      throw new Error(`Unsupported noBidFallback: ${String(exhaustive)}`);
+    }
   }
-  return firstBottomCard.face.kind === "joker"
-    ? { mode: "no-trump", rank: round.trumpRank }
-    : { mode: "suit", rank: round.trumpRank, suit: firstBottomCard.face.suit };
 }
 
 /** Called when the server-authoritative post-deal deadline expires. */

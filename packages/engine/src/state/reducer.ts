@@ -66,7 +66,9 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
         connected: true,
         ...(event.bot === undefined ? {} : { bot: { ...event.bot } }),
       };
-      next.ranks[event.playerId] = next.rulesetSnapshot.ranks.sequence[0]!;
+      next.ranks[event.playerId] =
+        next.rulesetSnapshot.ranks.startingRank ??
+        next.rulesetSnapshot.ranks.sequence[0]!;
       break;
     }
     case "PLAYER_CONTROL_CHANGED": {
