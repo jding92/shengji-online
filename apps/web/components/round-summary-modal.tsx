@@ -80,17 +80,19 @@ export function RoundSummaryModal({
       {round !== undefined && outcome !== undefined && (
         <motion.div
           className={`modal-scrim ${yourTeamWon ? "is-victory" : "is-defeat"}`}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          initial={false}
         >
           <motion.section
             className={`round-summary ${yourTeamWon ? "is-victory" : "is-defeat"}`}
-            initial={reducedMotion ? { opacity: 0 } : { y: 24, scale: 0.96 }}
-            animate={reducedMotion ? { opacity: 1 } : { y: 0, scale: 1 }}
+            {...(reducedMotion
+              ? { initial: false as const }
+              : {
+                  initial: { y: 24, scale: 0.96 },
+                  animate: { y: 0, scale: 1 },
+                })}
             transition={
               reducedMotion
-                ? { duration: 0.18 }
+                ? { duration: 0 }
                 : { type: "spring", stiffness: 320, damping: 26 }
             }
           >
@@ -169,22 +171,18 @@ export function RoundSummaryModal({
                     <motion.div
                       key={card.id}
                       className="bottom-reveal-card"
-                      initial={
-                        reducedMotion ? { opacity: 0 } : { rotateY: 90, opacity: 0 }
-                      }
-                      animate={
-                        reducedMotion ? { opacity: 1 } : { rotateY: 0, opacity: 1 }
-                      }
-                      transition={
-                        reducedMotion
-                          ? { duration: 0.18, delay: index * 0.03 }
-                          : {
+                      {...(reducedMotion
+                        ? { initial: false as const }
+                        : {
+                            initial: { rotateY: 90 },
+                            animate: { rotateY: 0 },
+                            transition: {
                               type: "spring",
                               stiffness: 360,
                               damping: 24,
                               delay: index * 0.08,
-                            }
-                      }
+                            },
+                          })}
                     >
                       <PlayingCard card={card} compact />
                     </motion.div>

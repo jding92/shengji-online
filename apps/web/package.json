@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "art:build": "node scripts/build-art.mjs",
+    "art:ranks": "node scripts/process-rank-glyphs.mjs",
     "build": "next build",
     "dev": "pnpm --filter @shengji/protocol build && next dev",
     "start": "next start -p 3000",

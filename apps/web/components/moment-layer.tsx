@@ -2,8 +2,8 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useMemo } from "react";
-import { MOMENT_POINTS_FLOAT_MS, MOMENT_TRUMP_STAMP_MS } from "../lib/constants";
-import { ART, art2x } from "../lib/art";
+import { MOMENT_TRUMP_STAMP_MS } from "../lib/constants";
+import { ART_ASSET_IDS, artAssetPath, artAssetSrcSet } from "../lib/art-registry";
 import type { GameMoment } from "../lib/moments";
 
 type MomentLayerProps = {
@@ -11,39 +11,19 @@ type MomentLayerProps = {
   dismiss: (id: string) => void;
 };
 
-type DisplayedMoment = Extract<
-  GameMoment,
-  { type: "TRUMP_DECLARED" } | { type: "TRICK_WON" }
->;
+type DisplayedMoment = Extract<GameMoment, { type: "TRUMP_DECLARED" }>;
 
-function isDisplayedMoment(moment: GameMoment): moment is DisplayedMoment {
-  return (
-    moment.type === "TRUMP_DECLARED" ||
-    (moment.type === "TRICK_WON" && moment.points > 0)
-  );
-}
-
-function pointGlowFor(moment: Extract<GameMoment, { type: "TRICK_WON" }>): string {
-  const ranks = moment.cards.flatMap(({ face }) =>
-    face.kind === "standard" ? [face.rank] : [],
-  );
-  if (ranks.includes("K")) return ART.ui.pointGlowKing;
-  if (ranks.includes("10")) return ART.ui.pointGlowTen;
-  return ART.ui.pointGlowFive;
+export function isMomentLayerMoment(moment: GameMoment): moment is DisplayedMoment {
+  return moment.type === "TRUMP_DECLARED";
 }
 
 export function MomentLayer({ moments, dismiss }: MomentLayerProps) {
   const reducedMotion = useReducedMotion() ?? false;
-  const displayed = useMemo(() => moments.filter(isDisplayedMoment), [moments]);
+  const displayed = useMemo(() => moments.filter(isMomentLayerMoment), [moments]);
 
   useEffect(() => {
     const timers = displayed.map((moment) =>
-      setTimeout(
-        () => dismiss(moment.id),
-        moment.type === "TRUMP_DECLARED"
-          ? MOMENT_TRUMP_STAMP_MS
-          : MOMENT_POINTS_FLOAT_MS,
-      ),
+      setTimeout(() => dismiss(moment.id), MOMENT_TRUMP_STAMP_MS),
     );
     return () => timers.forEach((timer) => clearTimeout(timer));
   }, [dismiss, displayed]);
@@ -51,73 +31,43 @@ export function MomentLayer({ moments, dismiss }: MomentLayerProps) {
   return (
     <div className="moment-layer" aria-hidden="true">
       <AnimatePresence>
-        {displayed.map((moment) =>
-          moment.type === "TRUMP_DECLARED" ? (
-            <motion.div
-              className="moment-trump-declared"
-              key={moment.id}
-              initial={
-                reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 1.4, rotate: -7 }
-              }
-              animate={
-                reducedMotion ? { opacity: 1 } : { opacity: 1, scale: 1, rotate: 0 }
-              }
-              exit={
-                reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.92, rotate: 4 }
-              }
-              transition={
-                reducedMotion
-                  ? { duration: 0.18 }
-                  : { type: "spring", stiffness: 420, damping: 18 }
-              }
-            >
-              <span
-                className="moment-trump-vignette"
-                style={{ backgroundImage: `url(${ART.ui.trumpBurst})` }}
-              />
-              <img
-                className="moment-trump-stamp"
-                src={ART.ui.trumpDeclaration}
-                srcSet={`${art2x(ART.ui.trumpDeclaration)} 2x`}
-                alt=""
-              />
-            </motion.div>
-          ) : (
-            <motion.div
-              className="moment-points-float"
-              key={moment.id}
-              initial={
-                reducedMotion
-                  ? { opacity: 0 }
-                  : { opacity: 0, x: "0%", y: "0%", scale: 0.9 }
-              }
-              animate={
-                reducedMotion
-                  ? { opacity: 1 }
-                  : {
-                      opacity: [0, 1, 1, 0],
-                      x: "-18%",
-                      y: "-34%",
-                      scale: [0.9, 1.06, 1],
-                    }
-              }
-              exit={{ opacity: 0 }}
-              transition={
-                reducedMotion
-                  ? { duration: 0.18 }
-                  : { duration: MOMENT_POINTS_FLOAT_MS / 1_000, ease: "easeOut" }
-              }
-            >
-              <img
-                className="moment-points-art"
-                src={pointGlowFor(moment)}
-                srcSet={`${art2x(pointGlowFor(moment))} 2x`}
-                alt=""
-              />
-              <strong>+{moment.points} 分</strong>
-            </motion.div>
-          ),
-        )}
+        {displayed.map((moment) => (
+          <motion.div
+            className="moment-trump-declared"
+            key={moment.id}
+            initial={
+              reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 1.4, rotate: -7 }
+            }
+            animate={
+              reducedMotion ? { opacity: 1 } : { opacity: 1, scale: 1, rotate: 0 }
+            }
+            exit={
+              reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.92, rotate: 4 }
+            }
+            transition={
+              reducedMotion
+                ? { duration: 0.18 }
+                : { type: "spring", stiffness: 420, damping: 18 }
+            }
+          >
+            <img
+              className="moment-trump-vignette"
+              data-art-asset={ART_ASSET_IDS.trumpBurst}
+              src={artAssetPath(ART_ASSET_IDS.trumpBurst)}
+              srcSet={artAssetSrcSet(ART_ASSET_IDS.trumpBurst)}
+              alt=""
+              draggable={false}
+            />
+            <img
+              className="moment-trump-stamp"
+              data-art-asset={ART_ASSET_IDS.gameplayUi("trump-declaration")}
+              src={artAssetPath(ART_ASSET_IDS.gameplayUi("trump-declaration"))}
+              srcSet={artAssetSrcSet(ART_ASSET_IDS.gameplayUi("trump-declaration"))}
+              alt=""
+              draggable={false}
+            />
+          </motion.div>
+        ))}
       </AnimatePresence>
     </div>
   );

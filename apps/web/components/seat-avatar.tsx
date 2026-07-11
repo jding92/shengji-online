@@ -4,7 +4,12 @@ import { portraitForSeat } from "../lib/seat-portraits";
 export function SeatAvatar({ seat }: { seat: number }) {
   const portrait = portraitForSeat(seat);
   return (
-    <span className="seat-portrait" data-portrait={portrait.id} aria-hidden="true">
+    <span
+      className="seat-portrait"
+      data-portrait={portrait.id}
+      data-art-asset={portrait.assetId}
+      aria-hidden="true"
+    >
       <img src={portrait.src} srcSet={`${portrait.src2x} 2x`} alt="" />
     </span>
   );

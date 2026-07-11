@@ -36,6 +36,10 @@ test("four players join, bid, bury, and complete a legal trick", async ({
       await page.getByLabel("Display name").fill(`Player ${seat + 1}`);
       await page.getByRole("button", { name: "Take a seat" }).click();
       await expect(page.getByRole("heading", { name: `Room ${roomId}` })).toBeVisible();
+      // The REST-backed room screen can render before its WebSocket is ready.
+      // Wait for the authoritative command channel before seating/readying so
+      // a full-suite compile spike cannot drop one player's first command.
+      await expect(page.locator(".connection-connected")).toContainText("Live");
       await page.locator(".lobby-seat").nth(seat).click();
     }
 
