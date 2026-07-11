@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  advanceRank,
   createDeck,
   fourPlayerTwoDeckFixedTeamRuleset,
   getBottomMultiplier,
@@ -79,5 +80,45 @@ describe("bottom multipliers", () => {
       ...cards("spades", "A", 1),
     ];
     expect(getBottomMultiplier(parseThrow(throwCards, trump), bottom)).toBe(8);
+  });
+});
+
+describe("rank advancement with must-defend ranks", () => {
+  const mustDefendRules = {
+    ...fourPlayerTwoDeckFixedTeamRuleset.ranks,
+    mustDefendRanks: ["5", "10", "K"] as Rank[],
+  };
+
+  it("clamps a non-defender that would skip past a must-defend rank", () => {
+    expect(advanceRank("4", 3, mustDefendRules)).toBe("5");
+    expect(advanceRank("4", 3, mustDefendRules, { wasDefender: false })).toBe("5");
+  });
+
+  it("clamps to the lowest must-defend rank crossed", () => {
+    expect(advanceRank("4", 20, mustDefendRules)).toBe("5");
+  });
+
+  it("holds a non-defender parked on a must-defend rank", () => {
+    expect(advanceRank("5", 2, mustDefendRules)).toBe("5");
+  });
+
+  it("does not clamp a defender", () => {
+    expect(advanceRank("4", 3, mustDefendRules, { wasDefender: true })).toBe("7");
+    expect(advanceRank("5", 2, mustDefendRules, { wasDefender: true })).toBe("7");
+  });
+
+  it("allows landing exactly on a must-defend rank", () => {
+    expect(advanceRank("3", 2, mustDefendRules)).toBe("5");
+  });
+
+  it("ignores must-defend ranks below the current rank", () => {
+    expect(advanceRank("6", 2, mustDefendRules)).toBe("8");
+  });
+
+  it("is a no-op with the default empty list", () => {
+    const openRules = { ...fourPlayerTwoDeckFixedTeamRuleset.ranks };
+    expect(openRules.mustDefendRanks).toEqual([]);
+    expect(advanceRank("4", 3, openRules)).toBe("7");
+    expect(advanceRank("K", 5, openRules)).toBe("A");
   });
 });

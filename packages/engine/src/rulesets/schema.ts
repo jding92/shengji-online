@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { RANKS } from "../types.js";
+import { CARDS_PER_DECK, RANKS } from "../types.js";
 
 const bidTierSchema = z.enum(["level-card", "small-joker", "big-joker"]);
 
@@ -31,6 +31,10 @@ export const shengJiRulesetSchema = z
     ranks: z.object({
       sequence: z.array(z.enum(RANKS)).min(2),
       gameEndsOnSuccessfulDefenseAt: z.enum(RANKS),
+      /** Rank each player starts on; defaults to the first rank in the sequence. */
+      startingRank: z.enum(RANKS).optional(),
+      /** Ranks a team may not advance past unless it was defending that round. */
+      mustDefendRanks: z.array(z.enum(RANKS)).default([]),
     }),
     bidding: z.object({
       duringDeal: z.boolean(),
@@ -44,6 +48,12 @@ export const shengJiRulesetSchema = z
       tiers: z.array(bidTierSchema).min(1),
       /** After this many all-pass redeals, trump is forced from the bottom. */
       maxRedeals: z.number().int().nonnegative(),
+      /** Strategy for finalizing trump when nobody bids by the redeal cap. */
+      noBidFallback: z.enum(["bottom-card-declares"]).default("bottom-card-declares"),
+      /** Rank a bid is validated against: the round's rank or the bidder's own. */
+      declareRankSource: z
+        .enum(["round-rank", "bidder-own-rank"])
+        .default("round-rank"),
     }),
     trump: z.object({
       jokersAlwaysTrump: z.literal(true),
@@ -81,7 +91,11 @@ export const shengJiRulesetSchema = z
     }),
     roundFlow: z.object({
       firstRoundLeader: z.literal("winning-bidder"),
-      laterRoundLeader: z.literal("round-progression"),
+      laterRoundLeader: z
+        .enum(["round-progression", "rebid-each-round"])
+        .default("round-progression"),
+      /** Strategy for advancing ranks after a round is scored. */
+      rankAdvancement: z.enum(["winning-team-members"]).default("winning-team-members"),
     }),
   })
   .superRefine((ruleset, context) => {
@@ -100,6 +114,25 @@ export const shengJiRulesetSchema = z
         message: "Game-ending rank must appear in the rank sequence",
       });
     }
+    if (
+      ruleset.ranks.startingRank !== undefined &&
+      !rankSet.has(ruleset.ranks.startingRank)
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["ranks", "startingRank"],
+        message: "Starting rank must appear in the rank sequence",
+      });
+    }
+    for (const mustDefendRank of ruleset.ranks.mustDefendRanks) {
+      if (!rankSet.has(mustDefendRank)) {
+        context.addIssue({
+          code: "custom",
+          path: ["ranks", "mustDefendRanks"],
+          message: "Must-defend ranks must appear in the rank sequence",
+        });
+      }
+    }
 
     const tierSet = new Set(ruleset.bidding.tiers);
     if (tierSet.size !== ruleset.bidding.tiers.length) {
@@ -111,7 +144,7 @@ export const shengJiRulesetSchema = z
     }
 
     const totalCards =
-      ruleset.decks.count * (52 + (ruleset.decks.includeJokers ? 2 : 0));
+      ruleset.decks.count * (CARDS_PER_DECK + (ruleset.decks.includeJokers ? 2 : 0));
     const dealtCards = totalCards - ruleset.bottom.size;
     if (dealtCards <= 0 || dealtCards % ruleset.players.count !== 0) {
       context.addIssue({

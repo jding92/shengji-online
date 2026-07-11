@@ -1,7 +1,7 @@
 import { createAndValidateBid } from "../bidding/bidding.js";
 import { cardFaceKey, getCardPoints } from "../cards/deck.js";
 import type { ClientCommand } from "../state/model.js";
-import type { Bid, CardInstance } from "../types.js";
+import { CARDS_PER_DECK, type Bid, type CardInstance } from "../types.js";
 import type { BotObservation, BotPublicBid } from "./observation.js";
 import { noisyPick, type BotRng } from "./rng.js";
 import type { BotConfig } from "./types.js";
@@ -124,7 +124,7 @@ export function decideBidAction(
 
   const totalCards =
     observation.ruleset.decks.count *
-    (52 + (observation.ruleset.decks.includeJokers ? 2 : 0));
+    (CARDS_PER_DECK + (observation.ruleset.decks.includeJokers ? 2 : 0));
   const dealProgress =
     round.dealtCardCount / (totalCards - observation.ruleset.bottom.size);
   if (observation.phase === "dealing" && dealProgress < config.bidTiming) {
