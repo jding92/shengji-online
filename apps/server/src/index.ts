@@ -1,15 +1,18 @@
 import Fastify from "fastify";
-import { BOT_DIFFICULTIES } from "@shengji/engine";
+import { BOT_DIFFICULTIES, listPresets, OPTION_METADATA } from "@shengji/engine";
+import { gameOptionsSchema } from "@shengji/protocol";
 import { z } from "zod";
 import { WebSocketServer } from "ws";
 import { SqliteStore } from "./persistence/sqlite-store.js";
-import { RoomManager } from "./room-manager.js";
+import { RoomManager, RulesetResolutionError } from "./room-manager.js";
 
 const botDifficultySchema = z.enum(BOT_DIFFICULTIES);
 const createRoomBodySchema = z
   .object({
     practice: z.boolean().optional(),
     botDifficulty: botDifficultySchema.optional(),
+    presetId: z.string().optional(),
+    options: gameOptionsSchema.optional(),
   })
   .optional();
 const joinRoomBodySchema = z.object({
@@ -38,19 +41,44 @@ const webSockets = new WebSocketServer({ noServer: true });
 
 app.get("/api/health", () => ({ ok: true }));
 
+app.get("/api/presets", () => ({
+  presets: listPresets().map(({ id, ruleset, description }) => ({
+    id,
+    name: ruleset.name,
+    players: ruleset.players.count,
+    decks: ruleset.decks.count,
+    teamsMode: ruleset.teams.mode,
+    description,
+  })),
+  optionMetadata: OPTION_METADATA,
+}));
+
 app.post("/api/rooms", async (request, reply) => {
   const parsed = createRoomBodySchema.safeParse(request.body);
   if (!parsed.success) return reply.code(400).send({ error: "Invalid request" });
-  const room = await rooms.createRoom({
-    ...(parsed.data?.practice === undefined ? {} : { practice: parsed.data.practice }),
-    ...(parsed.data?.botDifficulty === undefined
-      ? {}
-      : { botDifficulty: parsed.data.botDifficulty }),
-  });
-  return reply.code(201).send({
-    room: rooms.roomSummary(room.state),
-    invitePath: `/room/${room.state.roomId}`,
-  });
+  try {
+    const room = await rooms.createRoom({
+      ...(parsed.data?.practice === undefined
+        ? {}
+        : { practice: parsed.data.practice }),
+      ...(parsed.data?.botDifficulty === undefined
+        ? {}
+        : { botDifficulty: parsed.data.botDifficulty }),
+      ...(parsed.data?.presetId === undefined
+        ? {}
+        : { presetId: parsed.data.presetId }),
+      ...(parsed.data?.options === undefined ? {} : { options: parsed.data.options }),
+    });
+    return reply.code(201).send({
+      room: rooms.roomSummary(room.state),
+      invitePath: `/room/${room.state.roomId}`,
+    });
+  } catch (error) {
+    if (error instanceof RulesetResolutionError) {
+      return reply.code(400).send({ issues: error.issues });
+    }
+    throw error;
+  }
 });
 
 app.get<{ Params: { roomId: string } }>(

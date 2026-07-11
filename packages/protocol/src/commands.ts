@@ -1,4 +1,9 @@
+import { gameOptionsSchema } from "@shengji/engine";
 import { z } from "zod";
+
+// Re-export the engine's option schema so protocol consumers have a single
+// runtime source of truth (no drift between engine and protocol mirrors).
+export { gameOptionsSchema, type GameOptions } from "@shengji/engine";
 
 const cardIds = z.array(z.string().min(1)).min(1);
 
@@ -14,6 +19,11 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
     intent: z.enum(["normal", "throw"]),
   }),
   z.object({ type: z.literal("START_NEXT_ROUND") }),
+  z.object({
+    type: z.literal("UPDATE_OPTIONS"),
+    presetId: z.string().min(1).optional(),
+    options: gameOptionsSchema,
+  }),
 ]);
 
 export type WireClientCommand = z.infer<typeof clientCommandSchema>;

@@ -1,5 +1,7 @@
 import { createAndValidateBid } from "../bidding/bidding.js";
 import { sumCardPoints } from "../cards/deck.js";
+import { resolveRuleset } from "../rulesets/options.js";
+import { DEFAULT_PRESET_ID } from "../rulesets/registry.js";
 import { advanceRank, isSuccessfulDefenseAtGameRank } from "../scoring/ranks.js";
 import { getBottomMultiplier, scoreRound } from "../scoring/scoring.js";
 import { resolveThrowAttempt } from "../throws/throws.js";
@@ -17,6 +19,7 @@ export type CommandErrorCode =
   | "SEAT_OCCUPIED"
   | "INVALID_PHASE"
   | "NOT_LEADER"
+  | "NOT_HOST"
   | "NOT_YOUR_TURN"
   | "UNKNOWN_CARD"
   | "NO_BID"
@@ -602,6 +605,49 @@ export function validateCommand(
         );
       }
       return nextRoundEvents(state, requireRoundSeed(context), context.now);
+    }
+    case "UPDATE_OPTIONS": {
+      // In-game timer edits are a Phase 4 concern; v1 only allows lobby edits.
+      if (state.phase !== "lobby") {
+        throw new CommandValidationError(
+          "INVALID_PHASE",
+          "Options can only be changed in the lobby",
+        );
+      }
+      if (state.hostPlayerId === undefined || state.hostPlayerId !== actor) {
+        throw new CommandValidationError(
+          "NOT_HOST",
+          "Only the host can change the game options",
+        );
+      }
+      const presetId = command.presetId ?? state.presetId ?? DEFAULT_PRESET_ID;
+      const result = resolveRuleset(presetId, command.options);
+      if (!result.ok) {
+        throw new CommandValidationError(
+          "INVALID_COMMAND",
+          result.issues[0]?.message ?? "Invalid options",
+        );
+      }
+      const newCount = result.ruleset.players.count;
+      const conflictingSeats = Object.entries(state.seats)
+        .filter(([seat, occupant]) => occupant !== null && Number(seat) >= newCount)
+        .map(([seat]) => Number(seat))
+        .sort((a, b) => a - b);
+      if (conflictingSeats.length > 0) {
+        throw new CommandValidationError(
+          "INVALID_COMMAND",
+          `Cannot shrink to ${newCount} players while seat(s) ${conflictingSeats.join(", ")} are occupied`,
+        );
+      }
+      return [
+        {
+          type: "OPTIONS_UPDATED",
+          presetId,
+          options: command.options,
+          ruleset: result.ruleset,
+          at: context.now,
+        },
+      ];
     }
   }
 }

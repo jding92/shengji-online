@@ -2,6 +2,7 @@ import type {
   Bid,
   BotDifficulty,
   CardInstance,
+  GameOptions,
   GamePhase,
   Rank,
   TeamId,
@@ -19,7 +20,8 @@ export type LegalAction =
   | "bury-bottom"
   | "play-cards"
   | "attempt-throw"
-  | "start-next-round";
+  | "start-next-round"
+  | "update-options";
 
 export type SeatView = {
   seat: number;
@@ -42,12 +44,17 @@ export type PublicPlayedCards = {
 export type PrivateGameView = {
   roomId: string;
   revision: number;
+  /** The room's option authority; null before the first human joins. */
+  hostPlayerId: string | null;
   ruleset: {
     id: string;
     name: string;
     players: number;
     decks: number;
     bottomSize: number;
+    presetId: string;
+    teamsMode: "fixed" | "finding-friends";
+    options: GameOptions;
   };
   phase: GamePhase;
   you: {

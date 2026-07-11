@@ -1,7 +1,11 @@
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import type { GameEvent, GameState } from "@shengji/engine";
+import {
+  migrateGameStateSnapshot,
+  type GameEvent,
+  type GameState,
+} from "@shengji/engine";
 
 type RoomRow = { latest_snapshot_json: string };
 type SessionRow = { player_id: string; display_name: string };
@@ -99,13 +103,16 @@ export class SqliteStore {
       const result = this.database
         .prepare(
           `UPDATE rooms
-           SET updated_at = ?, status = ?, latest_revision = ?, latest_snapshot_json = ?
+           SET updated_at = ?, status = ?, latest_revision = ?,
+               ruleset_snapshot_json = ?, latest_snapshot_json = ?
            WHERE id = ? AND latest_revision = ?`,
         )
         .run(
           nextState.updatedAt,
           nextState.phase,
           nextState.revision,
+          // Options can change after creation, so keep the ruleset column current.
+          JSON.stringify(nextState.rulesetSnapshot),
           JSON.stringify(nextState),
           nextState.roomId,
           previousRevision,
@@ -124,15 +131,15 @@ export class SqliteStore {
       .get(roomId) as RoomRow | undefined;
     return row === undefined
       ? null
-      : (JSON.parse(row.latest_snapshot_json) as GameState);
+      : migrateGameStateSnapshot(JSON.parse(row.latest_snapshot_json));
   }
 
   loadActiveRooms(): GameState[] {
     const rows = this.database
       .prepare("SELECT latest_snapshot_json FROM rooms WHERE status != 'game-over'")
       .all() as unknown as RoomRow[];
-    return rows.map(
-      ({ latest_snapshot_json }) => JSON.parse(latest_snapshot_json) as GameState,
+    return rows.map(({ latest_snapshot_json }) =>
+      migrateGameStateSnapshot(JSON.parse(latest_snapshot_json)),
     );
   }
 

@@ -1,7 +1,10 @@
 import { createDeck } from "../cards/deck.js";
 import { shuffleDeck } from "../cards/shuffle.js";
+import type { GameOptions } from "../rulesets/options.js";
 import type { ShengJiRuleset } from "../rulesets/schema.js";
+import { CURRENT_SCHEMA_VERSION } from "./migrate.js";
 import type { GameEvent, GameState, RoundState } from "./model.js";
+import type { PlayerId } from "../types.js";
 
 export function teamIdForSeat(seat: number, ruleset: ShengJiRuleset): string {
   const teamIndex = ruleset.teams.teams.findIndex((team) => team.includes(seat));
@@ -13,6 +16,8 @@ export function createGameState(input: {
   roomId: string;
   ruleset: ShengJiRuleset;
   createdAt: string;
+  presetId?: string;
+  pendingOptions?: GameOptions;
 }): GameState {
   const seats: Record<number, null> = {};
   for (let seat = 0; seat < input.ruleset.players.count; seat += 1) seats[seat] = null;
@@ -21,6 +26,11 @@ export function createGameState(input: {
     revision: 0,
     rulesetId: input.ruleset.id,
     rulesetSnapshot: structuredClone(input.ruleset),
+    schemaVersion: CURRENT_SCHEMA_VERSION,
+    ...(input.presetId === undefined ? {} : { presetId: input.presetId }),
+    ...(input.pendingOptions === undefined
+      ? {}
+      : { pendingOptions: structuredClone(input.pendingOptions) }),
     phase: "lobby",
     players: {},
     seats,
@@ -313,6 +323,33 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
     }
     case "GAME_ENDED": {
       next.phase = "game-over";
+      break;
+    }
+    case "OPTIONS_UPDATED": {
+      next.rulesetSnapshot = structuredClone(event.ruleset);
+      next.rulesetId = event.ruleset.id;
+      next.presetId = event.presetId;
+      next.pendingOptions = structuredClone(event.options);
+      // Rebuild the seat map to the new count: keep existing assignments,
+      // pad new seats with null, drop the empty tail. The command guards
+      // against shrinking below an occupied seat, so no seated player is lost.
+      const newCount = next.rulesetSnapshot.players.count;
+      const resizedSeats: Record<number, PlayerId | null> = {};
+      for (let seat = 0; seat < newCount; seat += 1) {
+        resizedSeats[seat] = next.seats[seat] ?? null;
+      }
+      for (const [seatKey, occupant] of Object.entries(next.seats)) {
+        if (Number(seatKey) < newCount || occupant === null) continue;
+        const droppedPlayer = next.players[occupant];
+        if (droppedPlayer !== undefined) droppedPlayer.seat = null;
+      }
+      next.seats = resizedSeats;
+      // A rule change invalidates every prior consent; re-ready is required.
+      for (const player of Object.values(next.players)) player.ready = false;
+      break;
+    }
+    case "HOST_CHANGED": {
+      next.hostPlayerId = event.playerId;
       break;
     }
   }

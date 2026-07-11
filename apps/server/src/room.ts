@@ -537,8 +537,18 @@ export class Room {
       ) {
         throw new RangeError("Room is full");
       }
-      this.commit([{ type: "PLAYER_JOINED", playerId, name, at }]);
+      const events: GameEvent[] = [{ type: "PLAYER_JOINED", playerId, name, at }];
+      // The first human to join becomes the room host (bots are never host).
+      if (this.currentState.hostPlayerId === undefined) {
+        events.push({ type: "HOST_CHANGED", playerId, at });
+      }
+      this.commit(events);
     });
+  }
+
+  /** First non-bot player in insertion order, or undefined if none remain. */
+  private firstHuman(state: GameState): string | undefined {
+    return Object.values(state.players).find((player) => player.bot === undefined)?.id;
   }
 
   addBot(
@@ -597,7 +607,17 @@ export class Room {
       if (this.currentState.players[playerId]?.bot === undefined) {
         throw new RangeError("Player is not a bot");
       }
-      this.commit([{ type: "PLAYER_REMOVED", playerId, at }]);
+      const events: GameEvent[] = [{ type: "PLAYER_REMOVED", playerId, at }];
+      // Defensive host migration: bots are never host today, but if the removed
+      // player were host, reassign to the earliest-joined remaining human.
+      if (this.currentState.hostPlayerId === playerId) {
+        const preview = replayEvents(this.currentState, events);
+        const nextHost = this.firstHuman(preview);
+        if (nextHost !== undefined) {
+          events.push({ type: "HOST_CHANGED", playerId: nextHost, at });
+        }
+      }
+      this.commit(events);
       this.rescheduleTimers();
     });
   }
