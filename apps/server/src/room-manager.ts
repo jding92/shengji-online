@@ -1,12 +1,23 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import {
   createGameState,
-  fourPlayerTwoDeckFixedTeamRuleset,
+  DEFAULT_PRESET_ID,
+  resolveRuleset,
   type BotDifficulty,
+  type GameOptions,
   type GameState,
+  type ResolveIssue,
 } from "@shengji/engine";
 import { Room, type RoomOptions } from "./room.js";
 import type { SqliteStore } from "./persistence/sqlite-store.js";
+
+/** Thrown when create-room options fail to resolve; surfaced as HTTP 400. */
+export class RulesetResolutionError extends Error {
+  constructor(readonly issues: ResolveIssue[]) {
+    super(issues[0]?.message ?? "Invalid ruleset options");
+    this.name = "RulesetResolutionError";
+  }
+}
 
 const ROOM_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
 const BOT_NAMES = ["Ming", "Wei", "Lan", "Jun", "Mei", "Bo"] as const;
@@ -31,6 +42,8 @@ export type CreateRoomOptions = {
   at?: string;
   practice?: boolean;
   botDifficulty?: BotDifficulty;
+  presetId?: string;
+  options?: GameOptions;
 };
 
 export class RoomManager {
@@ -51,7 +64,11 @@ export class RoomManager {
     let roomId = roomCode();
     while (this.rooms.has(roomId) || this.store.loadRoom(roomId) !== null)
       roomId = roomCode();
-    const ruleset = structuredClone(fourPlayerTwoDeckFixedTeamRuleset);
+    const presetId = options.presetId ?? DEFAULT_PRESET_ID;
+    const resolved = resolveRuleset(presetId, options.options ?? {});
+    if (!resolved.ok) throw new RulesetResolutionError(resolved.issues);
+    const ruleset = resolved.ruleset;
+    // Env bid-timer overrides are ops-level knobs applied after resolution.
     if (process.env.BID_POST_DEAL_SECONDS !== undefined) {
       ruleset.bidding.postDealWindowSeconds = Number.parseInt(
         process.env.BID_POST_DEAL_SECONDS,
@@ -68,6 +85,8 @@ export class RoomManager {
       roomId,
       ruleset,
       createdAt: at,
+      presetId,
+      pendingOptions: options.options ?? {},
     });
     this.store.createRoom(state);
     const room = new Room(state, this.store, this.roomOptions);
@@ -172,6 +191,8 @@ export class RoomManager {
         name: state.rulesetSnapshot.name,
         players: state.rulesetSnapshot.players.count,
         decks: state.rulesetSnapshot.decks.count,
+        presetId: state.presetId ?? DEFAULT_PRESET_ID,
+        teamsMode: state.rulesetSnapshot.teams.mode,
       },
       seats: Array.from({ length: state.rulesetSnapshot.players.count }, (_, seat) => {
         const playerId = state.seats[seat] ?? null;

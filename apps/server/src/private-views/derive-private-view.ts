@@ -1,4 +1,4 @@
-import { teamIdForSeat, type GameState } from "@shengji/engine";
+import { DEFAULT_PRESET_ID, teamIdForSeat, type GameState } from "@shengji/engine";
 import type { LegalAction, PrivateGameView, SeatView } from "@shengji/protocol";
 
 function legalActions(state: GameState, playerId: string): LegalAction[] {
@@ -6,7 +6,9 @@ function legalActions(state: GameState, playerId: string): LegalAction[] {
   if (player === undefined) return [];
   const seat = player.seat;
   if (state.phase === "lobby") {
-    return seat === null ? ["sit"] : ["sit", "ready"];
+    const actions: LegalAction[] = seat === null ? ["sit"] : ["sit", "ready"];
+    if (state.hostPlayerId === playerId) actions.push("update-options");
+    return actions;
   }
   if (seat === null) return [];
   if (state.phase === "dealing") return ["bid"];
@@ -82,12 +84,16 @@ export function derivePrivateView(state: GameState, playerId: string): PrivateGa
   return {
     roomId: state.roomId,
     revision: state.revision,
+    hostPlayerId: state.hostPlayerId ?? null,
     ruleset: {
       id: state.rulesetSnapshot.id,
       name: state.rulesetSnapshot.name,
       players: state.rulesetSnapshot.players.count,
       decks: state.rulesetSnapshot.decks.count,
       bottomSize: state.rulesetSnapshot.bottom.size,
+      presetId: state.presetId ?? DEFAULT_PRESET_ID,
+      teamsMode: state.rulesetSnapshot.teams.mode,
+      options: state.pendingOptions ?? {},
     },
     phase: state.phase,
     you: {

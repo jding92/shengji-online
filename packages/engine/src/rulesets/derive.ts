@@ -37,11 +37,13 @@ export function defaultBottomSize(players: number, decks: Decks): number {
 }
 
 /**
- * band = 20 × decks; contiguous defender bands below `2 × band`, attacker bands
- * above. Reproduces the 4p/2d (band 40) and 6p/3d (band 60) presets exactly.
+ * Contiguous defender bands below `2 × band`, attacker bands above, each `band`
+ * points wide. The building block for both deck-derived and custom-band scoring.
  */
-export function defaultThresholds(deckCount: number): ScoringThreshold[] {
-  const band = 20 * deckCount;
+export function thresholdsForBand(band: number): ScoringThreshold[] {
+  if (!Number.isInteger(band) || band <= 0) {
+    throw new Error(`Scoring band must be a positive integer, got ${band}`);
+  }
   return [
     { maxExclusive: 1, winner: "defenders", levelDelta: 3 },
     { min: 1, maxExclusive: band, winner: "defenders", levelDelta: 2 },
@@ -51,6 +53,14 @@ export function defaultThresholds(deckCount: number): ScoringThreshold[] {
     { min: 4 * band, maxExclusive: 5 * band, winner: "attackers", levelDelta: 2 },
     { min: 5 * band, winner: "attackers", levelDelta: 3 },
   ];
+}
+
+/**
+ * band = 20 × decks; contiguous defender bands below `2 × band`, attacker bands
+ * above. Reproduces the 4p/2d (band 40) and 6p/3d (band 60) presets exactly.
+ */
+export function defaultThresholds(deckCount: number): ScoringThreshold[] {
+  return thresholdsForBand(20 * deckCount);
 }
 
 /** Alternating seats into two teams; even player counts only. */

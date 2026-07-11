@@ -19,10 +19,13 @@ describe("SQLite room persistence", () => {
     expect(store.loadRoom(room.state.roomId)?.players[joined.playerId]?.name).toBe(
       "Ada",
     );
+    // The first human join records PLAYER_JOINED plus the HOST_CHANGED that
+    // makes them the room host.
     const eventCount = store.database
       .prepare("SELECT COUNT(*) AS count FROM room_events WHERE room_id = ?")
       .get(room.state.roomId) as { count: number };
-    expect(eventCount.count).toBe(1);
+    expect(eventCount.count).toBe(2);
+    expect(store.loadRoom(room.state.roomId)?.hostPlayerId).toBe(joined.playerId);
     const storedToken = store.database
       .prepare(
         "SELECT resume_token_hash FROM player_sessions WHERE room_id = ? AND player_id = ?",
@@ -54,6 +57,31 @@ describe("SQLite room persistence", () => {
       resumeToken: joined.playerToken,
     });
     expect(resumed).toMatchObject({ playerId: joined.playerId, resumed: true });
+
+    restoredManager.close();
+    store.close();
+  });
+
+  it("resumes a room created with a preset and options after a restart", async () => {
+    const store = new SqliteStore(":memory:");
+    const firstManager = new RoomManager(store, { timersEnabled: false });
+    const room = await firstManager.createRoom({
+      at: "2026-07-10T12:00:00.000Z",
+      presetId: "shengji-6p-3d-fixed-experimental",
+      options: { bottomSize: 12 },
+    });
+    const roomId = room.state.roomId;
+    expect(room.state.rulesetSnapshot.players.count).toBe(6);
+    expect(room.state.rulesetSnapshot.bottom.size).toBe(12);
+    firstManager.close();
+
+    const restoredManager = new RoomManager(store, { timersEnabled: false });
+    const restored = restoredManager.getRoom(roomId);
+    expect(restored?.state.rulesetSnapshot.players.count).toBe(6);
+    expect(restored?.state.rulesetSnapshot.bottom.size).toBe(12);
+    expect(restored?.state.presetId).toBe("shengji-6p-3d-fixed-experimental");
+    // Migration stamps the schema version on load.
+    expect(store.loadRoom(roomId)?.schemaVersion).toBe(1);
 
     restoredManager.close();
     store.close();

@@ -1,3 +1,4 @@
+import type { GameOptions } from "../rulesets/options.js";
 import type { ShengJiRuleset } from "../rulesets/schema.js";
 import type { PlayedCards, TrickFormat } from "../tricks/types.js";
 import type { BotDifficulty } from "../bot/types.js";
@@ -93,6 +94,14 @@ export type GameState = {
   revision: number;
   rulesetId: string;
   rulesetSnapshot: ShengJiRuleset;
+  /** Snapshot compatibility version; backfilled to 1 on load for old rooms. */
+  schemaVersion?: number;
+  /** Room creator / current option authority; bots are never host. */
+  hostPlayerId?: PlayerId;
+  /** The base preset the current options resolve against, for lobby re-editing. */
+  presetId?: string;
+  /** The raw options the host last applied, so the lobby can re-edit from them. */
+  pendingOptions?: GameOptions;
   phase: GamePhase;
   players: Record<PlayerId, PlayerState>;
   seats: Record<SeatIndex, PlayerId | null>;
@@ -119,7 +128,8 @@ export type ClientCommand =
       cards: CardInstanceId[];
       intent: "normal" | "throw";
     }
-  | { type: "START_NEXT_ROUND" };
+  | { type: "START_NEXT_ROUND" }
+  | { type: "UPDATE_OPTIONS"; presetId?: string; options: GameOptions };
 
 export type GameEvent =
   | {
@@ -207,4 +217,12 @@ export type GameEvent =
       leaderSeat: SeatIndex;
       at: string;
     }
-  | { type: "GAME_ENDED"; winnerTeamId: TeamId; at: string };
+  | { type: "GAME_ENDED"; winnerTeamId: TeamId; at: string }
+  | {
+      type: "OPTIONS_UPDATED";
+      presetId: string;
+      options: GameOptions;
+      ruleset: ShengJiRuleset;
+      at: string;
+    }
+  | { type: "HOST_CHANGED"; playerId: PlayerId; at: string };
