@@ -6,7 +6,14 @@ import type {
   WireClientCommand,
 } from "@shengji/protocol";
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import {
   canHandOutbid,
   cardFaceKey,
@@ -20,7 +27,7 @@ import {
 import { useCardSelection } from "../hooks/use-card-selection";
 import { useGameMoments } from "../hooks/use-game-moments";
 import { useSoundEffects, useSoundPreference } from "../hooks/use-sound-effects";
-import { ART, art2x } from "../lib/art";
+import { ART_ASSET_IDS, artAssetPath, artAssetSrcSet } from "../lib/art-registry";
 import { THROW_BANNER_MS, TRICK_WINNER_GLOW_MS } from "../lib/constants";
 import {
   compareForHandDisplay,
@@ -29,14 +36,13 @@ import {
   relativeSeatPosition,
   teamRoleForSeat,
   teamRoleForTeam,
-  type TeamRole,
 } from "../lib/cards";
 import { teamClassForSeat } from "../lib/strings";
 import { CardBack, PlayingCard } from "./card";
 import { FxCanvas } from "./fx-canvas";
+import { GameDashboard } from "./game-dashboard";
 import { HandActions } from "./hand-actions";
 import { HandDock } from "./hand-dock";
-import { LeaveButton } from "./leave-button";
 import { MomentLayer } from "./moment-layer";
 import { RoundSummaryModal } from "./round-summary-modal";
 import { TableSeat } from "./table-seat";
@@ -50,33 +56,20 @@ type GameTableProps = {
   serverNow: () => number;
 };
 
-/**
- * Team-role badge: the Chinese character carries the meaning (攻 attack,
- * 守 defend), the icon and small English caption back it up.
- */
-function TeamRoleBadge({ role }: { role: TeamRole }) {
-  if (role === "pending") {
-    return (
-      <>
-        <span className="role-char">待</span>
-        <span className="role-en">PENDING</span>
-      </>
-    );
-  }
-  return (
-    <>
-      <img
-        className="role-medallion"
-        src={role === "attacking" ? ART.ui.attackBadge : ART.ui.defendBadge}
-        srcSet={`${art2x(role === "attacking" ? ART.ui.attackBadge : ART.ui.defendBadge)} 2x`}
-        alt=""
-        aria-hidden="true"
-      />
-      <span className="role-char">{role === "attacking" ? "攻" : "守"}</span>
-      <span className="role-en">{role === "attacking" ? "ATTACK" : "DEFEND"}</span>
-    </>
-  );
-}
+const POINT_THRESHOLDS = [
+  ...new Set(
+    fourPlayerTwoDeckFixedTeamRuleset.scoring.thresholds.flatMap((threshold) =>
+      "min" in threshold ? [threshold.min] : [],
+    ),
+  ),
+]
+  .filter((threshold) => threshold > 0)
+  .sort((a, b) => a - b);
+const POINT_METER_MAX = Math.max(200, ...POINT_THRESHOLDS);
+const TABLE_FELT_ASSET = "texture.table-felt" as const;
+const BOARD_ART_STYLE = {
+  "--table-felt-image": `image-set(url("${artAssetPath(TABLE_FELT_ASSET, 1)}") 1x, url("${artAssetPath(TABLE_FELT_ASSET, 2)}") 2x)`,
+} as CSSProperties;
 
 export function GameTable({
   view,
@@ -276,10 +269,10 @@ export function GameTable({
     // The end-state splash is an emotional peak; prefetch both densities before
     // scoring so the modal does not pop from a blurry placeholder.
     splashPrefetched.current = [
-      ART.splash.victory,
-      art2x(ART.splash.victory),
-      ART.splash.defeat,
-      art2x(ART.splash.defeat),
+      artAssetPath(ART_ASSET_IDS.splashVictory, 1),
+      artAssetPath(ART_ASSET_IDS.splashVictory, 2),
+      artAssetPath(ART_ASSET_IDS.splashDefeat, 1),
+      artAssetPath(ART_ASSET_IDS.splashDefeat, 2),
     ].map((src) => {
       const image = new Image();
       image.src = src;
@@ -358,6 +351,10 @@ export function GameTable({
     round !== undefined && (view.phase === "playing" || view.phase === "round-scoring")
       ? scoreRound(attackerPoints, fourPlayerTwoDeckFixedTeamRuleset.scoring)
       : null;
+  const pointProgress = Math.max(
+    0,
+    Math.min(100, (attackerPoints / POINT_METER_MAX) * 100),
+  );
 
   // One timer at a time: the bidding window, then the current turn's clock.
   const timerDeadline =
@@ -394,14 +391,6 @@ export function GameTable({
       : previousRound.winningTeamId === view.you.teamId
         ? "Your team"
         : "Rivals";
-  const yourRoundsWon =
-    view.you.teamId === undefined
-      ? 0
-      : (round?.roundStats.roundsWonByTeam[view.you.teamId] ?? 0);
-  const rivalRoundsWon =
-    enemySeat?.teamId === undefined
-      ? 0
-      : (round?.roundStats.roundsWonByTeam[enemySeat.teamId] ?? 0);
   const bidFor = (seatIndex: number) =>
     (view.phase === "dealing" || view.phase === "post-deal-bidding") &&
     round?.currentBid?.seat === seatIndex
@@ -422,133 +411,48 @@ export function GameTable({
 
   return (
     <main className="game-shell">
-      <aside className="side-panel">
-        <div className="brand-lockup">
-          <span className="brand-mark">升</span>
-          <span>
-            <strong>Sheng Ji</strong>
-            <small>Room {view.roomId}</small>
-          </span>
-        </div>
-
-        {/* The round panel is a two-column grid with full-width hero rows. */}
-        <div className="round-pills">
-          <div className="team-score-pills">
-            <span className={`team-score-pill ${yourTeamClass} is-${yourTeamRole}`}>
-              <small>我方 · YOUR TEAM</small>
-              <strong>{youSeat?.rank ?? "—"}</strong>
-              <em aria-label={yourTeamRole}>
-                <TeamRoleBadge role={yourTeamRole} />
-              </em>
-            </span>
-            <span className={`team-score-pill ${enemyTeamClass} is-${enemyTeamRole}`}>
-              <small>对方 · RIVALS</small>
-              <strong>{enemySeat?.rank ?? "—"}</strong>
-              <em aria-label={enemyTeamRole}>
-                <TeamRoleBadge role={enemyTeamRole} />
-              </em>
-            </span>
-          </div>
-          <div className="round-overview-row">
-            <span className="game-stats-pill">
-              <small>对局 · GAME STATS</small>
-              <span className="current-round-stat">
-                <i>ROUND</i>
-                <strong>{round?.roundNumber ?? 1}</strong>
-              </span>
-              <span className="previous-round-stat">
-                <i>PREVIOUS</i>
-                <strong>{previousWinner ?? "No result"}</strong>
-                <b>
-                  {previousRound === undefined
-                    ? "—"
-                    : `${previousRound.attackerPoints} pts · ${previousRound.winner}`}
-                </b>
-              </span>
-              <span className="round-wins-stat">
-                <i>ROUNDS WON</i>
-                <b>YOU {yourRoundsWon}</b>
-                <b>RIVALS {rivalRoundsWon}</b>
-              </span>
-            </span>
-            <span
-              className="level-trump-pill"
-              aria-label={
-                standingTrump === undefined
-                  ? `Level ${round?.trumpRank ?? "2"}, trump undeclared`
-                  : standingTrump.mode === "no-trump"
-                    ? "No-trump"
-                    : `${standingTrump.rank} of ${standingTrump.suit} is trump`
+      <GameDashboard
+        roomId={view.roomId}
+        yourTeam={{
+          label: "我方 · YOUR TEAM",
+          rank: youSeat?.rank ?? null,
+          role: yourTeamRole,
+          teamClass: yourTeamClass,
+        }}
+        rivalTeam={{
+          label: "对方 · RIVALS",
+          rank: enemySeat?.rank ?? null,
+          role: enemyTeamRole,
+          teamClass: enemyTeamClass,
+        }}
+        roundNumber={round?.roundNumber ?? 1}
+        trumpRank={round?.trumpRank ?? "2"}
+        standingTrump={standingTrump}
+        trumpCard={trumpCard}
+        attackerPoints={attackerPoints}
+        pointsTone={pointsTone}
+        pointProgress={pointProgress}
+        pointThresholds={POINT_THRESHOLDS}
+        pointMeterMax={POINT_METER_MAX}
+        projectedOutcome={projectedOutcome}
+        previousResult={
+          previousRound === undefined || previousWinner === null
+            ? null
+            : {
+                winnerLabel: previousWinner,
+                attackerPoints: previousRound.attackerPoints,
+                winner: previousRound.winner,
               }
-            >
-              <small className="trump-panel-label">主牌 · ROUND TRUMP</small>
-              {trumpCard !== undefined ? (
-                <PlayingCard
-                  card={trumpCard}
-                  {...(standingTrump === undefined ? {} : { trump: standingTrump })}
-                />
-              ) : standingTrump?.mode === "no-trump" ? (
-                <span className="generic-joker-card" aria-hidden="true">
-                  王
-                </span>
-              ) : (
-                <span className="pending-trump-card" aria-hidden="true">
-                  <strong>{round?.trumpRank ?? "2"}</strong>
-                  <b>?</b>
-                </span>
-              )}
-            </span>
-          </div>
-          <span className="points-pill">
-            <small>分 · POINTS</small>
-            <strong className={pointsTone}>{attackerPoints}</strong>
-            {projectedOutcome && (
-              <em
-                className={`points-projection is-${projectedOutcome.winner}`}
-                title="Outcome if the round ended at the current points"
-              >
-                {projectedOutcome.winner === "attackers" ? "攻" : "守"}
-                {projectedOutcome.levelDelta > 0
-                  ? ` +${projectedOutcome.levelDelta}`
-                  : " 夺庄"}
-                <i>IF ENDED NOW</i>
-              </em>
-            )}
-          </span>
-          {buried && (
-            <button
-              type="button"
-              className={`bottom-tab ${showBuried ? "is-open" : ""}`}
-              onClick={() => setShowBuried((open) => !open)}
-            >
-              <img
-                className="bottom-tab-icon"
-                src={ART.ui.buriedCards}
-                srcSet={`${art2x(ART.ui.buriedCards)} 2x`}
-                alt=""
-                aria-hidden="true"
-              />
-              <small>底牌 · BOTTOM</small>
-              <strong>{sumCardPoints(buried)} pts</strong>
-            </button>
-          )}
-        </div>
+        }
+        buriedPoints={buried === undefined ? null : sumCardPoints(buried)}
+        bottomOpen={showBuried}
+        onToggleBottom={() => setShowBuried((open) => !open)}
+        muted={muted}
+        onToggleMuted={toggleMuted}
+        onLeave={onLeave}
+      />
 
-        <div className="side-actions">
-          <button
-            type="button"
-            className="icon-button sound-toggle"
-            aria-label={muted ? "Unmute sounds" : "Mute sounds"}
-            aria-pressed={muted}
-            onClick={toggleMuted}
-          >
-            {muted ? "静" : "音"}
-          </button>
-          <LeaveButton onLeave={onLeave} />
-        </div>
-      </aside>
-
-      <section className="board">
+      <section className="board" style={BOARD_ART_STYLE}>
         <MomentLayer moments={moments} dismiss={dismiss} />
         <FxCanvas moments={moments} gameVictory={gameVictory} />
         <AnimatePresence>
@@ -579,81 +483,91 @@ export function GameTable({
         <LayoutGroup>
           <section className="table-stage">
             <div className="felt-table">
-              {view.seats.map((seat) =>
-                seat.playerId === view.you.playerId ? null : (
-                  <TableSeat
-                    key={seat.seat}
-                    seat={seat}
-                    position={relativeSeatPosition(seat.seat, view.you.seat)}
-                    currentTurn={round?.currentTurnSeat === seat.seat}
-                    trickWinner={trickWinnerSeat === seat.seat}
-                    isYou={false}
-                    isLeader={round?.leaderSeat === seat.seat}
-                    role={teamRoleForSeat(view, seat)}
-                    bid={bidFor(seat.seat)}
-                    roomId={view.roomId}
-                  />
-                ),
-              )}
-              {/* Your seat sits on a row with the action buttons flanking it:
-                  Clear to the left, the primary action to the right. */}
-              {youSeat && (
-                <div className="south-cluster">
-                  <div className="south-slot south-left">
-                    {selected.size > 0 && (
-                      <button
-                        type="button"
-                        className="button button-ghost"
-                        onClick={clear}
-                      >
-                        Clear
-                      </button>
-                    )}
-                  </div>
-                  <TableSeat
-                    seat={youSeat}
-                    position="south"
-                    currentTurn={round?.currentTurnSeat === youSeat.seat}
-                    trickWinner={trickWinnerSeat === youSeat.seat}
-                    isYou
-                    isLeader={round?.leaderSeat === youSeat.seat}
-                    role={teamRoleForSeat(view, youSeat)}
-                    handTotal={fullHandSize}
-                    bid={bidFor(youSeat.seat)}
-                    roomId={view.roomId}
-                    {...(timerDeadline === undefined
-                      ? {}
-                      : { timer: { deadline: timerDeadline, now: serverNow } })}
-                  />
-                  <div className="south-slot south-right">
-                    <HandActions
-                      selectedCards={selectedCards}
-                      selectionKind={selectionKind}
-                      actions={actions}
-                      bottomSize={view.ruleset.bottomSize}
-                      hasPassedBid={hasPassedBid}
-                      requiredCardCount={requiredCardCount}
-                      trump={round?.trumpSpec}
-                      submit={submit}
+              <div className="table-orbit">
+                <img
+                  className="table-ring"
+                  data-art-asset={ART_ASSET_IDS.tableRing}
+                  src={artAssetPath(ART_ASSET_IDS.tableRing)}
+                  srcSet={artAssetSrcSet(ART_ASSET_IDS.tableRing)}
+                  alt=""
+                  aria-hidden="true"
+                  draggable={false}
+                />
+                {view.seats.map((seat) =>
+                  seat.playerId === view.you.playerId ? null : (
+                    <TableSeat
+                      key={seat.seat}
+                      seat={seat}
+                      position={relativeSeatPosition(seat.seat, view.you.seat)}
+                      currentTurn={round?.currentTurnSeat === seat.seat}
+                      trickWinner={trickWinnerSeat === seat.seat}
+                      isYou={false}
+                      isLeader={round?.leaderSeat === seat.seat}
+                      role={teamRoleForSeat(view, seat)}
+                      bid={bidFor(seat.seat)}
+                      roomId={view.roomId}
                     />
+                  ),
+                )}
+                {/* Your tag stays below the ring and above the hand dock. */}
+                {youSeat && (
+                  <div className="south-cluster">
+                    <div className="south-slot south-left">
+                      {selected.size > 0 && (
+                        <button
+                          type="button"
+                          className="button button-ghost"
+                          onClick={clear}
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                    <TableSeat
+                      seat={youSeat}
+                      position="south"
+                      currentTurn={round?.currentTurnSeat === youSeat.seat}
+                      trickWinner={trickWinnerSeat === youSeat.seat}
+                      isYou
+                      isLeader={round?.leaderSeat === youSeat.seat}
+                      role={teamRoleForSeat(view, youSeat)}
+                      handTotal={fullHandSize}
+                      bid={bidFor(youSeat.seat)}
+                      roomId={view.roomId}
+                      {...(timerDeadline === undefined
+                        ? {}
+                        : { timer: { deadline: timerDeadline, now: serverNow } })}
+                    />
+                    <div className="south-slot south-right">
+                      <HandActions
+                        selectedCards={selectedCards}
+                        selectionKind={selectionKind}
+                        actions={actions}
+                        bottomSize={view.ruleset.bottomSize}
+                        hasPassedBid={hasPassedBid}
+                        requiredCardCount={requiredCardCount}
+                        trump={round?.trumpSpec}
+                        submit={submit}
+                      />
+                    </div>
                   </div>
-                </div>
-              )}
-              <TrickCenter view={view} />
-              {buried && (
-                <button
-                  type="button"
-                  className="buried-pile"
-                  aria-expanded={showBuried}
-                  title="Your buried bottom"
-                  onClick={() => setShowBuried((open) => !open)}
-                >
-                  {Array.from({ length: 3 }, (_, index) => (
-                    <CardBack key={index} compact />
-                  ))}
-                  <span className="card-count">底</span>
-                </button>
-              )}
+                )}
+                <TrickCenter view={view} />
+                {buried && (
+                  <button
+                    type="button"
+                    className="buried-pile"
+                    aria-expanded={showBuried}
+                    title="Your buried bottom"
+                    onClick={() => setShowBuried((open) => !open)}
+                  >
+                    {Array.from({ length: 3 }, (_, index) => (
+                      <CardBack key={index} compact />
+                    ))}
+                    <span className="card-count">底</span>
+                  </button>
+                )}
+              </div>
               <AnimatePresence>
                 {buried && showBuried && (
                   <motion.div
@@ -667,19 +581,13 @@ export function GameTable({
                         setShowBuried(false);
                       }
                     }}
-                    initial={
-                      reducedMotion
-                        ? { opacity: 0 }
-                        : { opacity: 0, y: 14, scale: 0.92 }
-                    }
-                    animate={
-                      reducedMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }
-                    }
-                    exit={
-                      reducedMotion
-                        ? { opacity: 0 }
-                        : { opacity: 0, y: 10, scale: 0.95 }
-                    }
+                    {...(reducedMotion
+                      ? { initial: false as const }
+                      : {
+                          initial: { y: 14, scale: 0.92 },
+                          animate: { y: 0, scale: 1 },
+                          exit: { y: 10, scale: 0.95 },
+                        })}
                     transition={
                       reducedMotion
                         ? { duration: 0.18 }
@@ -692,14 +600,7 @@ export function GameTable({
                     </small>
                     <div className="buried-panel-cards">
                       {buried.map((card) => (
-                        <PlayingCard
-                          key={card.id}
-                          card={card}
-                          compact
-                          {...(round?.trumpSpec === undefined
-                            ? {}
-                            : { trump: round.trumpSpec })}
-                        />
+                        <PlayingCard key={card.id} card={card} compact />
                       ))}
                     </div>
                   </motion.div>
@@ -712,7 +613,6 @@ export function GameTable({
             cards={cards}
             selected={selected}
             hinted={hinted}
-            trump={round?.trumpSpec}
             isDealing={view.phase === "dealing"}
             isYourTurn={round?.currentTurnSeat === view.you.seat}
             onToggle={toggle}

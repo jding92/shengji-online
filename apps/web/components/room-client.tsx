@@ -152,12 +152,18 @@ export function RoomClient({
         : view.phase === "lobby"
           ? "lobby"
           : "table";
-  const screenMotion = {
+  // A resumed game can mount with a full, overlapped hand already present.
+  // Keep that entire card-bearing tree opaque; only non-table screens use the
+  // shared cross-fade.
+  const tableScreenMotion = { initial: false as const };
+  const transitionalScreenMotion = {
     initial: reducedMotion ? { opacity: 0 } : { opacity: 0, y: 8 },
     animate: reducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 },
     exit: reducedMotion ? { opacity: 0 } : { opacity: 0, y: -8 },
     transition: { duration: reducedMotion ? 0.18 : 0.22, ease: "easeOut" },
   } as const;
+  const screenMotion =
+    screenKey === "table" ? tableScreenMotion : transitionalScreenMotion;
 
   const screen =
     status === "join-required" ? (

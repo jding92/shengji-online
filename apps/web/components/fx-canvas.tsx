@@ -16,8 +16,12 @@ type Particle = {
   color: string;
 };
 
-const GOLD = ["#f8d978", "#f2b84b", "#fff1b0"];
 const EMBER = ["#f8d978", "#f2b84b", "#ff4b55", "#d61d2f"];
+
+/** Point tricks deliberately stay effect-free until their VFX is redesigned. */
+export function shouldCreateFxBurst(moment: GameMoment, gameVictory: boolean): boolean {
+  return moment.type === "GAME_OVER" && gameVictory;
+}
 
 function randomBetween(min: number, max: number): number {
   return min + Math.random() * (max - min);
@@ -143,18 +147,7 @@ export function FxCanvas({
     for (const moment of moments) {
       if (seen.current.has(moment.id)) continue;
       seen.current.add(moment.id);
-      if (moment.type === "TRICK_WON" && moment.points >= 15) {
-        particles.current.push(
-          ...makeBurst(
-            24,
-            window.innerWidth * 0.52,
-            window.innerHeight * 0.43,
-            GOLD,
-            5,
-          ),
-        );
-      }
-      if (moment.type === "GAME_OVER" && gameVictory) {
+      if (shouldCreateFxBurst(moment, gameVictory)) {
         particles.current.push(
           ...makeBurst(
             80,

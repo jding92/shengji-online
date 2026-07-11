@@ -5,10 +5,10 @@ import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { replaceWithBot } from "../lib/bot-api";
 import { cardFaceLabel, type TablePosition } from "../lib/cards";
-import { teamClassForSeat, teamLabelForSeat } from "../lib/strings";
+import { teamClassForSeat } from "../lib/strings";
 import { CardBack } from "./card";
-import { Countdown } from "./countdown";
-import { SeatAvatar } from "./seat-avatar";
+import { PlayerTag } from "./player-tag";
+import { ChromeButton, ChromePanel } from "./ui-chrome";
 
 type CurrentBid = NonNullable<
   NonNullable<PrivateGameView["publicRound"]>["currentBid"]
@@ -119,62 +119,16 @@ export function TableSeat({
           vertical={position === "east" || position === "west"}
         />
       )}
-      <div className="player-chip">
-        <SeatAvatar seat={seat.seat} />
-        <span className="player-ident">
-          <strong>
-            {isYou ? "You" : (seat.name ?? `Seat ${seat.seat + 1}`)}
-            {isLeader && (
-              <span className="leader-badge" title="Round leader · 庄家">
-                庄
-              </span>
-            )}
-            {seat.isBot && (
-              <span
-                className="bot-badge"
-                title={`Bot · ${seat.botDifficulty ?? "intermediate"}`}
-              >
-                BOT
-              </span>
-            )}
-          </strong>
-          <small>
-            {seat.rank === null
-              ? "Waiting"
-              : `Lv ${seat.rank} · ${teamLabelForSeat(seat.seat)}`}
-            {role !== null && (
-              <span
-                className={`role-tag role-${role}`}
-                title={role === "attacking" ? "Attacking · 攻方" : "Defending · 守方"}
-              >
-                {role === "attacking" ? "攻" : "守"}
-              </span>
-            )}
-          </small>
-        </span>
-        {isYou && handTotal !== undefined && handTotal > 0 && (
-          <motion.span
-            className="seat-count"
-            key={seat.cardCount}
-            aria-label={`${seat.cardCount} of ${handTotal} cards remaining`}
-            initial={{ scale: 1.2 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 500, damping: 22 }}
-          >
-            {seat.cardCount} / {handTotal}
-          </motion.span>
-        )}
-        {isYou && timer !== undefined && (
-          <span className="seat-timer-badge" aria-label="Turn timer">
-            <Countdown deadline={timer.deadline} now={timer.now} />
-          </span>
-        )}
-        {!seat.connected && seat.playerId !== null && !seat.isBot && (
-          <i className="offline-dot" />
-        )}
-      </div>
+      <PlayerTag
+        seat={seat}
+        isYou={isYou}
+        isLeader={isLeader}
+        role={role}
+        {...(handTotal !== undefined ? { handTotal } : {})}
+        {...(timer !== undefined ? { timer } : {})}
+      />
       {canReplace && (
-        <div className="takeover-control">
+        <ChromePanel className="takeover-control">
           {showTakeover ? (
             <>
               <select
@@ -188,28 +142,24 @@ export function TableSeat({
                 <option value="advanced">Advanced</option>
                 <option value="expert">Expert</option>
               </select>
-              <button
-                type="button"
+              <ChromeButton
+                variant="gold"
                 disabled={replacing}
                 onClick={() => void takeOver()}
               >
                 {replacing ? "Replacing…" : "Confirm bot"}
-              </button>
-              <button
-                type="button"
-                disabled={replacing}
-                onClick={() => setShowTakeover(false)}
-              >
+              </ChromeButton>
+              <ChromeButton disabled={replacing} onClick={() => setShowTakeover(false)}>
                 Cancel
-              </button>
+              </ChromeButton>
             </>
           ) : (
-            <button type="button" onClick={() => setShowTakeover(true)}>
+            <ChromeButton onClick={() => setShowTakeover(true)}>
               Replace with bot
-            </button>
+            </ChromeButton>
           )}
           {replaceError && <small>{replaceError}</small>}
-        </div>
+        </ChromePanel>
       )}
       <AnimatePresence>
         {bid && (

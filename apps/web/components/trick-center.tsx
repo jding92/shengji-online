@@ -5,7 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { cardFaceLabel, relativeSeatPosition, type TablePosition } from "../lib/cards";
 import { TRICK_RESULT_HOLD_MS, TRICK_SWEEP_MS } from "../lib/constants";
-import { ART, art2x } from "../lib/art";
+import { ART_ASSET_IDS, artAssetPath, artAssetSrcSet } from "../lib/art-registry";
 import { PlayingCard } from "./card";
 
 type PublicCompletedTrick = NonNullable<
@@ -92,10 +92,12 @@ function phaseMessage(view: PrivateGameView): { key: string; node: ReactNode } |
         <div className="phase-message">
           <span className="deal-spinner">
             <img
-              src={ART.ui.cardDeck}
-              srcSet={`${art2x(ART.ui.cardDeck)} 2x`}
+              data-art-asset={ART_ASSET_IDS.gameplayUi("card-deck")}
+              src={artAssetPath(ART_ASSET_IDS.gameplayUi("card-deck"))}
+              srcSet={artAssetSrcSet(ART_ASSET_IDS.gameplayUi("card-deck"))}
               alt=""
               aria-hidden="true"
+              draggable={false}
             />
           </span>
           <strong>Dealing the cards</strong>
@@ -197,9 +199,7 @@ export function TrickCenter({ view }: { view: PrivateGameView }) {
           className={`trick-plays ${sweep === null ? "" : "trick-sweep"}`}
           initial={false}
           animate={
-            sweep === null
-              ? { x: 0, y: 0, scale: 1, opacity: 1 }
-              : { ...sweepVector, scale: 0.45, opacity: 0 }
+            sweep === null ? { x: 0, y: 0, scale: 1 } : { ...sweepVector, scale: 0.45 }
           }
           transition={
             sweep === null
@@ -215,17 +215,11 @@ export function TrickCenter({ view }: { view: PrivateGameView }) {
             <motion.div
               className={`center-play play-${relativeSeatPosition(play.seat, view.you.seat)}`}
               key={play.seat}
-              initial={{ opacity: 0, scale: 0.82 }}
-              animate={{ opacity: 1, scale: 1 }}
+              initial={{ scale: 0.82 }}
+              animate={{ scale: 1 }}
             >
               {play.cards.map((card) => (
-                <PlayingCard
-                  key={card.id}
-                  card={card}
-                  {...(round?.trumpSpec === undefined
-                    ? {}
-                    : { trump: round.trumpSpec })}
-                />
+                <PlayingCard key={card.id} card={card} />
               ))}
               {sweep === null && <span>Seat {play.seat + 1}</span>}
             </motion.div>

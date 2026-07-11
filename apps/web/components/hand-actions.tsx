@@ -9,6 +9,7 @@ import type { TrumpSpec } from "@shengji/engine";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { describePlaySelection } from "../lib/cards";
+import { ChromeButton } from "./ui-chrome";
 
 /**
  * The primary action button(s) for your turn — Pass / Bid / Bury / Play —
@@ -97,14 +98,14 @@ export function HandActions({
         </button>
       )}
       {actions.has("bury-bottom") && (
-        <button
-          className="button button-primary"
-          type="button"
+        <ChromeButton
+          className="button"
+          variant="primary"
           disabled={selectedIds.length !== bottomSize}
           onClick={() => submit({ type: "BURY_BOTTOM", cards: selectedIds })}
         >
           Bury {selectedIds.length} / {bottomSize}
-        </button>
+        </ChromeButton>
       )}
       {actions.has("play-cards") && (
         <>
@@ -126,9 +127,9 @@ export function HandActions({
               </>
             )}
           </span>
-          <button
-            className={`button ${isThrow ? "button-gold" : "button-primary"}`}
-            type="button"
+          <ChromeButton
+            className="button"
+            variant={isThrow ? "gold" : "primary"}
             disabled={
               selectedIds.length === 0 ||
               (requiredCardCount !== undefined &&
@@ -142,7 +143,7 @@ export function HandActions({
                 ? "Confirm throw 甩牌"
                 : "Play throw 甩牌"
               : describePlaySelection(selectedCards, trump)}
-          </button>
+          </ChromeButton>
         </>
       )}
     </div>
