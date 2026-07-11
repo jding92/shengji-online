@@ -7,21 +7,32 @@ import {
 } from "../state/commands.js";
 import { applyEvent, createGameState, replayEvents } from "../state/reducer.js";
 import { fourPlayerTwoDeckFixedTeamRuleset } from "../rulesets/four-player-two-deck.js";
+import type { ShengJiRuleset } from "../rulesets/schema.js";
 
 export type RoundSimulation = {
   state: GameState;
   events: GameEvent[];
 };
 
+export type RoundSimulationOptions = {
+  /** Defaults to the 4p/2d preset. */
+  ruleset?: ShengJiRuleset;
+};
+
 /**
  * Deterministic smoke harness that completes a round using legal single-card
  * plays. It exercises the complete lifecycle without bypassing command checks.
  */
-export function simulateRound(seed: string): RoundSimulation {
+export function simulateRound(
+  seed: string,
+  options: RoundSimulationOptions = {},
+): RoundSimulation {
+  const ruleset = options.ruleset ?? fourPlayerTwoDeckFixedTeamRuleset;
+  const playerCount = ruleset.players.count;
   const at = "2026-01-01T00:00:00.000Z";
   let state = createGameState({
     roomId: "SIMULATED",
-    ruleset: fourPlayerTwoDeckFixedTeamRuleset,
+    ruleset,
     createdAt: at,
   });
   const events: GameEvent[] = [];
@@ -30,7 +41,7 @@ export function simulateRound(seed: string): RoundSimulation {
     state = replayEvents(state, nextEvents);
   };
 
-  for (let seat = 0; seat < 4; seat += 1) {
+  for (let seat = 0; seat < playerCount; seat += 1) {
     const playerId = `player-${seat}`;
     const joined: GameEvent = {
       type: "PLAYER_JOINED",
@@ -42,7 +53,7 @@ export function simulateRound(seed: string): RoundSimulation {
     state = applyEvent(state, joined);
     commit(validateCommand(state, playerId, { type: "SIT", seat }, { now: at }));
   }
-  for (let seat = 0; seat < 4; seat += 1) {
+  for (let seat = 0; seat < playerCount; seat += 1) {
     commit(
       validateCommand(
         state,
@@ -81,7 +92,13 @@ export function simulateRound(seed: string): RoundSimulation {
     validateCommand(
       state,
       `player-${leaderSeat}`,
-      { type: "BURY_BOTTOM", cards: state.round!.hands[leaderSeat]!.slice(0, 8) },
+      {
+        type: "BURY_BOTTOM",
+        cards: state.round!.hands[leaderSeat]!.slice(
+          0,
+          state.rulesetSnapshot.bottom.size,
+        ),
+      },
       { now: at },
     ),
   );

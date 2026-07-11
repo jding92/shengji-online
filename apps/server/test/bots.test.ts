@@ -10,6 +10,7 @@ import {
   validateCommand,
   type GameState,
 } from "@shengji/engine";
+import { derivePrivateView } from "../src/private-views/derive-private-view.js";
 import { SqliteStore } from "../src/persistence/sqlite-store.js";
 import { RoomManager } from "../src/room-manager.js";
 import { Room } from "../src/room.js";
@@ -243,4 +244,52 @@ describe("server bot orchestration", () => {
     manager.close();
     store.close();
   });
+});
+
+describe("multi-deck (6p/3d) bot round", () => {
+  it("creates a room from the promoted 6p/3d preset via RoomManager and runs a full round of bots", async () => {
+    const store = new SqliteStore(":memory:");
+    // Fast test timers: instant dealing/bot decisions, short bid windows via
+    // the same GameOptions path a host would use, and short forced-play
+    // timeouts so any bot that stalls gets carried by the timeout harness.
+    const manager = new RoomManager(store, {
+      timersEnabled: true,
+      dealIntervalMs: 0,
+      botDelayMsOverride: { min: 0, max: 0 },
+      botNextRoundDelayMs: 0,
+      turnTimeoutMsOverride: { connected: 5, disconnected: 5 },
+    });
+    const room = await manager.createRoom({
+      at: now,
+      presetId: "shengji-6p-3d-fixed-v1",
+      options: { timers: { postDealWindowSeconds: 1, responseWindowSeconds: 1 } },
+    });
+    expect(room.state.rulesetSnapshot.players.count).toBe(6);
+    expect(room.state.rulesetSnapshot.decks.count).toBe(3);
+
+    const botIds: string[] = [];
+    for (let seat = 0; seat < 6; seat += 1) {
+      botIds.push(await manager.addBot(room.state.roomId, seat, "intermediate", now));
+    }
+    expect(botIds).toHaveLength(6);
+
+    // All 6 seats are bots and auto-ready on add, so the round starts (phase
+    // leaves "lobby") the moment the last seat fills.
+    expect(room.state.phase).not.toBe("lobby");
+
+    await vi.waitFor(() => expect(room.state.round?.roundNumber).toBe(2), {
+      timeout: 30_000,
+      interval: 20,
+    });
+
+    // A full round completed (round-scoring was reached) with no thrown
+    // errors, and every seat's private view reports the correct table size.
+    for (const botId of botIds) {
+      const view = derivePrivateView(room.state, botId);
+      expect(view.seats).toHaveLength(6);
+    }
+
+    manager.close();
+    store.close();
+  }, 40_000);
 });

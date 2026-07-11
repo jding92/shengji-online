@@ -8,8 +8,8 @@ import {
   deriveCardKnowledge,
   inferVoidSuits,
   isKnownBoss,
-  partnerSeat,
   teamForSeat,
+  teammateSeats,
 } from "./knowledge.js";
 import type { BotObservation } from "./observation.js";
 import { noisyPick, type BotRng } from "./rng.js";
@@ -118,7 +118,7 @@ export function decideLeadAction(
   }
   const knowledge = deriveCardKnowledge(observation, config);
   const inferredVoids = inferVoidSuits(observation, config);
-  const partner = partnerSeat(observation);
+  const teammates = teammateSeats(observation);
   const seen = new Set<string>();
   const candidates: LeadCandidate[] = [];
   const add = (cards: CardInstance[], intent: "normal" | "throw") => {
@@ -143,11 +143,10 @@ export function decideLeadAction(
         0,
       ) / Math.max(1, cards.length * 14);
     const effectiveSuit = getEffectiveSuit(cards[0]!, trump);
-    const partnerCanRuff =
+    const teammateCanRuff =
       config.teamCoordination === "full" &&
       effectiveSuit !== "trump" &&
-      partner !== undefined &&
-      inferredVoids.get(partner)?.has(effectiveSuit) === true;
+      teammates.some((seat) => inferredVoids.get(seat)?.has(effectiveSuit) === true);
     const voidOpponents = observation.seats.filter(
       ({ seat }) =>
         teamForSeat(observation, seat) !== observation.ownTeamId &&
@@ -155,7 +154,7 @@ export function decideLeadAction(
     ).length;
     const voidLeadValue =
       config.voidInference && effectiveSuit !== "trump"
-        ? (partnerCanRuff ? 0.9 : 0) -
+        ? (teammateCanRuff ? 0.9 : 0) -
           voidOpponents * (config.difficulty === "expert" ? 0.55 : 0.4)
         : 0;
     candidates.push({

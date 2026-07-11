@@ -6,7 +6,7 @@ import {
   defaultFriendCallCount,
   defaultThresholds,
   fourPlayerTwoDeckFixedTeamRuleset,
-  sixPlayerThreeDeckFutureRuleset,
+  sixPlayerThreeDeckFixedTeamRuleset,
   totalCards,
   validBottomSizes,
 } from "../src/index.js";
@@ -59,7 +59,7 @@ describe("defaultBottomSize", () => {
       fourPlayerTwoDeckFixedTeamRuleset.bottom.size,
     );
     expect(defaultBottomSize(6, threeDecks)).toBe(
-      sixPlayerThreeDeckFutureRuleset.bottom.size,
+      sixPlayerThreeDeckFixedTeamRuleset.bottom.size,
     );
   });
 });
@@ -71,9 +71,9 @@ describe("defaultThresholds", () => {
     );
   });
 
-  it("reproduces the 6p/3d fixture thresholds (band 60)", () => {
+  it("reproduces the 6p/3d preset thresholds (band 60)", () => {
     expect(defaultThresholds(3)).toEqual(
-      sixPlayerThreeDeckFutureRuleset.scoring.thresholds,
+      sixPlayerThreeDeckFixedTeamRuleset.scoring.thresholds,
     );
   });
 
