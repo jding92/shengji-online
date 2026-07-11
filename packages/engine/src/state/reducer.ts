@@ -4,13 +4,10 @@ import type { GameOptions } from "../rulesets/options.js";
 import type { ShengJiRuleset } from "../rulesets/schema.js";
 import { CURRENT_SCHEMA_VERSION } from "./migrate.js";
 import type { GameEvent, GameState, RoundState } from "./model.js";
+import { knownTeamIdForSeat, teamIdForSeat } from "./teams.js";
 import type { PlayerId } from "../types.js";
 
-export function teamIdForSeat(seat: number, ruleset: ShengJiRuleset): string {
-  const teamIndex = ruleset.teams.teams.findIndex((team) => team.includes(seat));
-  if (teamIndex < 0) throw new RangeError(`Seat ${seat} is not assigned to a team`);
-  return `team-${teamIndex}`;
-}
+export { teamIdForSeat };
 
 export function createGameState(input: {
   roomId: string;
@@ -56,6 +53,19 @@ function removeCards(source: string[], cards: readonly string[]): void {
 
 function nextSeat(seat: number, state: GameState): number {
   return (seat + 1) % state.rulesetSnapshot.players.count;
+}
+
+/**
+ * Finding-friends provisional attacker total: every pile not publicly known
+ * to belong to the defenders counts as attacker points until a reveal
+ * retroactively moves it.
+ */
+function provisionalAttackerPoints(state: GameState): number {
+  let total = 0;
+  for (const [seat, points] of Object.entries(state.round?.pointsBySeat ?? {})) {
+    if (knownTeamIdForSeat(state, Number(seat)) !== "defenders") total += points;
+  }
+  return total;
 }
 
 export function applyEvent(state: GameState, event: GameEvent): GameState {
@@ -197,6 +207,8 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
     case "TRUMP_FINALIZED": {
       const round = requireRound(next);
       round.trumpSpec = event.trumpSpec;
+      if (event.trumpRank !== undefined) round.trumpRank = event.trumpRank;
+      if (event.declarerSeat !== undefined) round.declarerSeat = event.declarerSeat;
       if (event.winningBid !== undefined) round.currentBid = event.winningBid;
       delete round.biddingDeadline;
       break;
@@ -217,7 +229,37 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
       removeCards(round.hands[event.seat]!, event.cards);
       round.buriedBottom = [...event.cards];
       round.currentTurnSeat = event.seat;
+      // The declarer calls friends knowing their final hand; called copies may
+      // deliberately sit in the buried bottom.
+      next.phase =
+        next.rulesetSnapshot.teams.mode === "finding-friends"
+          ? "friend-calling"
+          : "playing";
+      break;
+    }
+    case "FRIENDS_CALLED": {
+      const round = requireRound(next);
+      // Reveals only ever come from FRIEND_REVEALED, so any revealed marker on
+      // the event payload is dropped.
+      round.friendCalls = event.calls.map(({ face, copyIndex }) => ({
+        face: { ...face },
+        copyIndex,
+      }));
       next.phase = "playing";
+      break;
+    }
+    case "FRIEND_REVEALED": {
+      const round = requireRound(next);
+      const call = round.friendCalls?.[event.callIndex];
+      if (call === undefined) {
+        throw new Error(`Friend reveal for unknown call ${event.callIndex}`);
+      }
+      call.revealed = {
+        seat: event.seat,
+        trickNumber: event.trickNumber,
+        at: event.at,
+      };
+      round.attackerPoints = provisionalAttackerPoints(next);
       break;
     }
     case "TRICK_STARTED": {
@@ -265,7 +307,13 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
     case "TRICK_WON": {
       const round = requireRound(next);
       round.completedTricks.push(event.result);
-      if (
+      if (next.rulesetSnapshot.teams.mode === "finding-friends") {
+        const piles = round.pointsBySeat ?? {};
+        piles[event.result.winnerSeat] =
+          (piles[event.result.winnerSeat] ?? 0) + event.result.points;
+        round.pointsBySeat = piles;
+        round.attackerPoints = provisionalAttackerPoints(next);
+      } else if (
         teamIdForSeat(event.result.winnerSeat, next.rulesetSnapshot) ===
         next.attackingTeamId
       ) {
@@ -298,6 +346,15 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
         event.outcome.winner === "defenders"
           ? next.defendingTeamId
           : next.attackingTeamId;
+      // In finding-friends the round is over, so "publicly known defender"
+      // is final: the declarer plus every revealed friend.
+      const defenderSeats =
+        next.rulesetSnapshot.teams.mode === "finding-friends"
+          ? Array.from(
+              { length: next.rulesetSnapshot.players.count },
+              (_, seat) => seat,
+            ).filter((seat) => knownTeamIdForSeat(next, seat) === "defenders")
+          : undefined;
       next.roundHistory = [
         ...(next.roundHistory ?? []),
         {
@@ -306,6 +363,7 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
           attackingTeamId: next.attackingTeamId,
           winningTeamId,
           outcome: { ...event.outcome },
+          ...(defenderSeats === undefined ? {} : { defenderSeats }),
         },
       ];
       next.phase = "round-scoring";

@@ -3,6 +3,7 @@ import { RANKS } from "../types.js";
 import {
   defaultBottomSize,
   defaultFixedTeams,
+  defaultFriendCallCount,
   defaultThresholds,
   thresholdsForBand,
 } from "./derive.js";
@@ -80,14 +81,20 @@ export function resolveRuleset(presetId: string, options: GameOptions): ResolveR
     };
   }
 
-  // Finding-friends is not composable yet (Phase 3); reject any FF intent.
+  // friendCallCount is meaningless outside finding-friends; reject it before
+  // composing so the message points at the offending key.
   if (
-    options.teamsMode === "finding-friends" ||
-    options.friendCallCount !== undefined
+    options.friendCallCount !== undefined &&
+    (options.teamsMode ?? preset.ruleset.teams.mode) !== "finding-friends"
   ) {
     return {
       ok: false,
-      issues: [{ path: "teamsMode", message: "finding-friends is not yet available" }],
+      issues: [
+        {
+          path: "friendCallCount",
+          message: "friendCallCount requires finding-friends",
+        },
+      ],
     };
   }
 
@@ -99,7 +106,6 @@ export function resolveRuleset(presetId: string, options: GameOptions): ResolveR
 
     if (options.playerCount !== undefined) working.players.count = options.playerCount;
     if (options.deckCount !== undefined) working.decks.count = options.deckCount;
-    if (options.teamsMode !== undefined) working.teams.mode = options.teamsMode;
     if (options.startingRank !== undefined) {
       working.ranks.startingRank = options.startingRank;
     }
@@ -142,14 +148,41 @@ export function resolveRuleset(presetId: string, options: GameOptions): ResolveR
     const deckCountChanged =
       options.deckCount !== undefined && options.deckCount !== originalDeckCount;
 
-    // Re-derive fixed team layout for the new seat count when it can (even
-    // counts); odd counts leave the stale layout so the schema surfaces the
-    // "assign every seat exactly once" issue rather than throwing here.
-    if (
-      working.teams.mode === "fixed" &&
-      playerCountChanged &&
-      working.players.count % 2 === 0
-    ) {
+    const teamsMode = options.teamsMode ?? working.teams.mode;
+    if (teamsMode === "finding-friends") {
+      // Keep a preset's pinned call count only while the seat count it was
+      // derived for still holds; otherwise re-derive like teams/bottom.
+      const presetCallCount =
+        working.teams.mode === "finding-friends" && !playerCountChanged
+          ? working.teams.friends.callCount
+          : undefined;
+      working.teams = {
+        mode: "finding-friends",
+        friends: {
+          callCount:
+            options.friendCallCount ??
+            presetCallCount ??
+            defaultFriendCallCount(working.players.count),
+          callableCards: "any-non-trump",
+          allowOwnCardCall: true,
+        },
+      };
+      // FF requires per-round bidding at each player's own level.
+      working.roundFlow.laterRoundLeader = "rebid-each-round";
+      working.bidding.declareRankSource = "bidder-own-rank";
+    } else if (working.teams.mode !== "fixed") {
+      // Switching an FF preset back to fixed teams restores the classic
+      // strategies the FF-forced values replaced.
+      working.teams = {
+        mode: "fixed",
+        teams: defaultFixedTeams(working.players.count),
+      };
+      working.roundFlow.laterRoundLeader = "round-progression";
+      working.bidding.declareRankSource = "round-rank";
+    } else if (playerCountChanged && working.players.count % 2 === 0) {
+      // Re-derive fixed team layout for the new seat count when it can (even
+      // counts); odd counts leave the stale layout so the schema surfaces the
+      // "assign every seat exactly once" issue rather than throwing here.
       working.teams.teams = defaultFixedTeams(working.players.count);
     }
 

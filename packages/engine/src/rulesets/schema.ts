@@ -24,10 +24,23 @@ export const shengJiRulesetSchema = z
       count: z.number().int().positive(),
       includeJokers: z.boolean(),
     }),
-    teams: z.object({
-      mode: z.enum(["fixed", "finding-friends"]),
-      teams: z.array(z.array(z.number().int().nonnegative()).min(1)).min(1),
-    }),
+    teams: z.discriminatedUnion("mode", [
+      z.object({
+        mode: z.literal("fixed"),
+        teams: z.array(z.array(z.number().int().nonnegative()).min(1)).min(1),
+      }),
+      z.object({
+        mode: z.literal("finding-friends"),
+        friends: z.object({
+          /** How many friend calls the declarer makes after burying the bottom. */
+          callCount: z.number().int().positive(),
+          /** Callable faces: no jokers, no level-rank cards, no trump-suit faces. */
+          callableCards: z.literal("any-non-trump"),
+          /** Calling a fully-held face stays legal (unenforceable without leaking hands). */
+          allowOwnCardCall: z.literal(true),
+        }),
+      }),
+    ]),
     ranks: z.object({
       sequence: z.array(z.enum(RANKS)).min(2),
       gameEndsOnSuccessfulDefenseAt: z.enum(RANKS),
@@ -170,6 +183,39 @@ export const shengJiRulesetSchema = z
           message: "Fixed teams must assign every seat exactly once",
         });
       }
+    } else {
+      if (ruleset.players.count < 5) {
+        context.addIssue({
+          code: "custom",
+          path: ["players", "count"],
+          message: "Finding friends requires at least 5 players",
+        });
+      }
+      const maxCallCount = Math.floor(ruleset.players.count / 2) - 1;
+      const callCount = ruleset.teams.friends.callCount;
+      if (callCount < 1 || callCount > maxCallCount) {
+        context.addIssue({
+          code: "custom",
+          path: ["teams", "friends", "callCount"],
+          message: `Friend call count must be between 1 and ${maxCallCount} for ${ruleset.players.count} players`,
+        });
+      }
+      // FF depends on per-round bidding and per-player levels; other strategies
+      // would leave the declarer/level machinery incoherent.
+      if (ruleset.roundFlow.laterRoundLeader !== "rebid-each-round") {
+        context.addIssue({
+          code: "custom",
+          path: ["roundFlow", "laterRoundLeader"],
+          message: "Finding friends requires rebid-each-round",
+        });
+      }
+      if (ruleset.bidding.declareRankSource !== "bidder-own-rank") {
+        context.addIssue({
+          code: "custom",
+          path: ["bidding", "declareRankSource"],
+          message: "Finding friends requires bidder-own-rank",
+        });
+      }
     }
 
     const thresholds = ruleset.scoring.thresholds;
@@ -217,6 +263,11 @@ export const shengJiRulesetSchema = z
   });
 
 export type ShengJiRuleset = z.infer<typeof shengJiRulesetSchema>;
+
+export type FriendsConfig = Extract<
+  ShengJiRuleset["teams"],
+  { mode: "finding-friends" }
+>["friends"];
 
 export function validateRuleset(ruleset: unknown) {
   return shengJiRulesetSchema.safeParse(ruleset);

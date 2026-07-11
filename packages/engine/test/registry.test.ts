@@ -20,26 +20,35 @@ describe("ruleset registry", () => {
   });
 
   it("registers all four multi-deck/large-table presets as production", () => {
-    const ids = RULESET_PRESETS.map((entry) => entry.id);
-    expect(ids).toEqual([
+    const productionIds = RULESET_PRESETS.filter(
+      (entry) => entry.visibility === "production",
+    ).map((entry) => entry.id);
+    expect(productionIds).toEqual([
       "shengji-4p-2d-fixed-v1",
       "shengji-4p-3d-fixed-v1",
       "shengji-6p-3d-fixed-v1",
       "shengji-8p-4d-fixed-v1",
     ]);
-    expect(RULESET_PRESETS.every((entry) => entry.visibility === "production")).toBe(
-      true,
-    );
   });
 
-  it("lists every registered preset when nothing is experimental", () => {
-    // No preset is currently experimental (finding-friends presets land
-    // experimental in Phase 3), so the visibility filter is a no-op today —
-    // both calls must agree and cover the full registry.
+  it("registers the finding-friends presets as experimental until Phase 3c", () => {
+    const experimentalIds = RULESET_PRESETS.filter(
+      (entry) => entry.visibility === "experimental",
+    ).map((entry) => entry.id);
+    expect(experimentalIds).toEqual([
+      "shengji-ff-5p-2d-v1",
+      "shengji-ff-6p-3d-v1",
+      "shengji-ff-7p-3d-v1",
+      "shengji-ff-8p-4d-v1",
+    ]);
+  });
+
+  it("hides experimental presets unless explicitly included", () => {
     const production = listPresets();
     const all = listPresets(true);
-    expect(production.map((entry) => entry.id)).toEqual(all.map((entry) => entry.id));
-    expect(production).toHaveLength(RULESET_PRESETS.length);
+    expect(production.every((entry) => entry.visibility === "production")).toBe(true);
     expect(production.map((entry) => entry.id)).toContain(DEFAULT_PRESET_ID);
+    expect(all).toHaveLength(RULESET_PRESETS.length);
+    expect(all.map((entry) => entry.id)).toContain("shengji-ff-5p-2d-v1");
   });
 });

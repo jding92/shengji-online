@@ -26,7 +26,10 @@ describe("resolveRuleset", () => {
     if (!result.ok) throw new Error("expected ok");
     expect(result.ruleset.players.count).toBe(6);
     expect(result.ruleset.decks.count).toBe(3);
-    expect(result.ruleset.teams.teams).toEqual(defaultFixedTeams(6));
+    expect(result.ruleset.teams).toEqual({
+      mode: "fixed",
+      teams: defaultFixedTeams(6),
+    });
     expect(result.ruleset.bottom.size).toBe(defaultBottomSize(6, threeDecks));
     expect(result.ruleset.scoring.thresholds).toEqual(defaultThresholds(3));
     // Any override tags the id custom while keeping the preset name.
@@ -58,16 +61,72 @@ describe("resolveRuleset", () => {
     });
   });
 
-  it("rejects finding-friends until it ships", () => {
-    for (const options of [
-      { teamsMode: "finding-friends" as const },
-      { friendCallCount: 2 },
-    ]) {
-      const result = resolveRuleset(DEFAULT_PRESET_ID, options);
-      expect(result.ok).toBe(false);
-      if (result.ok) throw new Error("expected failure");
-      expect(result.issues[0]?.message).toBe("finding-friends is not yet available");
-    }
+  it("composes finding-friends from a fixed preset, forcing the FF strategies", () => {
+    const result = resolveRuleset(DEFAULT_PRESET_ID, {
+      teamsMode: "finding-friends",
+      playerCount: 5,
+      deckCount: 2,
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("expected ok");
+    expect(result.ruleset.teams).toEqual({
+      mode: "finding-friends",
+      friends: { callCount: 1, callableCards: "any-non-trump", allowOwnCardCall: true },
+    });
+    expect(result.ruleset.roundFlow.laterRoundLeader).toBe("rebid-each-round");
+    expect(result.ruleset.bidding.declareRankSource).toBe("bidder-own-rank");
+    expect(result.ruleset.id).toBe(`${DEFAULT_PRESET_ID}+custom`);
+  });
+
+  it("pins an explicit friend call count within the schema cap", () => {
+    const pinned = resolveRuleset(DEFAULT_PRESET_ID, {
+      teamsMode: "finding-friends",
+      playerCount: 8,
+      friendCallCount: 2,
+    });
+    expect(pinned.ok).toBe(true);
+    if (!pinned.ok) throw new Error("expected ok");
+    expect(pinned.ruleset.teams).toMatchObject({
+      mode: "finding-friends",
+      friends: { callCount: 2 },
+    });
+
+    const overCap = resolveRuleset(DEFAULT_PRESET_ID, {
+      teamsMode: "finding-friends",
+      playerCount: 5,
+      friendCallCount: 2,
+    });
+    expect(overCap.ok).toBe(false);
+    if (overCap.ok) throw new Error("expected failure");
+    expect(overCap.issues[0]?.path).toBe("teams.friends.callCount");
+  });
+
+  it("rejects finding-friends below five players", () => {
+    const result = resolveRuleset(DEFAULT_PRESET_ID, {
+      teamsMode: "finding-friends",
+    });
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error("expected failure");
+    expect(result.issues[0]?.path).toBe("players.count");
+  });
+
+  it("rejects friendCallCount for fixed-team compositions", () => {
+    const result = resolveRuleset(DEFAULT_PRESET_ID, { friendCallCount: 2 });
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error("expected failure");
+    expect(result.issues[0]?.path).toBe("friendCallCount");
+  });
+
+  it("switches an FF preset back to fixed teams with classic strategies", () => {
+    const result = resolveRuleset("shengji-ff-6p-3d-v1", { teamsMode: "fixed" });
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("expected ok");
+    expect(result.ruleset.teams).toEqual({
+      mode: "fixed",
+      teams: defaultFixedTeams(6),
+    });
+    expect(result.ruleset.roundFlow.laterRoundLeader).toBe("round-progression");
+    expect(result.ruleset.bidding.declareRankSource).toBe("round-rank");
   });
 
   it("rejects an unknown preset id", () => {

@@ -1,3 +1,4 @@
+import { CURRENT_SCHEMA_VERSION } from "@shengji/engine";
 import { describe, expect, it } from "vitest";
 import { SqliteStore } from "../src/persistence/sqlite-store.js";
 import { RoomManager } from "../src/room-manager.js";
@@ -81,7 +82,7 @@ describe("SQLite room persistence", () => {
     expect(restored?.state.rulesetSnapshot.bottom.size).toBe(12);
     expect(restored?.state.presetId).toBe("shengji-6p-3d-fixed-v1");
     // Migration stamps the schema version on load.
-    expect(store.loadRoom(roomId)?.schemaVersion).toBe(1);
+    expect(store.loadRoom(roomId)?.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
 
     restoredManager.close();
     store.close();
