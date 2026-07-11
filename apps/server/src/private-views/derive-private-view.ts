@@ -68,8 +68,13 @@ export function derivePrivateView(state: GameState, playerId: string): PrivateGa
     },
   );
   const previousRound = state.roundHistory?.at(-1);
+  // Type-level narrowing for the teams union; FF views land in Phase 3b.
+  const fixedTeams =
+    state.rulesetSnapshot.teams.mode === "fixed"
+      ? state.rulesetSnapshot.teams.teams
+      : [];
   const roundsWonByTeam = Object.fromEntries(
-    state.rulesetSnapshot.teams.teams.map((_, index) => {
+    fixedTeams.map((_, index) => {
       const teamId = `team-${index}`;
       return [
         teamId,

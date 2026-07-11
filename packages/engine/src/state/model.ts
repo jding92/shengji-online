@@ -4,12 +4,14 @@ import type { PlayedCards, TrickFormat } from "../tricks/types.js";
 import type { BotDifficulty } from "../bot/types.js";
 import type {
   Bid,
+  CardFace,
   CardInstance,
   CardInstanceId,
   PlayerId,
   Rank,
   RoundOutcome,
   SeatIndex,
+  StandardCardFace,
   TeamId,
   TrumpSpec,
 } from "../types.js";
@@ -19,6 +21,7 @@ export type GamePhase =
   | "dealing"
   | "post-deal-bidding"
   | "bottom-exchange"
+  | "friend-calling"
   | "playing"
   | "round-scoring"
   | "game-over";
@@ -45,6 +48,15 @@ export type TrickResult = {
   plays: PlayedCards[];
 };
 
+/** A declarer's call for the Nth played copy of a face (finding-friends only). */
+export type FriendCall = {
+  face: StandardCardFace;
+  /** 1-based; 1 = "first ♠K played"; at most decks.count. */
+  copyIndex: number;
+  /** Set by FRIEND_REVEALED when the called copy is played. */
+  revealed?: { seat: SeatIndex; trickNumber: number; at: string };
+};
+
 export type RoundState = {
   roundNumber: number;
   /** How many times this round number has been redealt after an all-pass. */
@@ -63,6 +75,17 @@ export type RoundState = {
   currentTurnSeat?: SeatIndex;
   currentTrick?: TrickState;
   completedTricks: TrickResult[];
+  /** Winning bidder in finding-friends rounds; set by TRUMP_FINALIZED. */
+  declarerSeat?: SeatIndex;
+  /** Finding-friends only; absent until FRIENDS_CALLED. */
+  friendCalls?: FriendCall[];
+  /** Per-seat captured trick points — the finding-friends accounting source of truth. */
+  pointsBySeat?: Record<SeatIndex, number>;
+  /**
+   * Fixed mode: attacking team's running total. Finding-friends: a derived
+   * provisional display value — the sum over seats not publicly known to be
+   * defenders — recomputed on TRICK_WON and FRIEND_REVEALED.
+   */
   attackerPoints: number;
   throwPenaltyAdjustment: number;
   lastThrow?: {
@@ -87,6 +110,8 @@ export type RoundHistoryEntry = {
   attackingTeamId: TeamId;
   winningTeamId: TeamId;
   outcome: RoundOutcome;
+  /** Finding-friends only: the declarer plus revealed friends. */
+  defenderSeats?: SeatIndex[];
 };
 
 export type GameState = {
@@ -123,6 +148,9 @@ export type ClientCommand =
   | { type: "BID"; cards: CardInstanceId[] }
   | { type: "PASS_BID" }
   | { type: "BURY_BOTTOM"; cards: CardInstanceId[] }
+  // Faces stay the wide CardFace here: calls come from clients, so joker
+  // rejection is a runtime validation, not a type assumption.
+  | { type: "CALL_FRIENDS"; calls: { face: CardFace; copyIndex: number }[] }
   | {
       type: "PLAY_CARDS";
       cards: CardInstanceId[];
@@ -172,6 +200,10 @@ export type GameEvent =
       trumpSpec: TrumpSpec;
       /** Absent when trump was forced from the bottom after the redeal cap. */
       winningBid?: Bid;
+      /** Present when the declared rank replaces the provisional round rank (finding-friends). */
+      trumpRank?: Rank;
+      /** Present in finding-friends: the winning bidder becomes the declarer. */
+      declarerSeat?: SeatIndex;
       at: string;
     }
   | { type: "LEADER_SET"; seat: SeatIndex; at: string }
@@ -180,6 +212,14 @@ export type GameEvent =
       type: "BOTTOM_BURIED";
       seat: SeatIndex;
       cards: CardInstanceId[];
+      at: string;
+    }
+  | { type: "FRIENDS_CALLED"; seat: SeatIndex; calls: FriendCall[]; at: string }
+  | {
+      type: "FRIEND_REVEALED";
+      seat: SeatIndex;
+      callIndex: number;
+      trickNumber: number;
       at: string;
     }
   | { type: "TRICK_STARTED"; leadSeat: SeatIndex; format: TrickFormat; at: string }

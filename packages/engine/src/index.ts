@@ -14,6 +14,7 @@ export * from "./cards/deck.js";
 export * from "./cards/shuffle.js";
 export * from "./rulesets/derive.js";
 export * from "./rulesets/eight-player-four-deck.js";
+export * from "./rulesets/finding-friends-presets.js";
 export * from "./rulesets/four-player-three-deck.js";
 export * from "./rulesets/four-player-two-deck.js";
 export * from "./rulesets/options.js";
@@ -30,6 +31,9 @@ export * from "./state/autoplay.js";
 export * from "./state/commands.js";
 export * from "./state/migrate.js";
 export * from "./state/reducer.js";
+// Deliberately selective: finalTeamIdForSeat stays engine-internal so views
+// and bots cannot leak hidden finding-friends membership.
+export { knownTeamIdForSeat, seatRole, type SeatRole } from "./state/teams.js";
 export * from "./throws/throws.js";
 export * from "./tricks/formats.js";
 export * from "./tricks/legality.js";

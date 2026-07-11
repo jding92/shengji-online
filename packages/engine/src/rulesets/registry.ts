@@ -1,4 +1,10 @@
 import { eightPlayerFourDeckFixedTeamRuleset } from "./eight-player-four-deck.js";
+import {
+  eightPlayerFourDeckFindingFriendsRuleset,
+  fivePlayerTwoDeckFindingFriendsRuleset,
+  sevenPlayerThreeDeckFindingFriendsRuleset,
+  sixPlayerThreeDeckFindingFriendsRuleset,
+} from "./finding-friends-presets.js";
 import { fourPlayerThreeDeckFixedTeamRuleset } from "./four-player-three-deck.js";
 import { fourPlayerTwoDeckFixedTeamRuleset } from "./four-player-two-deck.js";
 import type { ShengJiRuleset } from "./schema.js";
@@ -37,6 +43,32 @@ export const RULESET_PRESETS: readonly RulesetPresetEntry[] = [
     ruleset: eightPlayerFourDeckFixedTeamRuleset,
     visibility: "production",
     description: "Eight players, four decks, fixed alternating teams.",
+  },
+  // Finding-friends presets stay experimental until the protocol/server
+  // surface ships (Phase 3c).
+  {
+    id: fivePlayerTwoDeckFindingFriendsRuleset.id,
+    ruleset: fivePlayerTwoDeckFindingFriendsRuleset,
+    visibility: "experimental",
+    description: "Five players, two decks, finding friends (one call).",
+  },
+  {
+    id: sixPlayerThreeDeckFindingFriendsRuleset.id,
+    ruleset: sixPlayerThreeDeckFindingFriendsRuleset,
+    visibility: "experimental",
+    description: "Six players, three decks, finding friends (two calls).",
+  },
+  {
+    id: sevenPlayerThreeDeckFindingFriendsRuleset.id,
+    ruleset: sevenPlayerThreeDeckFindingFriendsRuleset,
+    visibility: "experimental",
+    description: "Seven players, three decks, finding friends (two calls).",
+  },
+  {
+    id: eightPlayerFourDeckFindingFriendsRuleset.id,
+    ruleset: eightPlayerFourDeckFindingFriendsRuleset,
+    visibility: "experimental",
+    description: "Eight players, four decks, finding friends (three calls).",
   },
 ];
 
