@@ -226,6 +226,13 @@ describe("createRoom with presets and options", () => {
     expect(payload.presets.some(({ id }) => id === "shengji-8p-4d-fixed-v1")).toBe(
       true,
     );
+    // Finding-friends presets are production as of Phase 3c and surface here.
+    expect(
+      payload.presets.some(
+        ({ id, teamsMode }) =>
+          id === "shengji-ff-5p-2d-v1" && teamsMode === "finding-friends",
+      ),
+    ).toBe(true);
     expect(
       payload.optionMetadata.some(({ key }) => key === "timers.playTimeoutSeconds"),
     ).toBe(true);
