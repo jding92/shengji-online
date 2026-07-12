@@ -29,6 +29,9 @@ const addBotBodySchema = memberBodySchema.extend({
 const takeoverBodySchema = memberBodySchema.extend({
   difficulty: botDifficultySchema,
 });
+const changeBotDifficultyBodySchema = memberBodySchema.extend({
+  difficulty: botDifficultySchema,
+});
 
 const databasePath = process.env.DATABASE_PATH ?? "./data/shengji.sqlite";
 const port = Number.parseInt(process.env.PORT ?? "3001", 10);
@@ -170,6 +173,38 @@ app.delete<{ Params: { roomId: string; botId: string } }>(
     } catch (error) {
       return reply.code(400).send({
         error: error instanceof Error ? error.message : "Unable to remove bot",
+      });
+    }
+  },
+);
+
+app.patch<{ Params: { roomId: string; botId: string } }>(
+  "/api/rooms/:roomId/bots/:botId",
+  async (request, reply) => {
+    const parsed = changeBotDifficultyBodySchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.code(400).send({ error: parsed.error.issues[0]?.message });
+    }
+    const room = rooms.getRoom(request.params.roomId);
+    const requester = rooms.authenticate(
+      request.params.roomId,
+      parsed.data.playerToken,
+    );
+    if (room === null) return reply.code(404).send({ error: "Room not found" });
+    if (requester === null || room.state.players[requester]?.bot !== undefined) {
+      return reply.code(403).send({ error: "Room membership required" });
+    }
+    try {
+      await room.changeBotDifficulty(
+        request.params.botId,
+        parsed.data.difficulty,
+        new Date().toISOString(),
+      );
+      return reply.code(200).send({ ok: true });
+    } catch (error) {
+      return reply.code(400).send({
+        error:
+          error instanceof Error ? error.message : "Unable to change bot difficulty",
       });
     }
   },

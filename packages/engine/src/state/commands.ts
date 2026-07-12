@@ -1,6 +1,7 @@
 import { createAndValidateBid } from "../bidding/bidding.js";
 import { cardFaceKey, sameCardFace, sumCardPoints } from "../cards/deck.js";
 import { resolveRuleset } from "../rulesets/options.js";
+import { diffOptionKeys, editableOptionKeySet } from "../rulesets/options-metadata.js";
 import { DEFAULT_PRESET_ID } from "../rulesets/registry.js";
 import { advanceRank, isSuccessfulDefenseAtGameRank } from "../scoring/ranks.js";
 import { getBottomMultiplier, scoreRound } from "../scoring/scoring.js";
@@ -878,11 +879,10 @@ export function validateCommand(
       return nextRoundEvents(state, requireRoundSeed(context), context.now);
     }
     case "UPDATE_OPTIONS": {
-      // In-game timer edits are a Phase 4 concern; v1 only allows lobby edits.
-      if (state.phase !== "lobby") {
+      if (state.phase === "game-over") {
         throw new CommandValidationError(
           "INVALID_PHASE",
-          "Options can only be changed in the lobby",
+          "Options cannot be changed after the game has ended",
         );
       }
       if (state.hostPlayerId === undefined || state.hostPlayerId !== actor) {
@@ -890,6 +890,28 @@ export function validateCommand(
           "NOT_HOST",
           "Only the host can change the game options",
         );
+      }
+      if (state.phase !== "lobby") {
+        // Mid-game, only keys OPTION_METADATA marks in-game-safe (timers today)
+        // may change; everything else would invalidate the live round. A
+        // preset switch is inherently structural, so it is rejected outright.
+        const requestedPresetId =
+          command.presetId ?? state.presetId ?? DEFAULT_PRESET_ID;
+        if (requestedPresetId !== (state.presetId ?? DEFAULT_PRESET_ID)) {
+          throw new CommandValidationError(
+            "INVALID_PHASE",
+            "Cannot change the preset outside the lobby",
+          );
+        }
+        const editableKeys = editableOptionKeySet(state.phase);
+        const changedKeys = diffOptionKeys(state.pendingOptions ?? {}, command.options);
+        const offendingKeys = changedKeys.filter((key) => !editableKeys.has(key));
+        if (offendingKeys.length > 0) {
+          throw new CommandValidationError(
+            "INVALID_PHASE",
+            `Cannot change ${offendingKeys.join(", ")} outside the lobby`,
+          );
+        }
       }
       const presetId = command.presetId ?? state.presetId ?? DEFAULT_PRESET_ID;
       const result = resolveRuleset(presetId, command.options);

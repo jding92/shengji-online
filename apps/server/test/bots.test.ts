@@ -246,6 +246,69 @@ describe("server bot orchestration", () => {
   });
 });
 
+describe("bot difficulty change mid-game (Phase 4)", () => {
+  it("changes a seated bot's difficulty mid-round; subsequent bot decisions still complete the round", async () => {
+    const store = new SqliteStore(":memory:");
+    const state = fourPlayerState({
+      roomId: "BOT-DIFF-ROUND",
+      bots: [1, 2, 3],
+      fastBidding: true,
+    });
+    store.createRoom(state);
+    const room = new Room(state, store, {
+      timersEnabled: true,
+      dealIntervalMs: 0,
+      botDelayMsOverride: { min: 0, max: 0 },
+      botNextRoundDelayMs: 0,
+      turnTimeoutMsOverride: { connected: 5, disconnected: 5 },
+    });
+    expect(room.state.players["p1"]?.bot?.difficulty).toBe("intermediate");
+
+    // Works in any phase — the point is a host can retune a struggling or
+    // overwhelming bot without pausing the table.
+    await room.changeBotDifficulty("p1", "expert", now);
+    expect(room.state.players["p1"]?.bot?.difficulty).toBe("expert");
+
+    // The next scheduled bot decision reads player.bot.difficulty live, so
+    // the round keeps completing normally with the new difficulty in play.
+    await vi.waitFor(() => expect(room.state.round?.roundNumber).toBe(2), {
+      timeout: 15_000,
+      interval: 20,
+    });
+
+    room.close();
+    store.close();
+  }, 20_000);
+
+  it("rejects a difficulty change for a human (non-bot) player", async () => {
+    const store = new SqliteStore(":memory:");
+    const state = postDealState("BOT-DIFF-HUMAN");
+    store.createRoom(state);
+    const room = new Room(state, store, { timersEnabled: false });
+
+    await expect(room.changeBotDifficulty("p0", "expert", now)).rejects.toThrow(
+      "Player is not a bot",
+    );
+
+    room.close();
+    store.close();
+  });
+
+  it("rejects a difficulty change for an unknown player", async () => {
+    const store = new SqliteStore(":memory:");
+    const state = postDealState("BOT-DIFF-UNKNOWN");
+    store.createRoom(state);
+    const room = new Room(state, store, { timersEnabled: false });
+
+    await expect(room.changeBotDifficulty("ghost", "expert", now)).rejects.toThrow(
+      "Player not found",
+    );
+
+    room.close();
+    store.close();
+  });
+});
+
 describe("multi-deck (6p/3d) bot round", () => {
   it("creates a room from the promoted 6p/3d preset via RoomManager and runs a full round of bots", async () => {
     const store = new SqliteStore(":memory:");

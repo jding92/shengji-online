@@ -2,7 +2,18 @@ import { EventEmitter } from "node:events";
 import { randomUUID } from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
 import WebSocket from "ws";
-import { listPresets, OPTION_METADATA } from "@shengji/engine";
+import {
+  applyEvent,
+  createGameState,
+  fourPlayerTwoDeckFixedTeamRuleset,
+  getFinalizeBiddingEvents,
+  getNextDealEvents,
+  listPresets,
+  OPTION_METADATA,
+  replayEvents,
+  validateCommand,
+  type GameState,
+} from "@shengji/engine";
 import {
   PROTOCOL_VERSION,
   type ServerEnvelope,
@@ -10,7 +21,7 @@ import {
 } from "@shengji/protocol";
 import { SqliteStore } from "../src/persistence/sqlite-store.js";
 import { RoomManager, RulesetResolutionError } from "../src/room-manager.js";
-import type { Room } from "../src/room.js";
+import { Room } from "../src/room.js";
 
 const now = "2026-07-10T12:00:00.000Z";
 const SIX_PLAYER_PRESET_ID = "shengji-6p-3d-fixed-v1";
@@ -236,5 +247,152 @@ describe("createRoom with presets and options", () => {
     expect(
       payload.optionMetadata.some(({ key }) => key === "timers.playTimeoutSeconds"),
     ).toBe(true);
+  });
+});
+
+/**
+ * Drives a fresh 4p/2d game (no sockets) to `bottom-exchange`, with the
+ * winning bidder — who becomes both round leader and room host — returned
+ * alongside the state so a Phase 4 in-game UPDATE_OPTIONS can be sent as an
+ * authenticated host action over a real Room/socket.
+ */
+function stateAtBottomExchangeWithHost(
+  roomId: string,
+  seed: string,
+): { state: GameState; hostId: string } {
+  let state = createGameState({
+    roomId,
+    ruleset: structuredClone(fourPlayerTwoDeckFixedTeamRuleset),
+    createdAt: now,
+  });
+  for (let seat = 0; seat < 4; seat += 1) {
+    const playerId = `p${seat}`;
+    state = applyEvent(state, {
+      type: "PLAYER_JOINED",
+      playerId,
+      name: `P${seat}`,
+      at: now,
+    });
+    state = replayEvents(
+      state,
+      validateCommand(state, playerId, { type: "SIT", seat }, { now }),
+    );
+  }
+  for (let seat = 0; seat < 4; seat += 1) {
+    state = replayEvents(
+      state,
+      validateCommand(state, `p${seat}`, { type: "READY" }, { now, roundSeed: seed }),
+    );
+  }
+  while (state.phase === "dealing") {
+    state = replayEvents(state, getNextDealEvents(state, now));
+  }
+
+  const bidderSeat = [0, 1, 2, 3].find((seat) =>
+    state.round!.hands[seat]!.some((id) => {
+      const face = state.round!.cards[id]!.face;
+      return face.kind === "standard" && face.rank === state.round!.trumpRank;
+    }),
+  )!;
+  const bidCard = state.round!.hands[bidderSeat]!.find((id) => {
+    const face = state.round!.cards[id]!.face;
+    return face.kind === "standard" && face.rank === state.round!.trumpRank;
+  })!;
+  state = replayEvents(
+    state,
+    validateCommand(
+      state,
+      `p${bidderSeat}`,
+      { type: "BID", cards: [bidCard] },
+      { now },
+    ),
+  );
+  state = replayEvents(state, getFinalizeBiddingEvents(state, now));
+  const hostId = `p${bidderSeat}`;
+  state = applyEvent(state, { type: "HOST_CHANGED", playerId: hostId, at: now });
+  return { state, hostId };
+}
+
+describe("in-game option editing (Phase 4)", () => {
+  it("applies a mid-round timer change and the next reschedule uses the shorter window", async () => {
+    const store = new SqliteStore(":memory:");
+    const { state, hostId } = stateAtBottomExchangeWithHost(
+      "TIMER-OPTS",
+      "phase4-timer-seed",
+    );
+    expect(state.phase).toBe("bottom-exchange");
+    store.createRoom(state);
+
+    // No turnTimeoutMsOverride: the real ruleset seconds must govern the
+    // leader's bottom-exchange deadline for this to prove anything.
+    const room = new Room(state, store, { timersEnabled: true });
+    const hostSocket = new FakeSocket();
+    room.connect(hostId, hostSocket.asWebSocket());
+
+    await send(room, hostSocket, {
+      type: "UPDATE_OPTIONS",
+      options: { timers: { playTimeoutSeconds: 1 } },
+    });
+    expect(room.state.rulesetSnapshot.turns.playTimeoutSeconds).toBe(1);
+    // Seats and readiness are untouched by an in-game options change.
+    expect(room.state.phase).toBe("bottom-exchange");
+
+    // The post-commit reschedule recomputes the leader's bottom-exchange
+    // deadline from the new 1-second window (was the ruleset's 60-second
+    // default), so the bottom gets force-buried and the round advances well
+    // within this wait — proving the changed timer actually took effect.
+    await vi.waitFor(() => expect(room.state.phase).toBe("playing"), {
+      timeout: 5_000,
+      interval: 20,
+    });
+
+    room.close();
+    store.close();
+  }, 10_000);
+
+  it("rejects an in-game options change from a non-host", async () => {
+    const store = new SqliteStore(":memory:");
+    const { state, hostId } = stateAtBottomExchangeWithHost(
+      "TIMER-OPTS-NONHOST",
+      "phase4-nonhost-seed",
+    );
+    store.createRoom(state);
+    const room = new Room(state, store, { timersEnabled: false });
+    const otherId = Object.keys(state.players).find((id) => id !== hostId)!;
+    const otherSocket = new FakeSocket();
+    room.connect(otherId, otherSocket.asWebSocket());
+
+    const rejected = await sendExpectingReject(room, otherSocket, {
+      type: "UPDATE_OPTIONS",
+      options: { timers: { playTimeoutSeconds: 5 } },
+    });
+    expect(rejected).toMatchObject({ type: "COMMAND_REJECTED", code: "NOT_HOST" });
+
+    room.close();
+    store.close();
+  });
+
+  it("rejects a structural in-game change over the socket, naming the offending key", async () => {
+    const store = new SqliteStore(":memory:");
+    const { state, hostId } = stateAtBottomExchangeWithHost(
+      "TIMER-OPTS-STRUCT",
+      "phase4-struct-seed",
+    );
+    store.createRoom(state);
+    const room = new Room(state, store, { timersEnabled: false });
+    const hostSocket = new FakeSocket();
+    room.connect(hostId, hostSocket.asWebSocket());
+
+    const rejected = await sendExpectingReject(room, hostSocket, {
+      type: "UPDATE_OPTIONS",
+      options: { maxRedeals: 5 },
+    });
+    expect(rejected).toMatchObject({ type: "COMMAND_REJECTED", code: "INVALID_PHASE" });
+    if (rejected.type !== "COMMAND_REJECTED")
+      throw new Error("expected COMMAND_REJECTED");
+    expect(rejected.message).toContain("maxRedeals");
+
+    room.close();
+    store.close();
   });
 });
