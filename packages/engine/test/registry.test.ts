@@ -28,14 +28,6 @@ describe("ruleset registry", () => {
       "shengji-4p-3d-fixed-v1",
       "shengji-6p-3d-fixed-v1",
       "shengji-8p-4d-fixed-v1",
-    ]);
-  });
-
-  it("registers the finding-friends presets as experimental until Phase 3c", () => {
-    const experimentalIds = RULESET_PRESETS.filter(
-      (entry) => entry.visibility === "experimental",
-    ).map((entry) => entry.id);
-    expect(experimentalIds).toEqual([
       "shengji-ff-5p-2d-v1",
       "shengji-ff-6p-3d-v1",
       "shengji-ff-7p-3d-v1",
@@ -43,12 +35,20 @@ describe("ruleset registry", () => {
     ]);
   });
 
-  it("hides experimental presets unless explicitly included", () => {
+  it("has no experimental presets left now that finding-friends shipped (Phase 3c)", () => {
+    const experimentalIds = RULESET_PRESETS.filter(
+      (entry) => entry.visibility === "experimental",
+    ).map((entry) => entry.id);
+    expect(experimentalIds).toEqual([]);
+  });
+
+  it("lists every preset, since none are experimental anymore", () => {
     const production = listPresets();
     const all = listPresets(true);
     expect(production.every((entry) => entry.visibility === "production")).toBe(true);
     expect(production.map((entry) => entry.id)).toContain(DEFAULT_PRESET_ID);
     expect(all).toHaveLength(RULESET_PRESETS.length);
+    expect(production).toHaveLength(RULESET_PRESETS.length);
     expect(all.map((entry) => entry.id)).toContain("shengji-ff-5p-2d-v1");
   });
 });

@@ -7,6 +7,7 @@ import {
   finishRoundEvents,
   getAutoStartNextRoundEvents,
   getFinalizeBiddingEvents,
+  getForcedFriendCallEvents,
   getForcedPlayEvents,
   getNextDealEvents,
   replayEvents,
@@ -224,6 +225,11 @@ export class Room {
         ? `bottom-exchange:${round?.roundNumber ?? 0}`
         : null;
     }
+    if (state.phase === "friend-calling") {
+      return round?.declarerSeat === seat
+        ? `friend-calling:${round.roundNumber}`
+        : null;
+    }
     if (state.phase === "playing") {
       if (round?.currentTurnSeat !== seat) return null;
       return `playing:${round.roundNumber}:${round.completedTricks.length}:${round.currentTrick?.plays.length ?? 0}`;
@@ -239,7 +245,8 @@ export class Room {
   private botDelayMs(): number {
     const range =
       this.botDelayMsOverride ??
-      (this.currentState.phase === "bottom-exchange"
+      (this.currentState.phase === "bottom-exchange" ||
+      this.currentState.phase === "friend-calling"
         ? { min: 2_000, max: 4_000 }
         : { min: 600, max: 1_500 });
     const minimum = Math.max(0, Math.min(range.min, range.max));
@@ -304,7 +311,10 @@ export class Room {
         error,
       );
       try {
-        const fallback = getForcedPlayEvents(this.currentState, now);
+        const fallback =
+          this.currentState.phase === "friend-calling"
+            ? getForcedFriendCallEvents(this.currentState, now)
+            : getForcedPlayEvents(this.currentState, now);
         if (fallback.length > 0) {
           this.commit(fallback);
           this.rescheduleTimers();
@@ -320,19 +330,23 @@ export class Room {
 
   /**
    * Acts for the current actor when their window expires — force-plays a
-   * trick turn or bottom exchange, or starts the next round for an absent
-   * leader — so a disconnected or idle player never stalls the game.
-   * Disconnected players get the shorter window.
+   * trick turn or bottom exchange, auto-calls friends for a stalled
+   * finding-friends declarer, or starts the next round for an absent leader —
+   * so a disconnected or idle player never stalls the game. Disconnected
+   * players get the shorter window.
    */
   private scheduleTurnTimeout(): void {
     const state = this.currentState;
     if (
       state.phase !== "playing" &&
       state.phase !== "bottom-exchange" &&
+      state.phase !== "friend-calling" &&
       state.phase !== "round-scoring"
     ) {
       return;
     }
+    // The declarer is also this round's leaderSeat (set at TRUMP_FINALIZED),
+    // so friend-calling shares the bottom-exchange/round-scoring branch below.
     const seat =
       state.phase === "playing" ? state.round?.currentTurnSeat : state.leaderSeat;
     if (seat === undefined) return;
@@ -353,7 +367,9 @@ export class Room {
           this.commit(
             this.currentState.phase === "round-scoring"
               ? getAutoStartNextRoundEvents(this.currentState, now, randomUUID())
-              : getForcedPlayEvents(this.currentState, now),
+              : this.currentState.phase === "friend-calling"
+                ? getForcedFriendCallEvents(this.currentState, now)
+                : getForcedPlayEvents(this.currentState, now),
           );
         } catch (error) {
           console.error(

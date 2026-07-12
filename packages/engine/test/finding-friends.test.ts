@@ -937,7 +937,8 @@ describe("finding-friends presets", () => {
     ];
     for (const expected of expectations) {
       const preset = engine.getPreset(expected.id);
-      expect(preset?.visibility).toBe("experimental");
+      // Production quality as of Phase 3c (protocol + server wire-up shipped).
+      expect(preset?.visibility).toBe("production");
       const ruleset = preset!.ruleset;
       expect(engine.validateRuleset(ruleset).success).toBe(true);
       expect(ruleset.players.count).toBe(expected.players);
