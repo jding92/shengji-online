@@ -4,6 +4,7 @@ import type { BotDifficulty } from "@shengji/protocol";
 import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent, type KeyboardEvent } from "react";
+import { ChromeButton, ChromeLink } from "../components/ui-chrome";
 import { ART, art2x } from "../lib/art";
 import { safeStorage } from "../lib/safe-storage";
 import { sessionKey } from "../lib/session";
@@ -150,11 +151,11 @@ export default function HomePage() {
             onKeyDown={handleMenuKeyDown}
           >
             {MENU_MODES.map(({ id, label }) => (
-              <button
+              <ChromeButton
                 key={id}
                 id={`menu-tab-${id}`}
                 className="arcade-mode"
-                type="button"
+                variant={menuMode === id ? "primary" : "neutral"}
                 role="tab"
                 aria-controls="menu-mode-panel"
                 aria-selected={menuMode === id}
@@ -166,7 +167,7 @@ export default function HomePage() {
                   ▶
                 </span>
                 <span>{label}</span>
-              </button>
+              </ChromeButton>
             ))}
           </div>
 
@@ -187,15 +188,15 @@ export default function HomePage() {
                 <p className="menu-panel-copy">
                   Open an invite-only room and bring your crew to the table.
                 </p>
-                <button
+                <ChromeButton
                   className="arcade-action"
-                  type="button"
+                  variant="primary"
                   disabled={creating}
                   onClick={() => void createRoom()}
                 >
                   <span>{creating ? "Preparing table…" : "Create table"}</span>
                   <b aria-hidden="true">→</b>
-                </button>
+                </ChromeButton>
               </>
             )}
 
@@ -217,14 +218,15 @@ export default function HomePage() {
                   value={roomCode}
                   onChange={(event) => setRoomCode(event.target.value)}
                 />
-                <button
+                <ChromeButton
                   className="arcade-action"
                   type="submit"
+                  variant="primary"
                   disabled={roomCode.trim().length === 0}
                 >
                   <span>Join table</span>
                   <b aria-hidden="true">→</b>
-                </button>
+                </ChromeButton>
               </form>
             )}
 
@@ -236,27 +238,27 @@ export default function HomePage() {
                   <legend>Practice difficulty</legend>
                   <div className="difficulty-options">
                     {DIFFICULTIES.map((difficulty) => (
-                      <button
+                      <ChromeButton
                         key={difficulty}
                         className="difficulty-option"
-                        type="button"
+                        variant={botDifficulty === difficulty ? "gold" : "neutral"}
                         aria-pressed={botDifficulty === difficulty}
                         onClick={() => setBotDifficulty(difficulty)}
                       >
                         {difficulty[0]!.toUpperCase() + difficulty.slice(1)}
-                      </button>
+                      </ChromeButton>
                     ))}
                   </div>
                 </fieldset>
-                <button
+                <ChromeButton
                   className="arcade-action"
-                  type="button"
+                  variant="primary"
                   disabled={creating}
                   onClick={() => void createRoom(true)}
                 >
                   <span>{creating ? "Preparing match…" : "Start practice"}</span>
                   <b aria-hidden="true">→</b>
-                </button>
+                </ChromeButton>
               </>
             )}
 
@@ -267,15 +269,16 @@ export default function HomePage() {
                 <p className="menu-panel-copy">
                   Master bidding, trump, tractors, throws, and scoring before battle.
                 </p>
-                <a
+                <ChromeLink
                   className="arcade-action"
+                  variant="primary"
                   href="https://robertying.com/shengji/rules.html"
                   target="_blank"
                   rel="noreferrer"
                 >
                   <span>Open game guide</span>
                   <b aria-hidden="true">↗</b>
-                </a>
+                </ChromeLink>
               </>
             )}
           </motion.section>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { LEAVE_CONFIRM_MS } from "../lib/constants";
+import { ChromeButton } from "./ui-chrome";
 
 /**
  * Two-tap leave control: the first tap arms a short confirmation window
@@ -17,15 +18,15 @@ export function LeaveButton({ onLeave }: { onLeave: () => void }) {
   }, [confirming]);
 
   return (
-    <button
-      type="button"
-      className={`button button-ghost leave-button ${confirming ? "is-confirming" : ""}`}
+    <ChromeButton
+      className={`leave-button ${confirming ? "is-confirming" : ""}`}
+      variant={confirming ? "danger" : "neutral"}
       onClick={() => {
         if (confirming) onLeave();
         else setConfirming(true);
       }}
     >
       {confirming ? "Tap again to leave" : "Leave"}
-    </button>
+    </ChromeButton>
   );
 }

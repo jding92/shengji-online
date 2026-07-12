@@ -16,12 +16,19 @@ The first reusable UI primitives are now source-controlled SVG layers under
 `assets/12-ui-primitives`: a transparent House portrait surround and a nine-slice primary-button
 surface. Both are built at 1x/2x through the registry and are explicit replaceable slots in
 `ChromePortrait` and `ChromeButton`; portraits, labels, icons, focus states, and VFX remain live
-independent content.
+independent content. The table ring is also a primitive in that folder: its center and exterior
+are true alpha, so the shared felt texture supplies all negative space instead of a square black
+presentation field. `node apps/web/scripts/extract-table-ring.mjs` deterministically derives it
+from the approved ring painting and rejects retained center, corner, or dark-matte pixels.
 
 The card surface must remain opaque. Index primitives use binary alpha: empty pixels are fully
 transparent and every visible glyph pixel is fully opaque. Ordinary alpha is reserved for artwork
-that intentionally needs soft edges, such as atmospheric VFX and the narrow antialias contour of
-an extracted ornament frame; it must not make a card surface translucent.
+that intentionally needs soft edges or subdued compositing, such as atmospheric VFX and House
+frame ornament; it must not make a card surface translucent. Number-card frames use a narrow,
+House-tinted perimeter with a transparent aperture/exterior and a clean alpha break beneath both
+index footprints. `node apps/web/scripts/extract-card-primitives.mjs` reproduces the frame masters;
+`node apps/web/scripts/render-card-composition-qa.mjs` renders ordinary, five-point, and ten-point
+cards at both shipped sizes for readability review after `pnpm art:build`.
 
 ## Migration lifecycle
 

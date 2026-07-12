@@ -1,7 +1,5 @@
 import type { PrivateGameView } from "@shengji/protocol";
-import { motion } from "motion/react";
 import { ART_ASSET_IDS, artAssetPath, artAssetSrcSet } from "../lib/art-registry";
-import { teamLabelForSeat } from "../lib/strings";
 import { Countdown } from "./countdown";
 import { SeatAvatar } from "./seat-avatar";
 import { ChromePortrait } from "./ui-chrome";
@@ -11,25 +9,31 @@ export function PlayerTag({
   isYou,
   isLeader,
   role,
-  handTotal,
   timer,
 }: {
   seat: PrivateGameView["seats"][number];
   isYou: boolean;
   isLeader: boolean;
   role: "attacking" | "defending" | null;
-  handTotal?: number;
   timer?: { deadline: string; now: () => number };
 }) {
   const playerName = isYou ? "You" : (seat.name ?? `Seat ${seat.seat + 1}`);
-  const countLabel =
-    isYou && handTotal !== undefined && handTotal > 0
-      ? `${seat.cardCount} of ${handTotal} cards remaining`
-      : `${seat.cardCount} cards remaining`;
   const ornamentAsset = ART_ASSET_IDS.playerNameplate;
+  const leaderAsset = ART_ASSET_IDS.playerBadgeIcon("round-leader");
+  const roleAsset =
+    role === null
+      ? null
+      : ART_ASSET_IDS.playerBadgeIcon(
+          role === "attacking" ? "role-attack" : "role-defend",
+        );
+  const playerType = seat.isBot ? "bot" : "human";
+  const playerTypeAsset = ART_ASSET_IDS.playerBadgeIcon(`type-${playerType}`);
 
   return (
-    <div className="player-tag" data-player-tag-shell="transparent">
+    <div
+      className={`player-tag ${timer === undefined ? "" : "has-timer"}`}
+      data-player-tag-shell="transparent"
+    >
       <span
         className="player-tag-surface"
         data-player-tag-layer="surface"
@@ -52,62 +56,58 @@ export function PlayerTag({
       <span className="player-tag-content" data-player-tag-layer="content">
         <span className="player-tag-name-row">
           <strong className="player-tag-name">{playerName}</strong>
-          {isLeader && (
-            <span className="leader-badge" title="Round leader · 庄家">
-              庄
-            </span>
-          )}
         </span>
         <span className="player-tag-meta">
-          <span>
-            {seat.rank === null
-              ? "Waiting"
-              : `Lv ${seat.rank} · ${teamLabelForSeat(seat.seat)}`}
-          </span>
-          {role !== null && (
-            <span
-              className={`role-tag role-${role}`}
-              title={role === "attacking" ? "Attacking · 攻方" : "Defending · 守方"}
-            >
-              {role === "attacking" ? "攻" : "守"}
-            </span>
+          {isLeader && (
+            <img
+              className="player-badge-icon leader-badge"
+              data-art-asset={leaderAsset}
+              data-round-leader="true"
+              src={artAssetPath(leaderAsset)}
+              srcSet={artAssetSrcSet(leaderAsset)}
+              alt="Round leader"
+              title="Round leader · 庄家"
+              draggable={false}
+            />
           )}
-          {seat.isBot && (
-            <span
-              className="bot-badge"
-              title={`Bot · ${seat.botDifficulty ?? "intermediate"}`}
-            >
-              BOT
-            </span>
+          {roleAsset !== null && (
+            <img
+              className={`player-badge-icon player-role-asset role-${role}`}
+              data-art-asset={roleAsset}
+              data-player-role={role}
+              src={artAssetPath(roleAsset)}
+              srcSet={artAssetSrcSet(roleAsset)}
+              alt={role === "attacking" ? "Attacking" : "Defending"}
+              title={role === "attacking" ? "Attacking team" : "Defending team"}
+              draggable={false}
+            />
           )}
+          <img
+            className={`player-badge-icon player-type-asset type-${playerType}`}
+            data-art-asset={playerTypeAsset}
+            data-player-type={playerType}
+            src={artAssetPath(playerTypeAsset)}
+            srcSet={artAssetSrcSet(playerTypeAsset)}
+            alt={seat.isBot ? "Bot player" : "Human player"}
+            title={
+              seat.isBot
+                ? `Bot · ${seat.botDifficulty ?? "intermediate"}`
+                : "Human player"
+            }
+            draggable={false}
+          />
         </span>
       </span>
 
-      {(seat.cardCount > 0 || timer !== undefined) && (
+      {timer !== undefined && (
         <span className="player-status" data-player-tag-layer="status">
-          {seat.cardCount > 0 && (
-            <motion.span
-              className="seat-count"
-              key={seat.cardCount}
-              aria-label={countLabel}
-              initial={{ scale: 1.2 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring", stiffness: 500, damping: 22 }}
-            >
-              {isYou && handTotal !== undefined && handTotal > 0
-                ? `${seat.cardCount}/${handTotal}`
-                : seat.cardCount}
-            </motion.span>
-          )}
-          {timer !== undefined && (
-            <span
-              className="seat-timer-badge"
-              data-player-tag-layer="timer"
-              aria-label="Turn timer"
-            >
-              <Countdown deadline={timer.deadline} now={timer.now} />
-            </span>
-          )}
+          <span
+            className="seat-timer-badge"
+            data-player-tag-layer="timer"
+            aria-label="Turn timer"
+          >
+            <Countdown deadline={timer.deadline} now={timer.now} />
+          </span>
         </span>
       )}
 

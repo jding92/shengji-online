@@ -33,7 +33,8 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: "pnpm --dir ../.. --filter @shengji/server dev",
+      command:
+        "pnpm --dir ../.. --filter @shengji/server build && pnpm --dir ../.. --filter @shengji/server start",
       url: `${serverOrigin}/api/health`,
       reuseExistingServer: process.env.PW_REUSE_SERVER === "1",
       timeout: 30_000,

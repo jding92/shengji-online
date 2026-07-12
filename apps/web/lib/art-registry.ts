@@ -28,6 +28,12 @@ export type ArtGameplayUiId =
   | "attackers-banner"
   | "defenders-banner"
   | "level-up-score";
+export type ArtPlayerBadgeIconId =
+  | "round-leader"
+  | "role-attack"
+  | "role-defend"
+  | "type-human"
+  | "type-bot";
 
 export type ArtAssetId =
   | `card.legacy.${ArtHouse}.${ArtLegacyRankName}`
@@ -37,6 +43,7 @@ export type ArtAssetId =
   | `card.index.suit.${ArtHouse}`
   | `card.index.rank.${ArtRankTone}.${ArtNumberRank}`
   | `ui.${ArtGameplayUiId}`
+  | `ui.player-badge.${ArtPlayerBadgeIconId}`
   | `portrait.${ArtPortraitId}`
   | "ui.chrome.panel-frame"
   | "ui.chrome.player-nameplate"
@@ -51,7 +58,7 @@ export type ArtAssetId =
   | "texture.table-felt"
   | "card.surface.parchment"
   | "ui.portrait-frame.house"
-  | "ui.button.primary";
+  | `ui.button.${"primary" | "gold" | "neutral" | "danger"}`;
 
 export const ART_ASSET_IDS = {
   cardBack: "card.back.premium",
@@ -67,6 +74,12 @@ export const ART_ASSET_IDS = {
   heroPortrait: "home.hero-portrait",
   portraitFrame: "ui.portrait-frame.house",
   primaryButton: "ui.button.primary",
+  buttons: {
+    primary: "ui.button.primary",
+    gold: "ui.button.gold",
+    neutral: "ui.button.neutral",
+    danger: "ui.button.danger",
+  },
   legacyCardFace: <House extends ArtHouse, Rank extends ArtLegacyRankName>(
     house: House,
     rank: Rank,
@@ -89,6 +102,8 @@ export const ART_ASSET_IDS = {
     rank: Rank,
   ): `card.index.rank.${Tone}.${Rank}` => `card.index.rank.${tone}.${rank}`,
   gameplayUi: <Id extends ArtGameplayUiId>(id: Id): `ui.${Id}` => `ui.${id}`,
+  playerBadgeIcon: <Id extends ArtPlayerBadgeIconId>(id: Id): `ui.player-badge.${Id}` =>
+    `ui.player-badge.${id}`,
   portrait: <Id extends ArtPortraitId>(id: Id): `portrait.${Id}` => `portrait.${id}`,
 } as const;
 
@@ -311,11 +326,10 @@ const primitiveFrameAssets = houses.map(([house]) =>
     lifecycle: "primitive",
     house,
     safeZones: CARD_SAFE_ZONES,
-    note: "Reusable House ornament with a transparent center aperture and exterior. Compose over card.surface.parchment; partial alpha is limited to the ornament antialias contour.",
+    note: "Quiet House perimeter ornament with transparent center/exterior and ordinary alpha. It is intentionally subdued and further attenuated under both generated index safe zones so rank and suit remain the primary read.",
     build: {
       source: `12-card-primitives/frame-${house}.png`,
       fit: "fill",
-      tightAlpha: true,
       lossless: true,
     },
     outputPath: `cards/primitives/frame-${house}.webp`,
@@ -423,6 +437,33 @@ const gameplayUiRows = gameplayUiAssets.map(([name, kind, width, width2x]) =>
   }),
 );
 
+const playerBadgeIconAssets = [
+  "round-leader",
+  "role-attack",
+  "role-defend",
+  "type-human",
+  "type-bot",
+] as const;
+
+const playerBadgeIconRows = playerBadgeIconAssets.map((name) =>
+  sourceAsset({
+    id: ART_ASSET_IDS.playerBadgeIcon(name),
+    kind: "icon",
+    alpha: "ordinary-alpha",
+    lifecycle: "primitive",
+    note: "Compact text-free player badge icon with a bold silhouette designed to remain legible at 18–24 CSS pixels.",
+    build: {
+      source: `14-player-badge-icons/player-${name}.png`,
+      lossless: true,
+    },
+    outputPath: `ui/player-badge/${name}.webp`,
+    width: 64,
+    height: 64,
+    width2x: 128,
+    height2x: 128,
+  }),
+);
+
 const portraitAssets = [
   ["hades-king-yan", "hades-king-yan"],
   ["persephone-plum-blossom", "persephone-plum-blossom-empress"],
@@ -477,7 +518,10 @@ const chromeAssets = [
     kind: "panel-chrome",
     alpha: "ordinary-alpha",
     lifecycle: "primitive",
-    build: { source: "10-ui-chrome-and-deck/10-ui-chrome-and-deck-table-ring.png" },
+    note: "Reusable ring ornament extracted from its original black presentation field. Both the center aperture and exterior are transparent so the table felt remains continuous.",
+    build: {
+      source: "12-ui-primitives/table-ring-ornament.png",
+    },
     outputPath: "ui/table-ring.webp",
     width: 800,
     width2x: 1600,
@@ -597,20 +641,22 @@ const otherAssets = [
     width2x: 144,
     height2x: 144,
   }),
-  sourceAsset({
-    id: "ui.button.primary",
-    kind: "button-chrome",
-    alpha: "ordinary-alpha",
-    lifecycle: "primitive",
-    nineSlice: { top: 10, right: 24, bottom: 10, left: 24 },
-    note: "Reusable primary-action surface derived from the approved black, crimson, and distressed-gold chrome. Labels, icons, focus state, and VFX remain separate slots.",
-    build: { source: "12-ui-primitives/button-primary.svg", lossless: true },
-    outputPath: "ui/primitives/button-primary.webp",
-    width: 240,
-    height: 72,
-    width2x: 480,
-    height2x: 144,
-  }),
+  ...(["primary", "gold", "neutral", "danger"] as const).map((variant) =>
+    sourceAsset({
+      id: ART_ASSET_IDS.buttons[variant],
+      kind: "button-chrome",
+      alpha: "ordinary-alpha",
+      lifecycle: "primitive",
+      nineSlice: { top: 10, right: 24, bottom: 10, left: 24 },
+      note: `Reusable ${variant}-action surface in the approved black, crimson, and distressed-gold chrome. Labels, icons, focus state, and VFX remain separate slots.`,
+      build: { source: `12-ui-primitives/button-${variant}.svg`, lossless: true },
+      outputPath: `ui/primitives/button-${variant}.webp`,
+      width: 240,
+      height: 72,
+      width2x: 480,
+      height2x: 144,
+    }),
+  ),
 ] satisfies readonly ArtAssetDefinition[];
 
 export const ART_ASSETS: readonly ArtAssetDefinition[] = [
@@ -621,6 +667,7 @@ export const ART_ASSETS: readonly ArtAssetDefinition[] = [
   ...suitIndexAssets,
   ...rankIndexAssets,
   ...gameplayUiRows,
+  ...playerBadgeIconRows,
   ...portraits,
   ...chromeAssets,
   ...backdrops,

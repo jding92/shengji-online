@@ -1,8 +1,19 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, test } from "vitest";
-import { GameDashboard } from "./game-dashboard";
+import { GameDashboard, TeamRoleBadge } from "./game-dashboard";
 
 describe("GameDashboard", () => {
+  test("uses a single accessible emblem instead of duplicate role labels", () => {
+    const attacking = renderToStaticMarkup(<TeamRoleBadge role="attacking" />);
+    const pending = renderToStaticMarkup(<TeamRoleBadge role="pending" />);
+
+    expect(attacking).toContain('data-art-asset="ui.attack-badge"');
+    expect(attacking).toContain('alt="Attacking team"');
+    expect(attacking).not.toContain("role-char");
+    expect(attacking).not.toContain("role-en");
+    expect(pending).toContain('role="img" aria-label="Role pending"');
+  });
+
   test("composes registry chrome around live dashboard content and controls", () => {
     const markup = renderToStaticMarkup(
       <GameDashboard
@@ -63,20 +74,31 @@ describe("GameDashboard", () => {
     expect(markup).toContain(
       'srcSet="/art/ui/attack-badge.webp 1x, /art/ui/attack-badge@2x.webp 2x"',
     );
+    expect(markup).toContain('alt="Defending team"');
+    expect(markup).toContain('alt="Attacking team"');
     expect(markup).toContain('data-art-asset="ui.buried-cards"');
     expect(markup).toContain(
       'srcSet="/art/ui/buried-cards.webp 1x, /art/ui/buried-cards@2x.webp 2x"',
     );
     expect(markup).toContain("YOUR TEAM");
     expect(markup).toContain("RIVALS");
-    expect(markup).toContain("ROUND TRUMP");
-    expect(markup).toContain("ATTACKER POINTS");
+    expect(markup).toContain('aria-label="YOUR TEAM, rank 2, defending"');
+    expect(markup).toContain('aria-label="RIVALS, rank 5, attacking"');
+    expect(markup).not.toContain('class="role-char"');
+    expect(markup).not.toContain('class="role-en"');
+    expect(markup).toContain(">TRUMP</small>");
+    expect(markup).toContain("ROUND POINTS");
     expect(markup).toContain(">-25</strong>");
     expect(markup).toContain('class="points-meter-fill" style="width:0%"');
+    expect(markup).toContain(
+      'role="progressbar" aria-label="Attacker scoring progress" aria-valuemin="0" aria-valuemax="200" aria-valuenow="0"',
+    );
+    expect(markup).toContain("+1 level");
     expect(markup).toContain("Your team");
     expect(markup).toContain("65 pts · defenders");
     expect(markup).toContain("25 pts");
     expect(markup).toContain('aria-label="Mute sounds"');
-    expect(markup).toContain(">Leave</button>");
+    expect(markup).toContain('data-chrome-layer="content">Leave</span>');
+    expect(markup).toContain('data-chrome-button-surface="ui.button.neutral"');
   });
 });

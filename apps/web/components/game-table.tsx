@@ -47,6 +47,7 @@ import { MomentLayer } from "./moment-layer";
 import { RoundSummaryModal } from "./round-summary-modal";
 import { TableSeat } from "./table-seat";
 import { TrickCenter } from "./trick-center";
+import { ChromeButton } from "./ui-chrome";
 
 type GameTableProps = {
   view: PrivateGameView;
@@ -95,11 +96,6 @@ export function GameTable({
     return [...view.you.hand].sort((a, b) => compareForHandDisplay(a, b, trump));
   }, [view.you.hand, round?.trumpSpec, round?.trumpRank]);
 
-  // Steady-state hand size = (all dealt cards − the buried bottom) ÷ players.
-  // A standard deck here is 54 cards (52 + two jokers).
-  const fullHandSize = Math.round(
-    (view.ruleset.decks * 54 - view.ruleset.bottomSize) / view.ruleset.players,
-  );
   const requiredCardCount = round?.currentTrick?.cardCount;
   const selectionLimit =
     view.phase === "bottom-exchange" && actions.has("bury-bottom")
@@ -514,13 +510,13 @@ export function GameTable({
                   <div className="south-cluster">
                     <div className="south-slot south-left">
                       {selected.size > 0 && (
-                        <button
-                          type="button"
-                          className="button button-ghost"
+                        <ChromeButton
+                          className="table-action-button clear-action-button"
+                          variant="neutral"
                           onClick={clear}
                         >
                           Clear
-                        </button>
+                        </ChromeButton>
                       )}
                     </div>
                     <TableSeat
@@ -531,7 +527,6 @@ export function GameTable({
                       isYou
                       isLeader={round?.leaderSeat === youSeat.seat}
                       role={teamRoleForSeat(view, youSeat)}
-                      handTotal={fullHandSize}
                       bid={bidFor(youSeat.seat)}
                       roomId={view.roomId}
                       {...(timerDeadline === undefined

@@ -71,6 +71,9 @@ describe("art registry", () => {
     expect(artAssetPath(ART_ASSET_IDS.houseCardFrame("hearts"), 2)).toBe(
       "/art/cards/primitives/frame-hearts@2x.webp",
     );
+    expect(artAssetSrcSet(ART_ASSET_IDS.playerBadgeIcon("role-attack"))).toBe(
+      "/art/ui/player-badge/role-attack.webp 1x, /art/ui/player-badge/role-attack@2x.webp 2x",
+    );
     expect(artCardSurface()).toBe("/art/cards/primitives/parchment.webp");
     expect(artHouseFrame("diamonds")).toBe("/art/cards/primitives/frame-diamonds.webp");
     expect(artJokerFace("big")).toBe("/art/cards/joker-big.webp");
@@ -109,12 +112,30 @@ describe("art registry", () => {
         house,
       });
       expect(frame.build?.lossless).toBe(true);
-      expect(frame.build?.tightAlpha).toBe(true);
+      expect(frame.build?.tightAlpha).toBeUndefined();
+      expect(frame.note).toContain("attenuated");
       expect(frame.safeZones?.map((zone) => zone.id)).toEqual([
         "index-top",
         "index-bottom",
       ]);
     }
+  });
+
+  test("builds the table ring from a transparent reusable ornament master", () => {
+    const ring = getArtAsset(ART_ASSET_IDS.tableRing);
+    expect(ring).toMatchObject({
+      kind: "panel-chrome",
+      alpha: "ordinary-alpha",
+      lifecycle: "primitive",
+      build: {
+        source: "12-ui-primitives/table-ring-ornament.png",
+      },
+    });
+    expect(ring.note).toContain("center aperture and exterior are transparent");
+    expect(ring.outputs.map((output) => [output.width, output.height])).toEqual([
+      [800, "auto"],
+      [1600, "auto"],
+    ]);
   });
 
   test("registers only the approved treasure illustration masters as primitives", () => {
@@ -169,26 +190,49 @@ describe("art registry", () => {
     });
   });
 
-  test("ships buildable portrait-frame and primary-button primitives", () => {
+  test("ships buildable portrait-frame and semantic button primitives", () => {
     expect(getArtAsset(ART_ASSET_IDS.portraitFrame)).toMatchObject({
       kind: "portrait-frame",
       alpha: "ordinary-alpha",
       lifecycle: "primitive",
       build: { source: "12-ui-primitives/portrait-frame-house.svg" },
     });
-    expect(getArtAsset(ART_ASSET_IDS.primaryButton)).toMatchObject({
-      kind: "button-chrome",
-      alpha: "ordinary-alpha",
-      lifecycle: "primitive",
-      build: { source: "12-ui-primitives/button-primary.svg" },
-      nineSlice: { top: 10, right: 24, bottom: 10, left: 24 },
-    });
+    for (const variant of ["primary", "gold", "neutral", "danger"] as const) {
+      expect(getArtAsset(ART_ASSET_IDS.buttons[variant])).toMatchObject({
+        kind: "button-chrome",
+        alpha: "ordinary-alpha",
+        lifecycle: "primitive",
+        build: { source: `12-ui-primitives/button-${variant}.svg` },
+        nineSlice: { top: 10, right: 24, bottom: 10, left: 24 },
+      });
+      expect(artAssetSrcSet(ART_ASSET_IDS.buttons[variant])).toContain(
+        `button-${variant}@2x.webp 2x`,
+      );
+    }
     expect(artAssetSrcSet(ART_ASSET_IDS.portraitFrame)).toContain(
       "portrait-frame-house@2x.webp 2x",
     );
-    expect(artAssetSrcSet(ART_ASSET_IDS.primaryButton)).toContain(
-      "button-primary@2x.webp 2x",
-    );
+  });
+
+  test("registers compact role and player-type icons as composable primitives", () => {
+    for (const icon of [
+      "round-leader",
+      "role-attack",
+      "role-defend",
+      "type-human",
+      "type-bot",
+    ] as const) {
+      expect(getArtAsset(ART_ASSET_IDS.playerBadgeIcon(icon))).toMatchObject({
+        kind: "icon",
+        alpha: "ordinary-alpha",
+        lifecycle: "primitive",
+        build: { source: `14-player-badge-icons/player-${icon}.png` },
+        outputs: [
+          { width: 64, height: 64 },
+          { width: 128, height: 128 },
+        ],
+      });
+    }
   });
 
   test("declares CardFace as ordered reusable slots", () => {

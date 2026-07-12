@@ -7,6 +7,7 @@ import { ART, art2x } from "../lib/art";
 import { didLocalTeamWin } from "../lib/cards";
 import { PlayingCard } from "./card";
 import { GameOverSplash } from "./game-over-splash";
+import { ChromeButton } from "./ui-chrome";
 
 const CONFETTI_COLORS = ["var(--gold)", "var(--accent-bright)", "var(--ink)"];
 
@@ -196,13 +197,12 @@ export function RoundSummaryModal({
               <p>Bottom and throw adjustments are included in the final total.</p>
             )}
             {!gameOver && actions.has("start-next-round") && (
-              <button
-                className="button button-primary"
-                type="button"
+              <ChromeButton
+                variant="primary"
                 onClick={() => submit({ type: "START_NEXT_ROUND" })}
               >
                 Start next round
-              </button>
+              </ChromeButton>
             )}
             {!gameOver && !actions.has("start-next-round") && (
               <small>Waiting for the next leader…</small>

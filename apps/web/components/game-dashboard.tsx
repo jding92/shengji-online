@@ -48,32 +48,46 @@ export function DashboardSection({
   );
 }
 
-/** Chinese role glyph plus a separate reusable medallion and text label. */
-export function TeamRoleBadge({ role }: { role: TeamRole }) {
+function dashboardTeamLabel(label: string): string {
+  const [, englishLabel] = label.split("·");
+  return englishLabel?.trim() ?? label;
+}
+
+/**
+ * The generated emblem is the visible role language. Its accessible name keeps
+ * the same information available without repeating 攻/守 and ATTACK/DEFEND in
+ * the narrow dashboard rail.
+ */
+export function TeamRoleBadge({
+  role,
+  compact = false,
+}: {
+  role: TeamRole;
+  compact?: boolean;
+}) {
   if (role === "pending") {
     return (
-      <>
-        <span className="role-char">待</span>
-        <span className="role-en">PENDING</span>
-      </>
+      <span
+        className={`role-medallion role-medallion-pending${compact ? " is-compact" : ""}`}
+        role="img"
+        aria-label="Role pending"
+      >
+        ?
+      </span>
     );
   }
   const badge = ART_ASSET_IDS.gameplayUi(
     role === "attacking" ? "attack-badge" : "defend-badge",
   );
   return (
-    <>
-      <img
-        className="role-medallion"
-        data-art-asset={badge}
-        src={artAssetPath(badge)}
-        srcSet={artAssetSrcSet(badge)}
-        alt=""
-        aria-hidden="true"
-      />
-      <span className="role-char">{role === "attacking" ? "攻" : "守"}</span>
-      <span className="role-en">{role === "attacking" ? "ATTACK" : "DEFEND"}</span>
-    </>
+    <img
+      className={`role-medallion${compact ? " is-compact" : ""}`}
+      data-art-asset={badge}
+      src={artAssetPath(badge)}
+      srcSet={artAssetSrcSet(badge)}
+      alt={role === "attacking" ? "Attacking team" : "Defending team"}
+      draggable={false}
+    />
   );
 }
 
@@ -141,40 +155,48 @@ export function GameDashboard({
         className="dashboard-panel"
         contentClassName="round-pills"
       >
-        <div className="team-score-pills">
+        <div className="team-score-pills" aria-label="Team standings">
           {[yourTeam, rivalTeam].map((team) => (
-            <DashboardSection
+            <ChromePanel
               key={team.label}
-              label={team.label}
               className={`team-score-pill ${team.teamClass} is-${team.role}`}
+              aria-label={`${dashboardTeamLabel(team.label)}, rank ${team.rank ?? "unknown"}, ${team.role}`}
             >
-              <strong>{team.rank ?? "—"}</strong>
-              <em aria-label={team.role}>
-                <TeamRoleBadge role={team.role} />
-              </em>
-            </DashboardSection>
+              <small className="team-score-name">
+                {dashboardTeamLabel(team.label)}
+              </small>
+              <TeamRoleBadge role={team.role} />
+              <span className="team-rank">
+                <small>RANK</small>
+                <strong>{team.rank ?? "—"}</strong>
+              </span>
+            </ChromePanel>
           ))}
+          <span className="team-versus" aria-hidden="true">
+            VS
+          </span>
         </div>
 
         <div className="round-overview-row">
-          <DashboardSection label="对局 · ROUND" className="game-stats-pill">
+          <DashboardSection label="ROUND" className="game-stats-pill">
             <span className="current-round-stat">
-              <i>ROUND</i>
               <strong>{roundNumber}</strong>
             </span>
-            <span className="previous-round-stat">
-              <i>PREVIOUS</i>
-              <strong>{previousResult?.winnerLabel ?? "No result"}</strong>
-              <b>
-                {previousResult === null
-                  ? "—"
-                  : `${previousResult.attackerPoints} pts · ${previousResult.winner}`}
-              </b>
-            </span>
+            {previousResult === null ? (
+              <span className="round-state-copy">OPENING DEAL</span>
+            ) : (
+              <span className="previous-round-stat">
+                <i>PREVIOUS</i>
+                <strong>{previousResult.winnerLabel}</strong>
+                <b>
+                  {previousResult.attackerPoints} pts · {previousResult.winner}
+                </b>
+              </span>
+            )}
           </DashboardSection>
 
           <DashboardSection
-            label="主牌 · ROUND TRUMP"
+            label="TRUMP"
             className="level-trump-pill"
             aria-label={
               standingTrump === undefined
@@ -199,17 +221,29 @@ export function GameDashboard({
           </DashboardSection>
         </div>
 
-        <DashboardSection label="攻方得分 · ATTACKER POINTS" className="points-pill">
-          <strong className={pointsTone}>{attackerPoints}</strong>
-          <span className="points-meter" aria-hidden="true">
+        <DashboardSection label="ROUND POINTS" className="points-pill">
+          <div className="points-total">
+            <TeamRoleBadge role="attacking" compact />
+            <strong className={pointsTone}>{attackerPoints}</strong>
+          </div>
+          <span
+            className="points-meter"
+            role="progressbar"
+            aria-label="Attacker scoring progress"
+            aria-valuemin={0}
+            aria-valuemax={pointMeterMax}
+            aria-valuenow={Math.max(0, Math.min(pointMeterMax, attackerPoints))}
+          >
             <span
               className="points-meter-fill"
               style={{ width: `${clampedPointProgress}%` }}
+              aria-hidden="true"
             />
             {pointThresholds.map((threshold) => (
               <i
                 key={threshold}
                 style={{ left: `${(threshold / pointMeterMax) * 100}%` }}
+                aria-hidden="true"
               />
             ))}
           </span>
@@ -218,10 +252,17 @@ export function GameDashboard({
               className={`points-projection is-${projectedOutcome.winner}`}
               title="Outcome if the round ended at the current points"
             >
-              {projectedOutcome.winner === "attackers" ? "攻" : "守"}
-              {projectedOutcome.levelDelta > 0
-                ? ` +${projectedOutcome.levelDelta}`
-                : " 夺庄"}
+              <TeamRoleBadge
+                role={
+                  projectedOutcome.winner === "attackers" ? "attacking" : "defending"
+                }
+                compact
+              />
+              <b>
+                {projectedOutcome.levelDelta > 0
+                  ? `+${projectedOutcome.levelDelta} level`
+                  : "Takes lead"}
+              </b>
               <i>IF ENDED NOW</i>
             </em>
           )}
@@ -249,12 +290,12 @@ export function GameDashboard({
 
       <div className="side-actions">
         <ChromeButton
-          className="icon-button sound-toggle"
+          className="sound-toggle"
           aria-label={muted ? "Unmute sounds" : "Mute sounds"}
           aria-pressed={muted}
           onClick={onToggleMuted}
         >
-          {muted ? "静" : "音"}
+          {muted ? "Sound off" : "Sound on"}
         </ChromeButton>
         <LeaveButton onLeave={onLeave} />
       </div>

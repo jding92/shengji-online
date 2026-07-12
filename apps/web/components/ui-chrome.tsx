@@ -1,4 +1,9 @@
-import type { ButtonHTMLAttributes, HTMLAttributes, PropsWithChildren } from "react";
+import type {
+  AnchorHTMLAttributes,
+  ButtonHTMLAttributes,
+  HTMLAttributes,
+  PropsWithChildren,
+} from "react";
 import type { ArtAssetId } from "../lib/art-registry";
 import { ART_ASSET_IDS, artAssetPath, artAssetSrcSet } from "../lib/art-registry";
 
@@ -62,6 +67,31 @@ export function ChromeArtPanel({
 
 export type ChromeButtonVariant = "primary" | "gold" | "neutral" | "danger";
 
+function ChromeActionSurface({
+  asset,
+  children,
+}: PropsWithChildren<{ asset: ChromeButtonAssetId | null }>) {
+  return (
+    <>
+      {asset !== null && (
+        <img
+          className="chrome-button-surface"
+          data-chrome-layer="surface"
+          data-art-asset={asset}
+          src={artAssetPath(asset)}
+          srcSet={artAssetSrcSet(asset)}
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+        />
+      )}
+      <span className="chrome-button-content" data-chrome-layer="content">
+        {children}
+      </span>
+    </>
+  );
+}
+
 /**
  * Shared button primitive for compact table chrome. Product-level buttons can
  * migrate to this contract without baking their label or icon into an image.
@@ -71,12 +101,12 @@ export function ChromeButton({
   className,
   type = "button",
   variant = "neutral",
-  surfaceAsset = variant === "primary" ? ART_ASSET_IDS.primaryButton : undefined,
+  surfaceAsset = ART_ASSET_IDS.buttons[variant],
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: ChromeButtonVariant;
   /** Optional interchangeable art slot; live labels and icons stay separate. */
-  surfaceAsset?: ChromeButtonAssetId;
+  surfaceAsset?: ChromeButtonAssetId | null;
 }) {
   return (
     <button
@@ -89,22 +119,35 @@ export function ChromeButton({
       data-chrome-button-surface={surfaceAsset ?? "theme"}
       {...props}
     >
-      {surfaceAsset !== undefined && (
-        <img
-          className="chrome-button-surface"
-          data-chrome-layer="surface"
-          data-art-asset={surfaceAsset}
-          src={artAssetPath(surfaceAsset)}
-          srcSet={artAssetSrcSet(surfaceAsset)}
-          alt=""
-          aria-hidden="true"
-          draggable={false}
-        />
-      )}
-      <span className="chrome-button-content" data-chrome-layer="content">
-        {children}
-      </span>
+      <ChromeActionSurface asset={surfaceAsset}>{children}</ChromeActionSurface>
     </button>
+  );
+}
+
+/** Anchor counterpart to ChromeButton for navigational actions. */
+export function ChromeLink({
+  children,
+  className,
+  variant = "neutral",
+  surfaceAsset = ART_ASSET_IDS.buttons[variant],
+  ...props
+}: AnchorHTMLAttributes<HTMLAnchorElement> & {
+  variant?: ChromeButtonVariant;
+  surfaceAsset?: ChromeButtonAssetId | null;
+}) {
+  return (
+    <a
+      className={chromeClassName(
+        "chrome-button",
+        "chrome-link",
+        `chrome-button-${variant}`,
+        className,
+      )}
+      data-chrome-button-surface={surfaceAsset ?? "theme"}
+      {...props}
+    >
+      <ChromeActionSurface asset={surfaceAsset}>{children}</ChromeActionSurface>
+    </a>
   );
 }
 
