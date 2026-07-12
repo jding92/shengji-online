@@ -1,3 +1,4 @@
+import { chooseFriendCallsForHand } from "../bot/friends.js";
 import { getCardPoints } from "../cards/deck.js";
 import {
   allocateThrowMatches,
@@ -120,6 +121,35 @@ export function selectForcedFollow(
     .sort(byLowestRank(trump))
     .slice(0, need - structural.length);
   return [...structural, ...fillers];
+}
+
+/**
+ * Deterministic auto-call for a stalled finding-friends declarer, mirroring
+ * getForcedPlayEvents: the same pure heuristic the declarer bot uses (the
+ * highest callable faces the hand lacks), validated through the production
+ * CALL_FRIENDS path. The server's friend-calling timeout (Phase 3c) commits
+ * these events; simulations drive the phase through the bot policy instead.
+ */
+export function getForcedFriendCallEvents(state: GameState, at: string): GameEvent[] {
+  const round = state.round;
+  const teams = state.rulesetSnapshot.teams;
+  if (
+    state.phase !== "friend-calling" ||
+    teams.mode !== "finding-friends" ||
+    round?.trumpSpec === undefined ||
+    round.declarerSeat === undefined
+  ) {
+    return [];
+  }
+  const playerId = state.seats[round.declarerSeat];
+  if (playerId === null || playerId === undefined) return [];
+  const hand = (round.hands[round.declarerSeat] ?? []).map((id) => round.cards[id]!);
+  const calls = chooseFriendCallsForHand({
+    hand,
+    trumpSpec: round.trumpSpec,
+    callCount: teams.friends.callCount,
+  });
+  return validateCommand(state, playerId, { type: "CALL_FRIENDS", calls }, { now: at });
 }
 
 /**

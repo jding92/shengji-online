@@ -2,6 +2,7 @@ import type { ClientCommand } from "../state/model.js";
 import { decideBidAction } from "./bidding.js";
 import { decideBuryAction } from "./bury.js";
 import { decideFollowAction } from "./follow.js";
+import { decideFriendCallAction } from "./friends.js";
 import { decideLeadAction } from "./lead.js";
 import type { BotObservation } from "./observation.js";
 import { createBotRng } from "./rng.js";
@@ -26,6 +27,9 @@ export function decideBotAction(
   }
   if (observation.phase === "bottom-exchange") {
     return decideBuryAction(observation, config, rng);
+  }
+  if (observation.phase === "friend-calling") {
+    return decideFriendCallAction(observation);
   }
   if (observation.phase === "playing") {
     return observation.round?.currentTrick === undefined

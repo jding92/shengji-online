@@ -6,12 +6,12 @@ import { determineTrickWinner } from "../tricks/winner.js";
 import { getEffectiveRankGroup } from "../trump/trump.js";
 import type { CardInstance, SeatIndex } from "../types.js";
 import {
+  alliedSeats,
   currentWinningSeat,
   deriveCardKnowledge,
   inferVoidSuits,
   isKnownBoss,
   teamForSeat,
-  teammateSeats,
 } from "./knowledge.js";
 import type { BotObservation } from "./observation.js";
 import { noisyPick, type BotRng } from "./rng.js";
@@ -114,7 +114,9 @@ export function decideFollowAction(
   const seen = new Set<string>();
   const candidates: FollowCandidate[] = [];
   const currentWinner = currentWinningSeat(observation);
-  const teammates = teammateSeats(observation);
+  // Allies fold in the finding-friends secret-friend inference; every other
+  // seat — unknown seats included — is read as an opponent.
+  const allies = alliedSeats(observation);
   const knowledge = deriveCardKnowledge(observation, config);
   const inferredVoids = inferVoidSuits(observation, config);
   const laterSeats = seatsYetToPlay(
@@ -127,11 +129,11 @@ export function decideFollowAction(
       ? []
       : laterSeats.filter(
           (seat) =>
-            teamForSeat(observation, seat) !== observation.ownTeamId &&
+            !allies.includes(seat) &&
             inferredVoids.get(seat)?.has(trick.ledFormat.effectiveSuit) === true,
         );
   const currentWinnerIsTeammate =
-    currentWinner !== undefined && teammates.includes(currentWinner);
+    currentWinner !== undefined && allies.includes(currentWinner);
   const winningTeammatePlay = trick.plays.find(({ seat }) => seat === currentWinner);
   const teammateHasControl =
     currentWinnerIsTeammate &&
@@ -170,9 +172,12 @@ export function decideFollowAction(
       const winnerTeam = teamForSeat(observation, winner.winnerSeat);
       const ownTeam = observation.ownTeamId;
       const wins = winner.winnerSeat === observation.ownSeat;
-      const teammateWinning = teammates.includes(winner.winnerSeat);
+      const teammateWinning = allies.includes(winner.winnerSeat);
+      // Points land on the bot's side when itself or an ally takes the trick;
+      // the team comparison keeps the fixed-mode reading and never matches
+      // when both sides are undefined (unknown finding-friends seats).
       const givesPointsToPartner =
-        teammateWinning || (winnerTeam !== undefined && winnerTeam === ownTeam);
+        wins || teammateWinning || (winnerTeam !== undefined && winnerTeam === ownTeam);
       const actsLast = trick.plays.length + 1 === observation.ruleset.players.count;
       const controlled =
         play.cards.length > 0 &&
@@ -187,7 +192,7 @@ export function decideFollowAction(
               : config.difficulty === "intermediate"
                 ? 0.72
                 : 0.82
-        : winnerTeam === ownTeam
+        : teammateWinning
           ? 0.6
           : 0;
       const ruffRisk =

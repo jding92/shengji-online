@@ -1,4 +1,4 @@
-import { cardFaceKey, createDeck } from "../cards/deck.js";
+import { cardFaceKey, createDeck, sameCardFace } from "../cards/deck.js";
 import { determineTrickWinner } from "../tricks/winner.js";
 import { getEffectiveRankGroup, getEffectiveSuit } from "../trump/trump.js";
 import type { CardInstance, EffectiveSuit, SeatIndex, TeamId } from "../types.js";
@@ -131,6 +131,46 @@ export function teammateSeats(observation: BotObservation): SeatIndex[] {
 /** @deprecated use teammateSeats — kept as a thin shim for one release. */
 export function partnerSeat(observation: BotObservation): SeatIndex | undefined {
   return teammateSeats(observation)[0];
+}
+
+/**
+ * True when the bot privately knows it is a future friend: its own hand holds
+ * a copy of a face named by a still-unrevealed call. This inference costs no
+ * hidden information — it reads only the bot's own cards plus the public
+ * calls. Deliberate v1 approximation (design B6): copy-index arithmetic
+ * against copies already played is skipped, so a bot holding the second ♠K
+ * against a "first ♠K" call still leans toward the declarer's side.
+ */
+export function isSecretFriend(observation: BotObservation): boolean {
+  if (observation.ruleset.teams.mode !== "finding-friends") return false;
+  // A seat with a public team (declarer or revealed friend) is not secret.
+  if (observation.ownSeat === null || observation.ownTeamId !== undefined) {
+    return false;
+  }
+  return (observation.round?.friendCalls ?? []).some(
+    (call) =>
+      call.revealed === undefined &&
+      observation.ownHand.some((card) => sameCardFace(card.face, call.face)),
+  );
+}
+
+/**
+ * Seats the acting bot should treat as allies when weighing point dumps and
+ * trick protection: its publicly known teammates, plus the declarer's known
+ * side when the bot is a secret friend. Every other seat — unknown
+ * finding-friends seats included — counts as an opponent.
+ */
+export function alliedSeats(observation: BotObservation): SeatIndex[] {
+  // A secret friend has no public team, so teammateSeats is empty and the
+  // declarer's revealed side is the entire alliance.
+  if (isSecretFriend(observation)) {
+    return observation.seats
+      .filter(
+        ({ seat, teamId }) => seat !== observation.ownSeat && teamId === "defenders",
+      )
+      .map(({ seat }) => seat);
+  }
+  return teammateSeats(observation);
 }
 
 export function currentWinningSeat(observation: BotObservation): SeatIndex | undefined {

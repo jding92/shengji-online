@@ -1,5 +1,5 @@
 import type { ShengJiRuleset } from "../rulesets/schema.js";
-import { teamIdForSeat } from "../state/reducer.js";
+import { knownTeamIdForSeat, seatRole, type SeatRole } from "../state/teams.js";
 import type { GamePhase, GameState, TrickResult, TrickState } from "../state/model.js";
 import type {
   Bid,
@@ -7,6 +7,7 @@ import type {
   PlayerId,
   Rank,
   SeatIndex,
+  StandardCardFace,
   TeamId,
   TrumpSpec,
 } from "../types.js";
@@ -20,11 +21,25 @@ export type BotPublicBid = Pick<
 export type BotSeatObservation = {
   seat: SeatIndex;
   playerId: PlayerId | null;
-  teamId: TeamId;
+  /**
+   * Publicly known team. Always present in fixed mode; in finding-friends only
+   * the declarer and revealed friends carry "defenders" — an unrevealed friend
+   * is indistinguishable from an attacker, even to an omniscient reader.
+   */
+  teamId?: TeamId;
+  /** Publicly known round role; "unknown" until roles (or reveals) resolve it. */
+  role: SeatRole;
   connected: boolean;
   ready: boolean;
   cardCount: number;
   botDifficulty?: BotDifficulty;
+};
+
+/** A friend call as announced at the table; the reveal is public once played. */
+export type BotFriendCallObservation = {
+  face: StandardCardFace;
+  copyIndex: number;
+  revealed?: { seat: SeatIndex; trickNumber: number };
 };
 
 export type BotRoundObservation = {
@@ -35,6 +50,10 @@ export type BotRoundObservation = {
   currentBid?: BotPublicBid;
   passedBidSeats: SeatIndex[];
   dealtCardCount: number;
+  /** Finding-friends: the winning bidder whose side defends this round. */
+  declarerSeat?: SeatIndex;
+  /** Finding-friends: announced calls, present once the declarer has called. */
+  friendCalls?: BotFriendCallObservation[];
   currentTurnSeat?: SeatIndex;
   currentTrick?: TrickState;
   completedTricks: TrickResult[];
@@ -52,7 +71,10 @@ export type BotRoundObservation = {
 /**
  * Policy input assembled from public zones plus the acting player's private
  * cards. Deliberately absent: the deck seed, undealt cards, unrevealed bottom,
- * and every other player's hand.
+ * and every other player's hand. Membership routes exclusively through
+ * knownTeamIdForSeat — in finding-friends an unrevealed friend (even the bot
+ * itself) carries no teamId; the private inference lives in isSecretFriend,
+ * which reads only the bot's own hand plus the public calls.
  */
 export type BotObservation = {
   roomId: string;
@@ -60,7 +82,10 @@ export type BotObservation = {
   phase: GamePhase;
   playerId: PlayerId;
   ownSeat: SeatIndex | null;
+  /** Publicly known own team — absent for an unrevealed finding-friends seat. */
   ownTeamId?: TeamId;
+  /** The bot's own level, which bidder-own-rank bidding validates against. */
+  ownRank?: Rank;
   ownHand: CardInstance[];
   ownBuried?: CardInstance[];
   leaderSeat?: SeatIndex;
@@ -106,10 +131,12 @@ export function deriveBotObservation(
     (_, seat): BotSeatObservation => {
       const occupantId = state.seats[seat] ?? null;
       const occupant = occupantId === null ? undefined : state.players[occupantId];
+      const teamId = knownTeamIdForSeat(state, seat);
       return {
         seat,
         playerId: occupantId,
-        teamId: teamIdForSeat(seat, state.rulesetSnapshot),
+        ...(teamId === undefined ? {} : { teamId }),
+        role: seatRole(state, seat),
         connected: occupant?.connected ?? false,
         ready: occupant?.ready ?? false,
         cardCount: round?.hands[seat]?.length ?? 0,
@@ -119,6 +146,9 @@ export function deriveBotObservation(
       };
     },
   );
+  const ownTeamId =
+    player.seat === null ? undefined : knownTeamIdForSeat(state, player.seat);
+  const ownRank = state.ranks[playerId];
 
   return {
     roomId: state.roomId,
@@ -126,9 +156,8 @@ export function deriveBotObservation(
     phase: state.phase,
     playerId,
     ownSeat: player.seat,
-    ...(player.seat === null
-      ? {}
-      : { ownTeamId: teamIdForSeat(player.seat, state.rulesetSnapshot) }),
+    ...(ownTeamId === undefined ? {} : { ownTeamId }),
+    ...(ownRank === undefined ? {} : { ownRank }),
     ownHand,
     ...(ownBuried === undefined ? {} : { ownBuried }),
     ...(state.leaderSeat === undefined ? {} : { leaderSeat: state.leaderSeat }),
@@ -164,6 +193,29 @@ export function deriveBotObservation(
                 }),
             passedBidSeats: [...round.passedBidSeats],
             dealtCardCount: Object.keys(round.cards).length - round.undealt.length,
+            ...(round.declarerSeat === undefined
+              ? {}
+              : { declarerSeat: round.declarerSeat }),
+            ...(round.friendCalls === undefined
+              ? {}
+              : {
+                  friendCalls: round.friendCalls.map(
+                    ({ face, copyIndex, revealed }): BotFriendCallObservation => ({
+                      face: structuredClone(face),
+                      copyIndex,
+                      // The reveal's `at` timestamp is event metadata, not
+                      // table knowledge — bots reason from seat and trick.
+                      ...(revealed === undefined
+                        ? {}
+                        : {
+                            revealed: {
+                              seat: revealed.seat,
+                              trickNumber: revealed.trickNumber,
+                            },
+                          }),
+                    }),
+                  ),
+                }),
             ...(round.currentTurnSeat === undefined
               ? {}
               : { currentTurnSeat: round.currentTurnSeat }),

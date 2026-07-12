@@ -1,5 +1,15 @@
-import { DEFAULT_PRESET_ID, teamIdForSeat, type GameState } from "@shengji/engine";
-import type { LegalAction, PrivateGameView, SeatView } from "@shengji/protocol";
+import {
+  DEFAULT_PRESET_ID,
+  knownTeamIdForSeat,
+  seatRole,
+  type GameState,
+} from "@shengji/engine";
+import type {
+  LegalAction,
+  PrivateGameView,
+  PublicFriendCall,
+  SeatView,
+} from "@shengji/protocol";
 
 function legalActions(state: GameState, playerId: string): LegalAction[] {
   const player = state.players[playerId];
@@ -20,6 +30,9 @@ function legalActions(state: GameState, playerId: string): LegalAction[] {
   if (state.phase === "bottom-exchange" && state.leaderSeat === seat) {
     return ["bury-bottom"];
   }
+  if (state.phase === "friend-calling") {
+    return state.round?.declarerSeat === seat ? ["call-friends"] : [];
+  }
   if (state.phase === "playing" && state.round?.currentTurnSeat === seat) {
     return state.round.currentTrick === undefined
       ? ["play-cards", "attempt-throw"]
@@ -39,16 +52,19 @@ export function derivePrivateView(state: GameState, playerId: string): PrivateGa
     player.seat === null || round === undefined
       ? []
       : (round.hands[player.seat] ?? []).map((id) => round.cards[id]!);
+  // The only membership source views may use: fixed mode always resolves, and
+  // finding-friends resolves exclusively from the declarer plus reveal events
+  // — an unrevealed friend's view carries no team, even to that player's
+  // teammates-to-be. finalTeamIdForSeat stays engine-internal by design.
   const yourTeamId =
-    player.seat === null
-      ? undefined
-      : teamIdForSeat(player.seat, state.rulesetSnapshot);
+    player.seat === null ? undefined : knownTeamIdForSeat(state, player.seat);
 
   const seats: SeatView[] = Array.from(
     { length: state.rulesetSnapshot.players.count },
     (_, seat) => {
       const occupantId = state.seats[seat] ?? null;
       const occupant = occupantId === null ? undefined : state.players[occupantId];
+      const teamId = occupantId === null ? undefined : knownTeamIdForSeat(state, seat);
       return {
         seat,
         playerId: occupantId,
@@ -61,14 +77,15 @@ export function derivePrivateView(state: GameState, playerId: string): PrivateGa
         ready: occupant?.ready ?? false,
         rank: occupantId === null ? null : (state.ranks[occupantId] ?? null),
         cardCount: round?.hands[seat]?.length ?? 0,
-        ...(occupantId === null
-          ? {}
-          : { teamId: teamIdForSeat(seat, state.rulesetSnapshot) }),
+        role: seatRole(state, seat),
+        ...(teamId === undefined ? {} : { teamId }),
       };
     },
   );
   const previousRound = state.roundHistory?.at(-1);
-  // Type-level narrowing for the teams union; FF views land in Phase 3b.
+  const isFindingFriends = state.rulesetSnapshot.teams.mode === "finding-friends";
+  // Type-level narrowing for the teams union; empty in finding-friends, where
+  // per-team tallies across rounds are meaningless (teams are round-scoped).
   const fixedTeams =
     state.rulesetSnapshot.teams.mode === "fixed"
       ? state.rulesetSnapshot.teams.teams
@@ -82,6 +99,31 @@ export function derivePrivateView(state: GameState, playerId: string): PrivateGa
           ({ winningTeamId }) => winningTeamId === teamId,
         ).length,
       ];
+    }),
+  );
+  // Finding-friends per-seat tallies come from the durable round history:
+  // the recorded defender seats plus each outcome's winner — never from
+  // hidden membership.
+  const roundsWonBySeat = isFindingFriends
+    ? Object.fromEntries(
+        Array.from({ length: state.rulesetSnapshot.players.count }, (_, seat) => [
+          seat,
+          (state.roundHistory ?? []).filter(({ outcome, defenderSeats }) => {
+            const defended = defenderSeats?.includes(seat) === true;
+            return outcome.winner === "defenders" ? defended : !defended;
+          }).length,
+        ]),
+      )
+    : undefined;
+  const publicFriendCalls: PublicFriendCall[] | undefined = round?.friendCalls?.map(
+    ({ face, copyIndex, revealed }) => ({
+      face,
+      copyIndex,
+      // The reveal's `at` timestamp stays server-side, matching currentBid's
+      // omitted placedAt: public view fields carry no event-time metadata.
+      ...(revealed === undefined
+        ? {}
+        : { revealed: { seat: revealed.seat, trickNumber: revealed.trickNumber } }),
     }),
   );
   const lastCompletedTrick = round?.completedTricks.at(-1);
@@ -134,6 +176,12 @@ export function derivePrivateView(state: GameState, playerId: string): PrivateGa
                   },
                 }),
             ...(state.leaderSeat === undefined ? {} : { leaderSeat: state.leaderSeat }),
+            ...(round.declarerSeat === undefined
+              ? {}
+              : { declarerSeat: round.declarerSeat }),
+            ...(publicFriendCalls === undefined
+              ? {}
+              : { friendCalls: publicFriendCalls }),
             ...(round.currentTurnSeat === undefined
               ? {}
               : { currentTurnSeat: round.currentTurnSeat }),
@@ -172,6 +220,7 @@ export function derivePrivateView(state: GameState, playerId: string): PrivateGa
             ),
             roundStats: {
               roundsWonByTeam,
+              ...(roundsWonBySeat === undefined ? {} : { roundsWonBySeat }),
               ...(previousRound === undefined
                 ? {}
                 : {
