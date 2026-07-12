@@ -37,12 +37,16 @@ function view({
   return {
     roomId: "ABC123",
     revision,
+    hostPlayerId: null,
     ruleset: {
       id: "test",
       name: "Test",
       players: 4,
       decks: 2,
       bottomSize: 8,
+      presetId: "test",
+      teamsMode: "fixed",
+      options: {},
     },
     phase,
     you: { playerId: "p0", seat: 0, hand: [] },
