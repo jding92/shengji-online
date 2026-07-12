@@ -5,6 +5,8 @@ import type {
   GameOptions,
   GamePhase,
   Rank,
+  SeatRole,
+  StandardCardFace,
   TeamId,
   TrickResult,
   TrumpSpec,
@@ -18,6 +20,7 @@ export type LegalAction =
   | "bid"
   | "pass-bid"
   | "bury-bottom"
+  | "call-friends"
   | "play-cards"
   | "attempt-throw"
   | "start-next-round"
@@ -33,7 +36,25 @@ export type SeatView = {
   ready: boolean;
   rank: Rank | null;
   cardCount: number;
+  /**
+   * Publicly known team. Always present for occupied seats in fixed mode; in
+   * finding-friends only the declarer and revealed friends carry "defenders" —
+   * an unrevealed friend is indistinguishable from an attacker.
+   */
   teamId?: TeamId;
+  /** Publicly known round role; "unknown" until roles (or reveals) resolve it. */
+  role?: SeatRole;
+};
+
+/**
+ * A finding-friends call as everyone at the table hears it: the declarer
+ * announces the face and copy index, and the reveal seat/trick becomes public
+ * the moment the called copy is played.
+ */
+export type PublicFriendCall = {
+  face: StandardCardFace;
+  copyIndex: number;
+  revealed?: { seat: number; trickNumber: number };
 };
 
 export type PublicPlayedCards = {
@@ -76,6 +97,10 @@ export type PrivateGameView = {
     trumpSpec?: TrumpSpec;
     currentBid?: Pick<Bid, "seat" | "face" | "count" | "tier" | "declares">;
     leaderSeat?: number;
+    /** Finding-friends: the winning bidder whose side defends this round. */
+    declarerSeat?: number;
+    /** Finding-friends: announced calls, present once the declarer has called. */
+    friendCalls?: PublicFriendCall[];
     currentTurnSeat?: number;
     attackerPoints: number;
     throwPenaltyAdjustment: number;
@@ -96,7 +121,13 @@ export type PrivateGameView = {
       Pick<TrickResult, "leadSeat" | "winnerSeat" | "points">
     >;
     roundStats: {
+      /** Fixed mode: persistent team tallies. Empty in finding-friends. */
       roundsWonByTeam: Record<TeamId, number>;
+      /**
+       * Finding-friends: completed rounds each seat ended on the winning
+       * side (teams are round-scoped, so per-team tallies are meaningless).
+       */
+      roundsWonBySeat?: Record<number, number>;
       previousRound?: {
         roundNumber: number;
         winningTeamId: TeamId;

@@ -1,7 +1,7 @@
 import { createAndValidateBid } from "../bidding/bidding.js";
 import { cardFaceKey, getCardPoints } from "../cards/deck.js";
 import type { ClientCommand } from "../state/model.js";
-import { CARDS_PER_DECK, type Bid, type CardInstance } from "../types.js";
+import { CARDS_PER_DECK, type Bid, type CardInstance, type Rank } from "../types.js";
 import type { BotObservation, BotPublicBid } from "./observation.js";
 import { noisyPick, type BotRng } from "./rng.js";
 import type { BotConfig } from "./types.js";
@@ -68,6 +68,24 @@ function legalBidCandidates(
   if (currentBid?.seat === ownSeat) return [];
   if (currentBid !== undefined && config.counterBid === "never") return [];
 
+  // Mirror the command validator's rank source: under bidder-own-rank
+  // (finding-friends) each player bids cards of their own level, not the
+  // provisional round rank.
+  const declareRankSource = observation.ruleset.bidding.declareRankSource;
+  let currentRank: Rank;
+  switch (declareRankSource) {
+    case "round-rank":
+      currentRank = round.trumpRank;
+      break;
+    case "bidder-own-rank":
+      currentRank = observation.ownRank ?? round.trumpRank;
+      break;
+    default: {
+      const exhaustive: never = declareRankSource;
+      throw new Error(`Unsupported declareRankSource: ${String(exhaustive)}`);
+    }
+  }
+
   const candidates: BidCandidate[] = [];
   for (const group of groupsByFace(observation.ownHand)) {
     const first = group[0]!;
@@ -85,7 +103,7 @@ function legalBidCandidates(
           seat: ownSeat,
           cards,
           hand: observation.ownHand,
-          currentRank: round.trumpRank,
+          currentRank,
           ...(currentBid === undefined ? {} : { currentBid }),
           placedAt: "1970-01-01T00:00:00.000Z",
           rules: observation.ruleset.bidding,

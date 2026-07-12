@@ -3,6 +3,7 @@ export * from "./bot/bidding.js";
 export * from "./bot/bury.js";
 export * from "./bot/difficulty.js";
 export * from "./bot/follow.js";
+export * from "./bot/friends.js";
 export * from "./bot/knowledge.js";
 export * from "./bot/lead.js";
 export * from "./bot/observation.js";

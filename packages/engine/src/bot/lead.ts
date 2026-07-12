@@ -5,11 +5,10 @@ import { groupsFor, validateLead } from "../tricks/legality.js";
 import { getEffectiveRankGroup, getEffectiveSuit } from "../trump/trump.js";
 import type { CardInstance, EffectiveSuit } from "../types.js";
 import {
+  alliedSeats,
   deriveCardKnowledge,
   inferVoidSuits,
   isKnownBoss,
-  teamForSeat,
-  teammateSeats,
 } from "./knowledge.js";
 import type { BotObservation } from "./observation.js";
 import { noisyPick, type BotRng } from "./rng.js";
@@ -118,7 +117,9 @@ export function decideLeadAction(
   }
   const knowledge = deriveCardKnowledge(observation, config);
   const inferredVoids = inferVoidSuits(observation, config);
-  const teammates = teammateSeats(observation);
+  // Allies fold in the finding-friends secret-friend inference; every other
+  // seat — unknown seats included — is read as an opponent.
+  const allies = alliedSeats(observation);
   const seen = new Set<string>();
   const candidates: LeadCandidate[] = [];
   const add = (cards: CardInstance[], intent: "normal" | "throw") => {
@@ -146,10 +147,11 @@ export function decideLeadAction(
     const teammateCanRuff =
       config.teamCoordination === "full" &&
       effectiveSuit !== "trump" &&
-      teammates.some((seat) => inferredVoids.get(seat)?.has(effectiveSuit) === true);
+      allies.some((seat) => inferredVoids.get(seat)?.has(effectiveSuit) === true);
     const voidOpponents = observation.seats.filter(
       ({ seat }) =>
-        teamForSeat(observation, seat) !== observation.ownTeamId &&
+        seat !== observation.ownSeat &&
+        !allies.includes(seat) &&
         inferredVoids.get(seat)?.has(effectiveSuit) === true,
     ).length;
     const voidLeadValue =

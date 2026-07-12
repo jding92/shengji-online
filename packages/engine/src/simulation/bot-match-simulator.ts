@@ -146,6 +146,15 @@ export function simulateBotMatch(
       }
       continue;
     }
+    if (state.phase === "friend-calling") {
+      // Finding-friends only: the declarer bot calls through the same policy
+      // path as every other decision (decideFriendCallAction).
+      const seat = state.round?.declarerSeat;
+      if (seat === undefined || !decideFor(seat)) {
+        throw new Error("Bot declarer did not call friends");
+      }
+      continue;
+    }
     if (state.phase === "playing") {
       const seat = state.round?.currentTurnSeat;
       if (seat === undefined || !decideFor(seat)) {
@@ -157,10 +166,14 @@ export function simulateBotMatch(
       const round = state.round;
       if (round?.outcome !== undefined && round.roundNumber !== recordedRound) {
         outcomes.push(round.outcome);
-        if (state.defendingTeamId === undefined) {
+        // The durable history entry works for both team modes: fixed rounds
+        // record the persistent team id, finding-friends rounds the
+        // round-scoped "defenders"/"attackers".
+        const scored = state.roundHistory?.at(-1);
+        if (scored === undefined || scored.roundNumber !== round.roundNumber) {
           throw new Error("Scored bot round is missing its winning team");
         }
-        winnerTeamIds.push(state.defendingTeamId);
+        winnerTeamIds.push(scored.winningTeamId);
         recordedRound = round.roundNumber;
       }
       if (outcomes.length >= maxRounds) break;
