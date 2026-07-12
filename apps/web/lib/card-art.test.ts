@@ -22,19 +22,19 @@ const rankColors = {
 const frameQualityBounds = {
   hearts: {
     outer: { left: 0.022, top: 0.024, right: 0.978, bottom: 0.976 },
-    aperture: { left: 0.18, top: 0.175, right: 0.84, bottom: 0.83 },
+    aperture: { left: 0.105, top: 0.085, right: 0.895, bottom: 0.915 },
   },
   spades: {
     outer: { left: 0.018, top: 0.012, right: 0.982, bottom: 0.988 },
-    aperture: { left: 0.17, top: 0.175, right: 0.88, bottom: 0.858 },
+    aperture: { left: 0.11, top: 0.1, right: 0.89, bottom: 0.9 },
   },
   diamonds: {
     outer: { left: 0.02, top: 0.026, right: 0.98, bottom: 0.974 },
-    aperture: { left: 0.205, top: 0.18, right: 0.86, bottom: 0.83 },
+    aperture: { left: 0.105, top: 0.09, right: 0.895, bottom: 0.91 },
   },
   clubs: {
     outer: { left: 0.04, top: 0.035, right: 0.96, bottom: 0.965 },
-    aperture: { left: 0.19, top: 0.145, right: 0.81, bottom: 0.855 },
+    aperture: { left: 0.105, top: 0.09, right: 0.895, bottom: 0.91 },
   },
 } as const;
 
@@ -45,15 +45,68 @@ interface NormalizedRegion {
   bottom: number;
 }
 
+function opaqueComponents(mask: Buffer, width: number, height: number) {
+  const visited = new Uint8Array(mask.length);
+  const components: Array<{
+    pixels: number;
+    left: number;
+    top: number;
+    right: number;
+    bottom: number;
+  }> = [];
+
+  for (let start = 0; start < mask.length; start += 1) {
+    if (mask[start] !== 255 || visited[start] === 1) continue;
+    const queue = [start];
+    visited[start] = 1;
+    let pixels = 0;
+    let left = width;
+    let top = height;
+    let right = -1;
+    let bottom = -1;
+    while (queue.length > 0) {
+      const pixel = queue.pop();
+      if (pixel === undefined) break;
+      const x = pixel % width;
+      const y = Math.floor(pixel / width);
+      pixels += 1;
+      left = Math.min(left, x);
+      top = Math.min(top, y);
+      right = Math.max(right, x);
+      bottom = Math.max(bottom, y);
+      for (const neighbor of [
+        x > 0 ? pixel - 1 : -1,
+        x + 1 < width ? pixel + 1 : -1,
+        y > 0 ? pixel - width : -1,
+        y + 1 < height ? pixel + width : -1,
+      ]) {
+        if (neighbor >= 0 && mask[neighbor] === 255 && visited[neighbor] === 0) {
+          visited[neighbor] = 1;
+          queue.push(neighbor);
+        }
+      }
+    }
+    components.push({ pixels, left, top, right, bottom });
+  }
+
+  return components.sort((left, right) => right.pixels - left.pixels);
+}
+
 function countAlpha(
   data: Buffer,
   width: number,
   height: number,
   channels: number,
   region: NormalizedRegion,
-): { nonTransparent: number; partial: number; total: number } {
+): {
+  nonTransparent: number;
+  partial: number;
+  alphaSum: number;
+  total: number;
+} {
   let nonTransparent = 0;
   let partial = 0;
+  let alphaSum = 0;
   let total = 0;
   for (
     let y = Math.floor(region.top * height);
@@ -68,10 +121,11 @@ function countAlpha(
       const alpha = data[(y * width + x) * channels + 3] ?? 0;
       if (alpha > 0) nonTransparent += 1;
       if (alpha > 0 && alpha < 255) partial += 1;
+      alphaSum += alpha;
       total += 1;
     }
   }
-  return { nonTransparent, partial, total };
+  return { nonTransparent, partial, alphaSum, total };
 }
 
 describe("generated card art", () => {
@@ -121,6 +175,18 @@ describe("generated card art", () => {
         expect(wrongColor, `${file} has non-flat glyph color`).toBe(0);
         expect(transparent, `${file} needs transparent canvas`).toBeGreaterThan(opaque);
         expect(opaque, `${file} needs a visible glyph`).toBeGreaterThan(0);
+        const components = opaqueComponents(mask, info.width, info.height);
+        expect(components, `${file} has disconnected decorative rails`).toHaveLength(
+          rank === "10" ? 2 : 1,
+        );
+        for (const component of components) {
+          const componentWidth = component.right - component.left + 1;
+          const componentHeight = component.bottom - component.top + 1;
+          expect(
+            componentWidth / componentHeight,
+            `${file} contains a thin side-rail component`,
+          ).toBeGreaterThan(0.12);
+        }
         masks[tone] = mask;
       }
       expect(
@@ -317,15 +383,35 @@ describe("generated card art", () => {
       ].map((region) =>
         countAlpha(data, info.width, info.height, info.channels, region),
       );
+      const indexZones = [
+        { left: 0.035, top: 0.025, right: 0.275, bottom: 0.295 },
+        { left: 0.725, top: 0.705, right: 0.965, bottom: 0.975 },
+      ].map((region) =>
+        countAlpha(data, info.width, info.height, info.channels, region),
+      );
+      const controlZones = [
+        { left: 0.725, top: 0.025, right: 0.965, bottom: 0.295 },
+        { left: 0.035, top: 0.705, right: 0.275, bottom: 0.975 },
+      ].map((region) =>
+        countAlpha(data, info.width, info.height, info.channels, region),
+      );
 
       let partial = 0;
       let opaque = 0;
+      let alphaSum = 0;
       for (let offset = 3; offset < data.length; offset += info.channels) {
         const alpha = data[offset] ?? 0;
+        alphaSum += alpha;
         if (alpha === 255) opaque += 1;
         else if (alpha > 0) partial += 1;
       }
       const pixels = info.width * info.height;
+      const indexAlpha =
+        indexZones.reduce((sum, region) => sum + region.alphaSum, 0) /
+        indexZones.reduce((sum, region) => sum + region.total * 255, 0);
+      const controlAlpha =
+        controlZones.reduce((sum, region) => sum + region.alphaSum, 0) /
+        controlZones.reduce((sum, region) => sum + region.total * 255, 0);
       expect(center.nonTransparent, `${house} center aperture`).toBe(0);
       expect(
         exterior.reduce((sum, region) => sum + region.nonTransparent, 0),
@@ -335,9 +421,18 @@ describe("generated card art", () => {
         corners.reduce((sum, region) => sum + region.nonTransparent, 0),
         `${house} corners`,
       ).toBe(0);
-      expect(opaque / pixels, `${house} retained ornament`).toBeGreaterThan(0.08);
-      expect(partial / pixels, `${house} antialias contour`).toBeGreaterThan(0);
-      expect(partial / pixels, `${house} antialias contour`).toBeLessThan(0.025);
+      expect(opaque, `${house} frame is not intentionally quiet`).toBe(0);
+      expect(partial / pixels, `${house} visible ornament`).toBeGreaterThan(0.1);
+      expect(partial / pixels, `${house} visible ornament`).toBeLessThan(0.25);
+      expect(alphaSum / (pixels * 255), `${house} weighted coverage`).toBeGreaterThan(
+        0.06,
+      );
+      expect(alphaSum / (pixels * 255), `${house} weighted coverage`).toBeLessThan(
+        0.16,
+      );
+      expect(indexAlpha / controlAlpha, `${house} index-zone attenuation`).toBeLessThan(
+        0.15,
+      );
     }
 
     for (const density of [
@@ -380,19 +475,44 @@ describe("generated card art", () => {
           right: 1,
           bottom: 1,
         });
+        const indexZones = [
+          { left: 0.035, top: 0.025, right: 0.275, bottom: 0.295 },
+          { left: 0.725, top: 0.705, right: 0.965, bottom: 0.975 },
+        ].map((region) =>
+          countAlpha(data, info.width, info.height, info.channels, region),
+        );
+        const controlZones = [
+          { left: 0.725, top: 0.025, right: 0.965, bottom: 0.295 },
+          { left: 0.035, top: 0.705, right: 0.275, bottom: 0.975 },
+        ].map((region) =>
+          countAlpha(data, info.width, info.height, info.channels, region),
+        );
+        const indexAlpha =
+          indexZones.reduce((sum, region) => sum + region.alphaSum, 0) /
+          indexZones.reduce((sum, region) => sum + region.total * 255, 0);
+        const controlAlpha =
+          controlZones.reduce((sum, region) => sum + region.alphaSum, 0) /
+          controlZones.reduce((sum, region) => sum + region.total * 255, 0);
         expect(center.nonTransparent, `${house}${density.suffix} center`).toBe(0);
         expect(
           corners.reduce((sum, region) => sum + region.nonTransparent, 0),
           `${house}${density.suffix} corners`,
         ).toBe(0);
+        expect(whole.partial, `${house}${density.suffix} ordinary-alpha frame`).toBe(
+          whole.nonTransparent,
+        );
         expect(
-          whole.partial / whole.total,
-          `${house}${density.suffix} partial-alpha contour`,
-        ).toBeGreaterThan(0);
+          whole.alphaSum / (whole.total * 255),
+          `${house}${density.suffix} weighted frame coverage`,
+        ).toBeGreaterThan(0.06);
         expect(
-          whole.partial / whole.total,
-          `${house}${density.suffix} partial-alpha contour`,
-        ).toBeLessThan(0.025);
+          whole.alphaSum / (whole.total * 255),
+          `${house}${density.suffix} weighted frame coverage`,
+        ).toBeLessThan(0.16);
+        expect(
+          indexAlpha / controlAlpha,
+          `${house}${density.suffix} index-zone attenuation`,
+        ).toBeLessThan(0.15);
       }
     }
   });

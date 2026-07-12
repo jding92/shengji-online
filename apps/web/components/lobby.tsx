@@ -10,6 +10,7 @@ import { addBot, removeBot } from "../lib/bot-api";
 import { teamLabelForSeat } from "../lib/strings";
 import { LeaveButton } from "./leave-button";
 import { SeatAvatar } from "./seat-avatar";
+import { ChromeButton } from "./ui-chrome";
 
 type LobbyProps = {
   view: PrivateGameView;
@@ -62,13 +63,9 @@ export function Lobby({ view, sendCommand, onLeave }: LobbyProps) {
             <h1>Room {view.roomId}</h1>
             <p>Choose a seat, settle in, and ready up.</p>
           </div>
-          <button
-            className="button button-ghost"
-            type="button"
-            onClick={() => void copyInvite()}
-          >
+          <ChromeButton variant="neutral" onClick={() => void copyInvite()}>
             {copied ? "Copied!" : "Copy invite"}
-          </button>
+          </ChromeButton>
         </div>
 
         <div className="rules-ribbon" aria-label="Room rules">
@@ -172,14 +169,13 @@ export function Lobby({ view, sendCommand, onLeave }: LobbyProps) {
           </div>
           <div className="lobby-footer-actions">
             <LeaveButton onLeave={onLeave} />
-            <button
-              type="button"
-              className="button button-primary"
+            <ChromeButton
+              variant="primary"
               disabled={view.you.seat === null}
               onClick={() => sendCommand({ type: "READY", ready: !you?.ready })}
             >
               {you?.ready ? "Not ready" : "Ready up"}
-            </button>
+            </ChromeButton>
           </div>
         </footer>
       </section>

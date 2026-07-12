@@ -104,11 +104,16 @@ button:disabled:not(.playing-card) {
 .chrome-button {
   position: relative;
   isolation: isolate;
-  min-height: 34px;
+  min-height: 44px;
   border: 0;
-  padding: 6px 11px;
+  padding: 7px 16px;
   cursor: pointer;
   white-space: nowrap;
+}
+.chrome-link {
+  display: inline-grid;
+  align-items: center;
+  text-decoration: none;
 }
 .chrome-button-surface {
   position: absolute;
@@ -253,14 +258,18 @@ button:disabled:not(.playing-card) {
   align-content: center;
 }
 .arcade-mode {
-  display: grid;
-  grid-template-columns: 18px 1fr;
-  gap: 9px;
-  align-items: center;
-  min-height: 66px;
+  width: 100%;
+  min-height: 58px;
   padding: 0 24px;
   cursor: pointer;
   text-align: left;
+}
+.arcade-mode .chrome-button-content {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 18px 1fr;
+  align-items: center;
+  gap: 9px;
 }
 .arcade-mode-caret {
   line-height: 1;
@@ -301,10 +310,6 @@ button:disabled:not(.playing-card) {
   padding: 0 16px;
 }
 .arcade-action {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 18px;
-  align-items: center;
   width: 100%;
   min-height: 52px;
   margin-top: 22px;
@@ -312,6 +317,13 @@ button:disabled:not(.playing-card) {
   cursor: pointer;
   text-align: left;
   text-decoration: none;
+}
+.arcade-action .chrome-button-content {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 18px;
 }
 .arcade-action b {
   line-height: 1;
@@ -332,8 +344,8 @@ button:disabled:not(.playing-card) {
 }
 .difficulty-option {
   min-width: 0;
-  min-height: 40px;
-  padding: 0 5px;
+  min-height: 44px;
+  padding: 0 8px;
   cursor: pointer;
 }
 .menu-error {
@@ -629,14 +641,14 @@ button:disabled:not(.playing-card) {
   height: 72%;
   object-fit: cover;
 }
-/* Two-column round panel; the hero card and primary readouts span both. */
+/* Dashboard information is composed from independent wells, emblems and live
+   readouts. The decorative rail frame remains a replaceable art layer. */
 .round-pills {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 7px;
+  gap: 8px;
 }
 .round-pills > .dashboard-section,
-.team-score-pills > .dashboard-section,
 .round-overview-row > .dashboard-section,
 .bottom-tab {
   display: grid;
@@ -664,7 +676,7 @@ button:disabled:not(.playing-card) {
   margin-bottom: 8px;
 }
 .dashboard-panel > .round-pills {
-  padding: 18px 16px;
+  padding: 20px 17px;
 }
 .level-trump-pill .playing-card,
 .pending-trump-card,
@@ -703,7 +715,7 @@ button:disabled:not(.playing-card) {
 }
 .game-stats-pill {
   align-content: start;
-  gap: 8px !important;
+  gap: 12px !important;
 }
 .current-round-stat,
 .previous-round-stat {
@@ -735,50 +747,140 @@ button:disabled:not(.playing-card) {
   font-weight: 700;
   line-height: 1.2;
 }
+.round-state-copy {
+  color: var(--faint);
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+}
 .points-pill {
-  min-height: 112px;
+  min-height: 126px;
   align-content: center;
 }
-.round-pills .points-pill > strong {
+.points-total {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.round-pills .points-total > strong {
   font-size: 2.55rem !important;
   font-weight: 900;
   line-height: 1;
 }
 .team-score-pills {
+  position: relative;
   display: grid;
   grid-column: 1 / -1;
   grid-template-columns: 1fr 1fr;
-  gap: 7px;
+  gap: 10px;
 }
 .team-score-pill {
-  min-height: 86px;
-  align-content: center;
-}
-.round-pills .team-score-pill > strong {
-  font-size: 1.45rem !important;
-  font-weight: 900;
-}
-.team-score-pill em {
-  display: flex;
+  display: grid;
+  min-width: 0;
+  min-height: 132px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto 1fr;
   align-items: center;
-  gap: 4px;
-  border-radius: 999px;
-  padding: 3px 7px;
-  font-size: 0.58rem;
-  font-style: normal;
-  font-weight: 850;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  gap: 3px 5px;
+  border: 2px solid var(--panel-edge);
+  border-radius: 8px;
+  padding: 9px 7px 8px;
+  background: var(--well-deep);
+  box-shadow: inset 0 3px 0 rgba(0, 0, 0, 0.4);
+  text-align: center;
 }
-/* 攻/守 tag on nameplates and the points projection stack the same way in
-   every skin; themes only recolor them. */
+.round-pills .team-score-name {
+  grid-column: 1 / -1;
+  overflow: hidden;
+  width: 100%;
+  color: var(--text-soft);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.team-score-pill > .role-medallion {
+  width: 54px;
+  height: 54px;
+  justify-self: center;
+}
+.team-rank {
+  display: grid;
+  min-width: 24px;
+  align-content: center;
+  justify-items: center;
+}
+.round-pills .team-rank small {
+  color: var(--faint);
+  font-size: 0.48rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+.round-pills .team-rank strong {
+  color: var(--team-color, var(--gold));
+  font-size: 2rem !important;
+  font-weight: 900;
+  line-height: 1;
+}
+.team-versus {
+  position: absolute;
+  z-index: 2;
+  top: 58%;
+  left: 50%;
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 1px solid rgba(242, 184, 75, 0.65);
+  border-radius: 50%;
+  background: #12100f;
+  color: var(--gold);
+  font-family: var(--font-num);
+  font-size: 0.55rem;
+  font-weight: 850;
+  transform: translate(-50%, -50%);
+}
+.role-medallion {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  object-fit: contain;
+}
+.role-medallion.is-compact {
+  width: 30px;
+  height: 30px;
+}
+.role-medallion-pending {
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--panel-edge);
+  border-radius: 50%;
+  color: var(--faint);
+  font-family: var(--font-num);
+  font-size: 1.5rem;
+  font-weight: 850;
+}
+/* Legacy role tags remain available outside the dashboard; the dashboard uses
+   registry-backed role emblems instead. */
 .role-tag {
   margin-left: 5px;
 }
 .points-projection {
   display: grid;
-  gap: 2px;
-  justify-items: center;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 1px 7px;
+  justify-self: center;
+}
+.points-projection .role-medallion {
+  grid-row: 1 / span 2;
+}
+.points-projection b {
+  justify-self: start;
+  font-style: normal;
 }
 .points-meter {
   position: relative;
@@ -804,24 +906,6 @@ button:disabled:not(.playing-card) {
   height: 11px;
   background: rgba(255, 255, 255, 0.8);
 }
-.team-score-pill.is-defending {
-  border-color: var(--gold) !important;
-}
-.team-score-pill.is-defending em {
-  background: var(--gold);
-  color: #352205;
-}
-.team-score-pill.is-attacking {
-  border-color: var(--accent-bright) !important;
-}
-.team-score-pill.is-attacking em {
-  background: var(--accent);
-  color: #fff;
-}
-.team-score-pill.is-pending em {
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--faint);
-}
 .team-score-pill.team-blue {
   --team-color: var(--team-blue);
 }
@@ -830,16 +914,7 @@ button:disabled:not(.playing-card) {
 }
 .team-score-pill.team-blue,
 .team-score-pill.team-red {
-  border-color: var(--team-color) !important;
-}
-.round-pills .team-score-pill.team-blue > strong,
-.round-pills .team-score-pill.team-red > strong {
-  color: var(--team-color) !important;
-}
-.team-score-pill.team-blue em,
-.team-score-pill.team-red em {
-  background: color-mix(in srgb, var(--team-color) 20%, transparent);
-  color: var(--team-color);
+  border-color: color-mix(in srgb, var(--team-color) 72%, var(--panel-edge)) !important;
 }
 /* Progress readouts become calmer as level/points climb; low values carry
    the same urgency cue as a nearly expired timer. */
@@ -859,6 +934,11 @@ button:disabled:not(.playing-card) {
   display: grid;
   gap: 10px;
   margin-top: auto;
+}
+.side-actions .chrome-button {
+  width: 100%;
+  min-height: 44px;
+  font-style: normal;
 }
 .capitalize {
   text-transform: capitalize;
@@ -899,22 +979,20 @@ button:disabled:not(.playing-card) {
   container-type: size;
 }
 .table-orbit {
-  --seat-ring-clearance: 8px;
+  --seat-ring-clearance: 2px;
+  --orbit-size: max(300px, min(700px, calc(100cqh - 250px), calc(100cqw - 680px)));
+  --side-module-width: 216px;
+  /* Keep side modules close to the felt edge on wide boards, then let them
+     move toward the orbit only when the horizontal lane contracts. */
+  --side-seat-clearance: max(
+    18px,
+    calc((100cqw - var(--orbit-size)) / 2 - var(--side-module-width) - 12px)
+  );
+  --player-tag-height: 64px;
 
   position: relative;
-  width: max(300px, min(700px, calc(100dvh - 400px), calc(100vw - 900px)));
+  width: var(--orbit-size);
   aspect-ratio: 1;
-}
-.table-orbit > .table-seat .player-tag {
-  width: 220px;
-  height: 70px;
-  grid-template-columns: 52px minmax(0, 1fr) auto;
-  padding: 7px 27px 7px 6px;
-}
-.table-orbit > .table-seat .player-tag-portrait,
-.table-orbit > .table-seat .player-tag .seat-portrait {
-  width: 52px;
-  height: 52px;
 }
 .table-ring {
   position: absolute;
@@ -930,14 +1008,16 @@ button:disabled:not(.playing-card) {
   z-index: var(--z-seats);
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 4px;
 }
 .seat-north {
   top: auto;
   bottom: calc(100% + var(--seat-ring-clearance));
   left: 50%;
   transform: translateX(-50%);
-  flex-direction: column-reverse;
+  /* North mirrors the local POV: cards toward the screen edge, tag toward
+     the table. */
+  flex-direction: column;
 }
 .seat-south {
   top: 100%;
@@ -946,28 +1026,35 @@ button:disabled:not(.playing-card) {
 }
 .seat-west {
   top: 50%;
-  right: calc(100% + var(--seat-ring-clearance));
+  right: calc(100% + var(--side-seat-clearance));
   left: auto;
   transform: translateY(-50%);
-  flex-direction: row-reverse;
+  /* Side tags use the vertical lane above/below each deck instead of
+     consuming the horizontal lane between the cards and table. */
+  flex-direction: column;
 }
 .seat-east {
   top: 50%;
   right: auto;
-  left: calc(100% + var(--seat-ring-clearance));
+  left: calc(100% + var(--side-seat-clearance));
   transform: translateY(-50%);
-  flex-direction: row;
+  flex-direction: column-reverse;
 }
 .player-tag {
+  --player-tag-portrait-size: 46px;
+
   position: relative;
   display: grid;
   isolation: isolate;
-  width: 244px;
-  height: 78px;
-  grid-template-columns: 58px minmax(0, 1fr) auto;
+  width: 216px;
+  height: var(--player-tag-height, 64px);
+  grid-template-columns: var(--player-tag-portrait-size) minmax(0, 1fr);
   align-items: center;
-  gap: 8px;
-  padding: 8px 30px 8px 7px;
+  gap: 4px;
+  padding: 5px 26px 5px 4px;
+}
+.player-tag.has-timer {
+  grid-template-columns: var(--player-tag-portrait-size) minmax(0, 1fr) 38px;
 }
 .player-tag-surface,
 .player-tag-ornament {
@@ -987,20 +1074,22 @@ button:disabled:not(.playing-card) {
 }
 .player-tag-portrait {
   display: grid;
-  width: 58px;
-  height: 58px;
+  width: var(--player-tag-portrait-size);
+  height: var(--player-tag-portrait-size);
   place-items: center;
   flex-shrink: 0;
 }
 .player-tag .seat-portrait {
-  width: 58px;
-  height: 58px;
+  width: var(--player-tag-portrait-size);
+  height: var(--player-tag-portrait-size);
   flex-shrink: 0;
 }
 .player-tag-content {
-  display: grid;
+  display: flex;
+  overflow: hidden;
   min-width: 0;
-  gap: 3px;
+  align-items: center;
+  gap: 6px;
   white-space: nowrap;
 }
 .player-tag-name-row,
@@ -1009,39 +1098,36 @@ button:disabled:not(.playing-card) {
   align-items: center;
   gap: 5px;
 }
+.player-tag-name-row {
+  min-width: 0;
+}
+.player-tag-meta {
+  flex-shrink: 0;
+}
 .player-tag-name {
+  display: block;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.player-tag-meta > span:first-child {
-  overflow: hidden;
-  text-overflow: ellipsis;
+.player-badge-icon {
+  display: block;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  object-fit: contain;
 }
-/* The 庄 (banker) crest marks the round's declarer, next to their name. */
+/* Leader, role, and player-type glyphs share one optical box and rhythm. */
 .leader-badge {
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-}
-.player-tag .bot-badge {
-  position: static;
-  padding: 3px 7px;
-  font-size: 0.62rem;
-}
-.seat-count {
-  white-space: nowrap;
+  flex: 0 0 22px;
 }
 .player-status {
-  position: relative;
   z-index: 2;
   display: grid;
-  min-width: 34px;
-  gap: 3px;
   place-items: center;
 }
 .seat-timer-badge {
-  z-index: 2;
+  display: grid;
+  place-items: center;
   pointer-events: none;
 }
 .seat-timer-badge .countdown {
@@ -1072,6 +1158,7 @@ button:disabled:not(.playing-card) {
 }
 .south-cluster .table-seat {
   position: static;
+  margin-right: 48px;
   transform: none;
 }
 .south-slot {
@@ -1090,6 +1177,17 @@ button:disabled:not(.playing-card) {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+.table-action-button {
+  min-height: var(--player-tag-height, 64px);
+  padding-inline: 24px;
+}
+.clear-action-button {
+  min-width: 92px;
+}
+.play-action-button {
+  min-width: 112px;
+  font-size: 0.86rem;
 }
 .bid-passed-status {
   color: var(--gold);
@@ -1115,23 +1213,53 @@ button:disabled:not(.playing-card) {
 }
 /* Team coding: even seats blue, odd seats red — reinforces the plaque
    labels. The turn glow (gold) has higher specificity and still wins. */
-.table-seat.team-blue .player-tag {
+.table-seat.team-blue {
   --player-team-color: var(--team-blue);
 }
-.table-seat.team-red .player-tag {
+.table-seat.team-red {
   --player-team-color: var(--team-red);
 }
 /* Fan of card backs; the component computes size and per-card offsets. */
 .mini-hand {
+  --mini-card-width: 60px;
+  --mini-card-height: 86px;
+  --mini-fan-step: 18px;
+
   position: relative;
+  width: calc(var(--mini-card-width) + (var(--fan-count) - 1) * var(--mini-fan-step));
+  height: var(--mini-card-height);
+}
+.seat-north .mini-hand {
+  --mini-fan-step: clamp(12px, 1.55cqw, 28px);
+}
+.seat-east .mini-hand,
+.seat-west .mini-hand {
+  --mini-card-width: clamp(56px, 3.7cqw, 68px);
+  --mini-card-height: clamp(81px, 5.3cqw, 98px);
+  --mini-fan-step: clamp(11px, 2.65cqh, 24px);
 }
 .mini-card {
   position: absolute;
-  width: 75px;
-  height: 108px;
+  top: 0;
+  left: calc(var(--fan-index) * var(--mini-fan-step));
+  width: var(--mini-card-width);
+  height: var(--mini-card-height);
+}
+.mini-card .card-back {
+  width: 100%;
+  height: 100%;
 }
 /* Side seats hold their cards sideways, facing the middle of the table. */
+.mini-hand.is-vertical {
+  width: var(--mini-card-height);
+  height: calc(var(--mini-card-width) + (var(--fan-count) - 1) * var(--mini-fan-step));
+}
 .mini-hand.is-vertical .mini-card {
+  top: calc(
+    var(--fan-index) * var(--mini-fan-step) -
+      (var(--mini-card-height) - var(--mini-card-width)) / 2
+  );
+  left: calc((var(--mini-card-height) - var(--mini-card-width)) / 2);
   transform: rotate(90deg);
 }
 /* Only the top card of a fan shows its 升 crest; the covered ones would
@@ -1225,6 +1353,7 @@ button:disabled:not(.playing-card) {
   position: absolute;
   display: flex;
   align-items: center;
+  gap: 6px;
 }
 .trick-plays {
   position: absolute;
@@ -1256,9 +1385,6 @@ button:disabled:not(.playing-card) {
   white-space: nowrap;
 }
 .center-play .playing-card {
-  margin-left: -51px;
-}
-.center-play .playing-card:first-child {
   margin-left: 0;
 }
 .center-play > span {
@@ -1270,15 +1396,36 @@ button:disabled:not(.playing-card) {
 }
 .play-south {
   bottom: 0;
+  left: 50%;
+  translate: -50% 0;
 }
 .play-east {
   right: 4%;
+  top: 50%;
+  translate: 0 -50%;
 }
 .play-north {
   top: 0;
+  left: 50%;
+  translate: -50% 0;
 }
 .play-west {
+  top: 50%;
   left: 4%;
+  translate: 0 -50%;
+}
+/* Dense trick fans are a compact-screen fallback only. On a roomy table every
+   card stays fully readable and each play remains anchored to its seat. */
+@container (max-width: 760px) or (max-height: 560px) {
+  .center-play {
+    gap: 0;
+  }
+  .center-play .playing-card {
+    margin-left: -51px;
+  }
+  .center-play .playing-card:first-child {
+    margin-left: 0;
+  }
 }
 .table-watermark {
   display: grid;
@@ -1339,10 +1486,15 @@ button:disabled:not(.playing-card) {
   cursor: default;
 }
 .playing-card.is-selected {
-  z-index: var(--z-card-selected);
+  /* Later cards retain paint priority, so a lifted card never blocks the
+     cards to its right from view or selection. */
+  z-index: auto;
 }
 .playing-card:is(:hover, :focus-visible) {
   z-index: var(--z-card-hover);
+}
+.hand-scroll .playing-card:is(:hover, :focus-visible) {
+  z-index: auto;
 }
 .card-surface {
   position: absolute;
@@ -1643,8 +1795,10 @@ button:disabled:not(.playing-card) {
   .round-pills {
     gap: 5px;
   }
+  .dashboard-panel > .round-pills {
+    padding: 14px 12px;
+  }
   .round-pills > .dashboard-section,
-  .team-score-pills > .dashboard-section,
   .round-overview-row > .dashboard-section,
   .bottom-tab {
     padding: 7px 6px;
@@ -1660,60 +1814,45 @@ button:disabled:not(.playing-card) {
     height: 123px;
   }
   .team-score-pill {
-    min-height: 72px;
+    min-height: 108px;
+    column-gap: 3px;
+    padding: 7px 5px 6px;
+  }
+  .team-score-pill > .role-medallion {
+    width: 44px;
+    height: 44px;
+  }
+  .round-pills .team-rank strong {
+    font-size: 1.65rem !important;
+  }
+  .team-versus {
+    width: 24px;
+    height: 24px;
   }
   .points-pill {
-    min-height: 88px;
+    min-height: 102px;
   }
-  .round-pills .points-pill > strong {
+  .round-pills .points-total > strong {
     font-size: 2rem !important;
   }
   .player-tag {
-    width: 210px;
-    height: 70px;
-    grid-template-columns: 52px minmax(0, 1fr) auto;
-    padding: 7px 29px 7px 6px;
+    --player-tag-portrait-size: 42px;
+
+    width: 204px;
+    height: 60px;
+    padding: 5px 24px 5px 4px;
   }
-  .player-tag-portrait,
-  .player-tag .seat-portrait {
-    width: 52px;
-    height: 52px;
-  }
-  /* Compact only the opponent modules that orbit the ring. This preserves the
-     local controls while reserving enough real clearance above and beside a
-     centered ring at laptop-height viewports. */
   .table-orbit > .table-seat {
     gap: 6px;
   }
-  .table-orbit > .table-seat .player-tag {
-    width: 176px;
-    height: 56px;
-    grid-template-columns: 40px minmax(0, 1fr) 28px;
-    gap: 5px;
-    padding: 5px 22px 5px 4px;
-  }
-  .table-orbit > .table-seat .player-tag-portrait,
-  .table-orbit > .table-seat .player-tag .seat-portrait {
-    width: 40px;
-    height: 40px;
-  }
-  .seat-north .mini-hand {
-    margin-top: -54px;
-    transform: scale(0.5);
-    transform-origin: center bottom;
-  }
-  .seat-east .mini-hand {
-    margin-right: -54px;
-    transform: scale(0.5);
-    transform-origin: left center;
-  }
-  .seat-west .mini-hand {
-    margin-left: -54px;
-    transform: scale(0.5);
-    transform-origin: right center;
+  .mini-hand {
+    --mini-card-width: 56px;
+    --mini-card-height: 81px;
+    --mini-fan-step: 13px;
   }
   .table-orbit {
-    width: max(260px, min(560px, calc(100dvh - 440px), calc(100vw - 900px)));
+    --orbit-size: max(260px, min(560px, calc(100cqh - 230px), calc(100cqw - 610px)));
+    --side-module-width: 204px;
   }
   .hand-scroll {
     height: 182px;
@@ -1728,17 +1867,26 @@ button:disabled:not(.playing-card) {
     height: 100dvh;
   }
   .side-panel {
+    height: 132px;
     width: 100%;
-    max-height: 144px;
+    max-height: 132px;
     flex-direction: row;
     align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
+    gap: 6px;
+    padding: 6px 8px;
     overflow-x: auto;
     overflow-y: hidden;
   }
   .side-panel .brand-lockup {
+    width: 108px;
     flex-shrink: 0;
+    gap: 6px;
+  }
+  .side-panel .brand-lockup strong {
+    font-size: 0.78rem;
+  }
+  .side-panel .brand-lockup small {
+    font-size: 0.48rem;
   }
   .round-pills {
     display: flex;
@@ -1757,18 +1905,42 @@ button:disabled:not(.playing-card) {
     padding: 0;
   }
   .team-score-pills {
-    width: 230px;
-    height: 112px;
+    width: 186px;
+    height: 104px;
     grid-column: auto;
+    gap: 5px;
+  }
+  .team-score-pill {
+    min-height: 104px;
+    grid-template-columns: minmax(0, 1fr) 24px;
+    padding: 5px 4px;
+  }
+  .team-score-pill > .role-medallion {
+    width: 40px;
+    height: 40px;
+  }
+  .round-pills .team-score-name {
+    font-size: 0.49rem;
+  }
+  .round-pills .team-rank small {
+    display: none;
+  }
+  .round-pills .team-rank strong {
+    font-size: 1.45rem !important;
+  }
+  .team-versus {
+    width: 20px;
+    height: 20px;
+    font-size: 0.44rem;
   }
   .round-overview-row {
-    width: 230px;
-    height: 112px;
+    width: 178px;
+    height: 104px;
     grid-column: auto;
   }
   .points-pill {
-    width: 145px;
-    height: 112px;
+    width: 140px;
+    height: 104px;
   }
   .points-pill,
   .team-score-pills,
@@ -1783,22 +1955,50 @@ button:disabled:not(.playing-card) {
   .level-trump-pill .playing-card,
   .pending-trump-card,
   .generic-joker-card {
-    width: 56px;
-    height: 81px;
+    width: 50px;
+    height: 72px;
   }
   .level-trump-pill > .dashboard-section-label {
     margin-bottom: 0;
   }
   .bottom-tab {
-    width: 150px;
-    height: 112px;
+    width: 116px;
+    height: 104px;
     flex-shrink: 0;
+  }
+  .bottom-tab .bottom-tab-icon {
+    width: 34px;
+    height: 34px;
+  }
+  .bottom-tab small {
+    font-size: 0.5rem !important;
+  }
+  .points-total {
+    min-height: 30px;
+    gap: 5px;
+  }
+  .round-pills .points-total > strong {
+    font-size: 1.75rem !important;
+  }
+  .points-projection {
+    padding: 3px 5px !important;
+  }
+  .points-projection .role-medallion {
+    width: 24px;
+    height: 24px;
+  }
+  .points-projection b {
+    font-size: 0.62rem;
   }
   .side-actions {
     margin-top: 0;
     margin-left: auto;
     grid-auto-flow: column;
     align-items: center;
+    gap: 5px;
+  }
+  .side-actions .leave-button {
+    padding-inline: 10px;
   }
   /* No side offset once the sidebar is a top bar. */
   .throw-banner {
@@ -1812,7 +2012,21 @@ button:disabled:not(.playing-card) {
     padding: 12px 18px 0;
   }
   .table-orbit {
-    width: max(220px, min(460px, calc(100dvh - 548px), calc(100vw - 804px)));
+    --orbit-size: max(220px, min(460px, calc(100cqh - 235px), calc(100cqw - 590px)));
+    --side-module-width: 198px;
+  }
+  .player-tag {
+    --player-tag-portrait-size: 44px;
+
+    width: 198px;
+    height: 62px;
+    gap: 4px;
+    padding: 5px 23px 5px 4px;
+  }
+  .mini-hand {
+    --mini-card-width: 58px;
+    --mini-card-height: 84px;
+    --mini-fan-step: 10px;
   }
 }
 
@@ -1874,25 +2088,18 @@ button:disabled:not(.playing-card) {
     display: none;
   }
   .player-tag {
-    width: 168px;
+    --player-tag-portrait-size: 44px;
+
+    width: 188px;
     height: 62px;
-    grid-template-columns: 44px minmax(0, 1fr) 30px;
-    gap: 6px;
+    gap: 4px;
     padding: 6px 22px 6px 5px;
-  }
-  .player-tag-portrait {
-    width: 44px;
-    height: 44px;
-  }
-  .player-tag .seat-portrait {
-    width: 44px;
-    height: 44px;
-  }
-  .player-tag-meta > span:first-child {
-    display: none;
   }
   .mini-hand {
     display: none;
+  }
+  .south-cluster .table-seat {
+    margin-right: 0;
   }
   .seat-east {
     right: 0;
@@ -1936,6 +2143,10 @@ button:disabled:not(.playing-card) {
     min-height: 38px;
     padding-inline: 12px;
     white-space: nowrap;
+  }
+  .table-action-button {
+    min-height: 48px;
+    padding-inline: 14px;
   }
   .round-summary {
     padding: 32px 22px;

@@ -6,6 +6,7 @@ import { useGameRoom } from "../hooks/use-game-room";
 import { NOTICE_DISMISS_MS, TOAST_DISMISS_MS } from "../lib/constants";
 import { GameTable } from "./game-table";
 import { Lobby } from "./lobby";
+import { ChromeButton } from "./ui-chrome";
 
 /** Announces seat connection changes ("Ada disconnected") as passing notices. */
 function useConnectionNotices(
@@ -186,12 +187,13 @@ export function RoomClient({
               value={name}
               onChange={(event) => setName(event.target.value)}
             />
-            <button
-              className="button button-primary"
+            <ChromeButton
+              type="submit"
+              variant="primary"
               disabled={joining || name.trim().length === 0}
             >
               {joining ? "Joining…" : "Take a seat"}
-            </button>
+            </ChromeButton>
           </form>
         </section>
         {joinError && (

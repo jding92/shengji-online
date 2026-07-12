@@ -1,5 +1,7 @@
 "use client";
 
+import { ChromeButton } from "../components/ui-chrome";
+
 export default function RoomError({ reset }: { error: Error; reset: () => void }) {
   return (
     <main className="join-shell">
@@ -10,9 +12,9 @@ export default function RoomError({ reset }: { error: Error; reset: () => void }
           The page hit an unexpected error. Your seat and hand are safe on the server —
           reload to pick up where you left off.
         </p>
-        <button type="button" className="button button-primary" onClick={() => reset()}>
+        <ChromeButton variant="primary" onClick={() => reset()}>
           Reload the table
-        </button>
+        </ChromeButton>
       </section>
     </main>
   );

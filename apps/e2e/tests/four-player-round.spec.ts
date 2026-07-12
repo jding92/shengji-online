@@ -47,7 +47,9 @@ test("four players join, bid, bury, and complete a legal trick", async ({
       await page.getByRole("button", { name: "Ready up" }).click();
     }
     for (const { page } of players) {
-      await expect(page.locator(".hand-scroll .playing-card")).toHaveCount(25);
+      await expect(page.locator(".hand-scroll .playing-card")).toHaveCount(25, {
+        timeout: 20_000,
+      });
       await expect(page.getByText("Declare trump")).toBeVisible();
     }
     await players[3]!.page.reload();

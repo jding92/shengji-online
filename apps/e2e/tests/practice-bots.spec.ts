@@ -4,23 +4,39 @@ test("practice drops the human straight into a game against three bots", async (
   page,
 }) => {
   await page.goto("/");
+  await expect(page.getByRole("tab", { name: "Create table" })).toHaveAttribute(
+    "data-chrome-button-surface",
+    "ui.button.primary",
+  );
+  await expect(page.getByRole("tab", { name: "Join table" })).toHaveAttribute(
+    "data-chrome-button-surface",
+    "ui.button.neutral",
+  );
   await page.getByRole("tab", { name: "Practice" }).click();
+  await expect(page.getByRole("tab", { name: "Practice" })).toHaveAttribute(
+    "data-chrome-button-surface",
+    "ui.button.primary",
+  );
   await page
     .getByRole("group", { name: "Practice difficulty" })
     .getByRole("button", { name: "Advanced" })
     .click();
+  await expect(page.getByRole("button", { name: "Advanced" })).toHaveAttribute(
+    "data-chrome-button-surface",
+    "ui.button.gold",
+  );
   await page.getByRole("button", { name: "Start practice" }).click();
 
   // No manual lobby step: the human is auto-seated, auto-readied, and dealt in.
   await expect(page.locator(".hand-scroll .playing-card")).toHaveCount(25, {
     timeout: 15_000,
   });
-  await expect(page.locator(".table-seat .bot-badge")).toHaveCount(3);
+  await expect(page.locator('.table-seat [data-player-type="bot"]')).toHaveCount(3);
   // The lobby ready control and the legacy practice switcher are both gone.
   await expect(page.getByRole("button", { name: "Ready up" })).toHaveCount(0);
   await expect(page.getByRole("tablist", { name: "Practice players" })).toHaveCount(0);
   // Bots bid and play on their own.
-  await expect(page.locator(".bid-badge")).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator(".bid-badge").first()).toBeVisible({ timeout: 15_000 });
   await expect(page.locator(".center-play").first()).toBeVisible({ timeout: 25_000 });
 });
 
@@ -37,6 +53,7 @@ test("table orbit and HUD stay usable at supported desktop viewports", async ({
 
   for (const viewport of [
     { width: 2561, height: 1286 },
+    { width: 2048, height: 1118 },
     { width: 1499, height: 828 },
     { width: 1280, height: 720 },
     { width: 1024, height: 768 },
@@ -70,12 +87,26 @@ test("table orbit and HUD stay usable at supported desktop viewports", async ({
       const felt = rect(".felt-table");
       const orbit = rect(".table-orbit");
       const northTag = rect(".seat-north .player-tag");
+      const eastTag = rect(".seat-east .player-tag");
+      const westTag = rect(".seat-west .player-tag");
+      const northFan = rect(".seat-north .mini-hand");
+      const eastFan = rect(".seat-east .mini-hand");
+      const westFan = rect(".seat-west .mini-hand");
       const hand = rect(".hand-scroll");
       const firstHandCard = rect(".hand-scroll .playing-card");
+      const localTag = rect(".seat-south .player-tag");
+      const localStatus = rect(".seat-south .player-status");
+      const localTimer = rect(".seat-south .seat-timer-badge");
+      const playerTags = [...document.querySelectorAll(".player-tag")].map((tag) =>
+        tag.getBoundingClientRect(),
+      );
       const handCards = [
         ...document.querySelectorAll(".hand-scroll .playing-card"),
       ].map((card) => card.getBoundingClientRect());
       const actions = rect(".south-cluster");
+      const actionSlot = rect(".south-right");
+      const soundButton = rect(".sound-toggle");
+      const leaveButton = rect(".side-actions .leave-button");
       const dashboard = document.querySelector(".side-panel");
       if (!(dashboard instanceof HTMLElement)) throw new Error("Missing dashboard");
       const dashboardRect = dashboard.getBoundingClientRect();
@@ -92,9 +123,19 @@ test("table orbit and HUD stay usable at supported desktop viewports", async ({
             seat.classList.contains(`seat-${candidate}`),
           );
           if (position === undefined) throw new Error("Unknown opponent position");
-          return { position, rect: rectValues(fanRect) };
+          const card = fan.querySelector(".mini-card .card-back");
+          if (!(card instanceof HTMLElement)) throw new Error("Fan missing card back");
+          return {
+            position,
+            rect: rectValues(fanRect),
+            card: rectValues(card.getBoundingClientRect()),
+          };
         },
       );
+      const eastSeat = rect(".seat-east");
+      const westSeat = rect(".seat-west");
+      const tagWidths = playerTags.map((tag) => tag.width);
+      const tagHeights = playerTags.map((tag) => tag.height);
       const opponentModules = [
         ...document.querySelectorAll(
           ".table-orbit > .table-seat .player-tag, .table-orbit > .table-seat .mini-hand",
@@ -113,6 +154,8 @@ test("table orbit and HUD stay usable at supported desktop viewports", async ({
         northHudOverlap: dashboardRect.bottom - northTag.top,
         dashboardHasNoVerticalOverflow:
           dashboard.scrollHeight <= dashboard.clientHeight + 1,
+        dashboardHasNoHorizontalOverflow:
+          !horizontalHud || dashboard.scrollWidth <= dashboard.clientWidth + 1,
         dashboardSectionsVisible:
           !horizontalHud ||
           sections.every(
@@ -136,6 +179,58 @@ test("table orbit and HUD stay usable at supported desktop viewports", async ({
         actionsVisible:
           actions.left < window.innerWidth && actions.right > 0 && actions.bottom > 0,
         actionsClearHandCards: actions.bottom <= firstHandCard.top + 1,
+        timerContained:
+          localTimer.top >= localStatus.top - 1 &&
+          localTimer.right <= localStatus.right + 1 &&
+          localTimer.bottom <= localStatus.bottom + 1 &&
+          localTimer.left >= localStatus.left - 1,
+        timerContainedInTag:
+          localTimer.top >= localTag.top - 1 &&
+          localTimer.right <= localTag.right + 1 &&
+          localTimer.bottom <= localTag.bottom + 1 &&
+          localTimer.left >= localTag.left - 1,
+        timerCenterDelta: Math.abs(
+          (localTimer.top + localTimer.bottom) / 2 -
+            (localTag.top + localTag.bottom) / 2,
+        ),
+        actionClearsTimer: actionSlot.left >= localTimer.right + 8,
+        actionCenterDelta: Math.abs(
+          (actionSlot.top + actionSlot.bottom) / 2 -
+            (localTag.top + localTag.bottom) / 2,
+        ),
+        seatTagsUseVerticalLanes:
+          northTag.top >= northFan.bottom - 1 &&
+          eastTag.bottom <= eastFan.top + 1 &&
+          westTag.top >= westFan.bottom - 1,
+        sideFansFillVerticalLane:
+          Math.min(eastFan.height, westFan.height) / felt.height,
+        northFanFillsHorizontalLane: northFan.width / felt.width,
+        sideEdgeGap: Math.max(westTag.left - felt.left, felt.right - eastTag.right),
+        sidebarButtonHeightDelta: Math.abs(soundButton.height - leaveButton.height),
+        compactStatusGeometry: {
+          tag: rectValues(localTag),
+          status: rectValues(localStatus),
+          timer: rectValues(localTimer),
+        },
+        tagsShareDimensions:
+          Math.max(...tagWidths) - Math.min(...tagWidths) <= 1 &&
+          Math.max(...tagHeights) - Math.min(...tagHeights) <= 1,
+        smallestOpponentCardScale: Math.min(
+          ...opponentFans.map(
+            ({ card }) =>
+              Math.min(card.width, card.height) /
+              Math.min(firstHandCard.width, firstHandCard.height),
+          ),
+        ),
+        opponentFansHaveReadableSpread: opponentFans.every(
+          ({ position, rect: fan, card }) =>
+            (position === "north" ? fan.width : fan.height) >=
+            Math.min(card.width, card.height) * 3,
+        ),
+        sideSeatClearance: Math.min(
+          eastSeat.left - orbit.right,
+          orbit.left - westSeat.right,
+        ),
         opponentFansOutsideRing: opponentFans.every(({ position, rect: fan }) => {
           if (position === "north") return fan.bottom <= orbit.top - ringClearance;
           if (position === "east") return fan.left >= orbit.right + ringClearance;
@@ -148,6 +243,7 @@ test("table orbit and HUD stay usable at supported desktop viewports", async ({
             module.bottom <= window.innerHeight + 1 &&
             module.left >= -1,
         ),
+        opponentModuleGeometry: opponentModules.map(rectValues),
       };
     });
 
@@ -165,6 +261,10 @@ test("table orbit and HUD stay usable at supported desktop viewports", async ({
       `${viewport.width}x${viewport.height}: north tag overlaps HUD by ${layout.northHudOverlap}px`,
     ).toBe(true);
     expect(layout.dashboardHasNoVerticalOverflow).toBe(true);
+    expect(
+      layout.dashboardHasNoHorizontalOverflow,
+      `${viewport.width}x${viewport.height}: dashboard horizontal overflow`,
+    ).toBe(true);
     expect(layout.dashboardSectionsVisible).toBe(true);
     expect(layout.dashboardKeepsHorizontalScroll).toBe(true);
     expect(
@@ -177,8 +277,42 @@ test("table orbit and HUD stay usable at supported desktop viewports", async ({
     ).toBe(true);
     expect(layout.actionsVisible).toBe(true);
     expect(layout.actionsClearHandCards).toBe(true);
+    expect(
+      layout.timerContained,
+      `${viewport.width}x${viewport.height}: compact timer ${JSON.stringify(layout.compactStatusGeometry)}`,
+    ).toBe(true);
+    expect(layout.timerContainedInTag).toBe(true);
+    expect(
+      layout.timerCenterDelta,
+      `${viewport.width}x${viewport.height}: timer vertical centering`,
+    ).toBeLessThanOrEqual(1);
+    expect(layout.actionClearsTimer).toBe(true);
+    expect(layout.actionCenterDelta).toBeLessThanOrEqual(1);
+    expect(layout.seatTagsUseVerticalLanes).toBe(true);
+    expect(layout.sideFansFillVerticalLane).toBeGreaterThanOrEqual(0.45);
+    expect(layout.northFanFillsHorizontalLane).toBeGreaterThanOrEqual(0.28);
+    if (viewport.width > 1440) {
+      expect(
+        layout.sideEdgeGap,
+        `${viewport.width}x${viewport.height}: side module edge gap`,
+      ).toBeLessThanOrEqual(14);
+    }
+    expect(layout.sidebarButtonHeightDelta).toBeLessThanOrEqual(1);
+    expect(layout.tagsShareDimensions).toBe(true);
+    expect(
+      layout.smallestOpponentCardScale,
+      `${viewport.width}x${viewport.height}: opponent card scale`,
+    ).toBeGreaterThanOrEqual(0.5);
+    expect(layout.opponentFansHaveReadableSpread).toBe(true);
+    expect(
+      layout.sideSeatClearance,
+      `${viewport.width}x${viewport.height}: side-seat ring clearance`,
+    ).toBeGreaterThanOrEqual(viewport.width > 1100 ? 17 : 7);
     expect(layout.opponentFansOutsideRing).toBe(true);
-    expect(layout.opponentModulesWithinViewport).toBe(true);
+    expect(
+      layout.opponentModulesWithinViewport,
+      `${viewport.width}x${viewport.height}: opponent modules ${JSON.stringify(layout.opponentModuleGeometry)}`,
+    ).toBe(true);
   }
 });
 

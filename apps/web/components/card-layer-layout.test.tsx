@@ -6,6 +6,7 @@ import { beforeAll, describe, expect, test } from "vitest";
 import { CardFace } from "./card-face";
 
 let globalCss = "";
+let mythicCss = "";
 let trickCenterSource = "";
 let gameTableSource = "";
 let roundSummarySource = "";
@@ -14,12 +15,14 @@ let roomClientSource = "";
 beforeAll(async () => {
   [
     globalCss,
+    mythicCss,
     trickCenterSource,
     gameTableSource,
     roundSummarySource,
     roomClientSource,
   ] = await Promise.all([
     readFile(path.resolve(process.cwd(), "app/globals.css"), "utf8"),
+    readFile(path.resolve(process.cwd(), "app/themes/mythic.css"), "utf8"),
     readFile(path.resolve(process.cwd(), "components/trick-center.tsx"), "utf8"),
     readFile(path.resolve(process.cwd(), "components/game-table.tsx"), "utf8"),
     readFile(path.resolve(process.cwd(), "components/round-summary-modal.tsx"), "utf8"),
@@ -96,6 +99,40 @@ describe("card primitive layout", () => {
     expect(backRule).toContain("object-fit: fill");
     expect(backRule).not.toContain("object-fit: cover");
     expect(backRule).not.toMatch(/\bopacity\s*:/);
+  });
+
+  test("keeps lifted hand cards behind the cards to their right", () => {
+    const selectedRule = declarationBlock(/\.playing-card\.is-selected\s*\{([^}]*)\}/);
+    const handHoverRule = declarationBlock(
+      /\.hand-scroll \.playing-card:is\(:hover, :focus-visible\)\s*\{([^}]*)\}/,
+    );
+    expect(selectedRule).toContain("z-index: auto");
+    expect(handHoverRule).toContain("z-index: auto");
+  });
+
+  test("uses gilded selection corners and stronger playable-card contrast", () => {
+    const selectedSurface = mythicCss.match(
+      /\.playing-card\.is-selected \.card-surface\s*\{([^}]*)\}/,
+    )?.[1];
+    const selectedCorners = mythicCss.match(
+      /\.playing-card\.is-selected::after\s*\{([^}]*)\}/,
+    )?.[1];
+    expect(selectedSurface).toContain("border-color: #ffe8a3");
+    expect(selectedSurface).toContain("0 0 0 4px #d5a43b");
+    expect(selectedSurface).not.toContain("0 0 0 3px var(--red)");
+    expect(selectedCorners).toContain("linear-gradient");
+    expect(mythicCss).toContain("mythic-playable-card-pulse");
+    expect(mythicCss).toContain("filter: brightness(0.62) saturate(0.42)");
+  });
+
+  test("only overlaps center-play cards inside the compact container fallback", () => {
+    const regularPlayRule = declarationBlock(
+      /\.center-play \.playing-card\s*\{([^}]*)\}/,
+    );
+    expect(regularPlayRule).toContain("margin-left: 0");
+    expect(globalCss).toMatch(
+      /@container \(max-width: 760px\) or \(max-height: 560px\)[\s\S]*?\.center-play \.playing-card\s*\{[\s\S]*?margin-left: -51px/,
+    );
   });
 
   test("does not fade card-bearing wrappers or ancestors", () => {

@@ -130,6 +130,12 @@ html[data-theme="mythic"] {
     transform: scale(1.32);
   }
 }
+@keyframes mythic-playable-card-pulse {
+  50% {
+    opacity: 0.95;
+    filter: blur(5px) saturate(1.2);
+  }
+}
 
 /* Deep black field; faint red bleeds in from opposite corners, and a sparse
    halftone dot drift keeps big empty areas alive. */
@@ -197,14 +203,15 @@ html[data-theme="mythic"] .chrome-panel {
   box-shadow: 0 4px 0 var(--edge-shadow);
 }
 html[data-theme="mythic"] .chrome-button {
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 6px;
-  background: linear-gradient(180deg, #4a4350, var(--slate));
-  box-shadow: 0 3px 0 var(--slate-deep);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
   color: #fff;
   font-family: var(--font-menu), sans-serif;
   font-size: 0.72rem;
   font-weight: 800;
+  font-style: normal;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   transition:
@@ -217,7 +224,7 @@ html[data-theme="mythic"] .chrome-button:not(:disabled):hover {
   transform: translateY(-1px);
 }
 html[data-theme="mythic"] .chrome-button:not(:disabled):active {
-  box-shadow: 0 1px 0 var(--slate-deep);
+  box-shadow: none;
   transform: translateY(2px);
 }
 html[data-theme="mythic"] .chrome-button-primary {
@@ -226,15 +233,16 @@ html[data-theme="mythic"] .chrome-button-primary {
   box-shadow: none;
 }
 html[data-theme="mythic"] .chrome-button-gold {
-  border-color: #ffe09c;
-  background: linear-gradient(180deg, #ffc95e, var(--gold));
-  box-shadow: 0 3px 0 var(--gold-deep);
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
   color: #33210a;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.28);
 }
 html[data-theme="mythic"] .chrome-button-danger {
-  border-color: var(--red-bright);
-  background: var(--danger-panel);
-  box-shadow: 0 3px 0 var(--red-deep);
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
   color: var(--danger-soft);
 }
 
@@ -351,6 +359,7 @@ html[data-theme="mythic"] .arcade-mode,
 html[data-theme="mythic"] .arcade-action,
 html[data-theme="mythic"] .difficulty-option {
   border: 0;
+  background: transparent;
   font-family: inherit;
   text-transform: uppercase;
   transition:
@@ -360,16 +369,8 @@ html[data-theme="mythic"] .difficulty-option {
     color var(--dur-fast) ease;
 }
 html[data-theme="mythic"] .arcade-mode {
-  clip-path: polygon(
-    0 0,
-    calc(100% - 14px) 0,
-    100% 50%,
-    calc(100% - 14px) 100%,
-    0 100%
-  );
-  background: rgba(10, 11, 8, 0.86);
   color: #d6d1d3;
-  font-size: 1.35rem;
+  font-size: 1rem;
   font-weight: 700;
   letter-spacing: 0.025em;
   text-shadow: 0 2px 0 rgba(0, 0, 0, 0.55);
@@ -384,20 +385,21 @@ html[data-theme="mythic"] .arcade-mode-caret {
     transform var(--dur-fast) ease;
 }
 html[data-theme="mythic"] .arcade-mode[aria-selected="true"] {
-  background: var(--red);
   color: #fff;
+}
+html[data-theme="mythic"] .arcade-mode[aria-selected="true"] .chrome-button-surface,
+html[data-theme="mythic"]
+  .difficulty-option[aria-pressed="true"]
+  .chrome-button-surface {
+  filter: drop-shadow(0 0 8px rgba(242, 184, 75, 0.5));
 }
 html[data-theme="mythic"] .arcade-mode[aria-selected="true"] .arcade-mode-caret {
   opacity: 1;
   transform: translateX(0);
 }
 html[data-theme="mythic"] .arcade-mode:not(:disabled):hover {
-  background-color: #292a23;
   color: #fff;
   transform: translateX(4px);
-}
-html[data-theme="mythic"] .arcade-mode[aria-selected="true"]:not(:disabled):hover {
-  background-color: var(--red-bright);
 }
 html[data-theme="mythic"] .arcade-mode:focus-visible {
   outline-color: #fff;
@@ -462,16 +464,8 @@ html[data-theme="mythic"] .arcade-field:focus {
   box-shadow: inset 4px 0 0 var(--red);
 }
 html[data-theme="mythic"] .arcade-action {
-  clip-path: polygon(
-    0 0,
-    calc(100% - 11px) 0,
-    100% 50%,
-    calc(100% - 11px) 100%,
-    0 100%
-  );
-  background: var(--red);
   color: #fff;
-  font-size: 1.08rem;
+  font-size: 0.9rem;
   font-weight: 800;
   letter-spacing: 0.04em;
   text-shadow: 0 2px 0 rgba(0, 0, 0, 0.4);
@@ -494,22 +488,21 @@ html[data-theme="mythic"] .difficulty-options {
   background: transparent;
 }
 html[data-theme="mythic"] .difficulty-option {
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: #070805;
+  border: 0;
+  background: transparent;
   color: #a9a2a8;
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.035em;
 }
 html[data-theme="mythic"] .difficulty-option:not(:disabled):hover {
-  border-color: rgba(255, 255, 255, 0.45);
   color: #fff;
 }
 html[data-theme="mythic"] .difficulty-option[aria-pressed="true"] {
-  border-color: #fff;
-  background: #f4f0ee;
+  border-color: transparent;
+  background: transparent;
   color: #17130f;
-  box-shadow: inset 0 -3px 0 #9b9296;
+  box-shadow: none;
 }
 html[data-theme="mythic"] .menu-error {
   background: rgba(8, 9, 6, 0.88);
@@ -731,7 +724,6 @@ html[data-theme="mythic"] .buried-panel small {
 }
 /* Sidebar readout wells. */
 html[data-theme="mythic"] .round-pills > .dashboard-section,
-html[data-theme="mythic"] .team-score-pills > .dashboard-section,
 html[data-theme="mythic"] .round-overview-row > .dashboard-section {
   border: 2px solid var(--panel-edge);
   border-radius: 7px;
@@ -755,24 +747,11 @@ html[data-theme="mythic"] .round-pills strong {
   font-family: var(--font-menu);
   font-size: 1rem;
 }
-html[data-theme="mythic"] .icon-button {
-  border: 0;
-  border-radius: 7px;
-  background: var(--slate);
-  box-shadow: 0 3px 0 var(--slate-deep);
-  color: #fff;
-  transform: skewX(-6deg);
-}
 html[data-theme="mythic"] .sound-toggle {
-  min-width: 44px;
-  min-height: 40px;
+  min-height: 44px;
   cursor: pointer;
-  font-family: var(--font-game);
-  font-size: 1rem;
-}
-html[data-theme="mythic"] .icon-button:not(:disabled):active {
-  transform: skewX(-6deg) translateY(2px);
-  box-shadow: 0 1px 0 var(--slate-deep);
+  font-family: var(--font-menu);
+  font-size: 0.72rem;
 }
 html[data-theme="mythic"] .throw-banner {
   border: 2px solid var(--panel-edge);
@@ -842,13 +821,7 @@ html[data-theme="mythic"] .hand-dock.is-your-turn {
   animation: mythic-hand-turn-pulse 1.5s ease-in-out infinite;
 }
 html[data-theme="mythic"] .leader-badge {
-  border-radius: 4px;
-  background: var(--gold);
-  box-shadow: 0 2px 0 var(--gold-deep);
-  color: #33210a;
-  font-family: var(--font-game);
-  font-size: 0.72rem;
-  transform: rotate(-6deg);
+  filter: drop-shadow(0 1px 1px #000);
 }
 html[data-theme="mythic"] .player-tag-portrait {
   border: 0;
@@ -859,11 +832,6 @@ html[data-theme="mythic"] .player-tag-portrait {
   font-family: Georgia, serif;
   font-size: 1.5rem;
   font-weight: 700;
-}
-html[data-theme="mythic"] .seat-count {
-  color: var(--gold);
-  font-family: var(--font-menu);
-  font-size: 0.95rem;
 }
 html[data-theme="mythic"] .player-tag-name {
   color: var(--text-bright);
@@ -880,6 +848,9 @@ html[data-theme="mythic"] .player-tag-meta {
   font-size: 0.7rem;
   font-weight: 600;
   line-height: 1;
+}
+html[data-theme="mythic"] .player-badge-icon {
+  filter: drop-shadow(0 1px 1px #000);
 }
 html[data-theme="mythic"] .offline-dot {
   width: 8px;
@@ -1053,6 +1024,21 @@ html[data-theme="mythic"] .playing-card {
   box-shadow: none;
   color: var(--house-ink);
 }
+html[data-theme="mythic"] .playing-card::before,
+html[data-theme="mythic"] .playing-card::after {
+  position: absolute;
+  inset: -6px;
+  border-radius: 11px;
+  content: "";
+  opacity: 0;
+  pointer-events: none;
+}
+html[data-theme="mythic"] .playing-card::before {
+  z-index: -1;
+}
+html[data-theme="mythic"] .playing-card::after {
+  z-index: 6;
+}
 html[data-theme="mythic"] .card-surface {
   border: 2px solid var(--card-line);
   border-radius: 7px;
@@ -1076,11 +1062,27 @@ html[data-theme="mythic"] .card-face-parchment {
   background: var(--card-face);
 }
 html[data-theme="mythic"] .playing-card.is-selected .card-surface {
-  border-color: var(--red);
+  border-color: #ffe8a3;
   box-shadow:
-    0 0 0 3px var(--red),
-    0 0 18px var(--red-tint),
-    0 7px 0 var(--edge-shadow);
+    inset 0 0 0 1px #fff4c7,
+    inset 0 0 0 4px rgba(111, 20, 25, 0.48),
+    0 0 0 2px #4e2b0d,
+    0 0 0 4px #d5a43b,
+    0 0 24px rgba(242, 184, 75, 0.62),
+    0 8px 0 var(--edge-shadow);
+}
+html[data-theme="mythic"] .playing-card.is-selected::after {
+  background:
+    linear-gradient(90deg, #fff1aa, #b47518) left top / 25px 3px no-repeat,
+    linear-gradient(180deg, #fff1aa, #b47518) left top / 3px 25px no-repeat,
+    linear-gradient(270deg, #fff1aa, #b47518) right top / 25px 3px no-repeat,
+    linear-gradient(180deg, #fff1aa, #b47518) right top / 3px 25px no-repeat,
+    linear-gradient(90deg, #fff1aa, #b47518) left bottom / 25px 3px no-repeat,
+    linear-gradient(0deg, #fff1aa, #b47518) left bottom / 3px 25px no-repeat,
+    linear-gradient(270deg, #fff1aa, #b47518) right bottom / 25px 3px no-repeat,
+    linear-gradient(0deg, #fff1aa, #b47518) right bottom / 3px 25px no-repeat;
+  filter: drop-shadow(0 0 4px rgba(255, 219, 126, 0.7));
+  opacity: 1;
 }
 html[data-theme="mythic"] .card-hearts {
   --house-accent: var(--house-hearts);
@@ -1109,10 +1111,32 @@ html[data-theme="mythic"] .card-spades {
 
 html[data-theme="mythic"] .playing-card.is-hinted:not(.is-selected) .card-surface {
   box-shadow:
-    inset 0 0 0 2px var(--gold),
-    0 0 0 2px var(--gold-deep),
-    0 0 15px rgba(242, 184, 75, 0.38),
+    inset 0 0 0 2px #ffe29a,
+    0 0 0 2px #8d5b16,
+    0 0 22px rgba(255, 199, 82, 0.72),
     0 4px 0 var(--edge-shadow);
+}
+html[data-theme="mythic"] .playing-card.is-hinted:not(.is-selected)::before {
+  inset: -8px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 209, 105, 0.7),
+    rgba(242, 184, 75, 0.24) 58%,
+    transparent 76%
+  );
+  filter: blur(4px);
+  opacity: 0.72;
+  animation: mythic-playable-card-pulse 1.6s ease-in-out infinite;
+}
+html[data-theme="mythic"]
+  .hand-scroll.has-hints
+  .playing-card:not(.is-hinted):not(.is-selected)
+  .card-surface {
+  filter: brightness(0.62) saturate(0.42) contrast(0.94);
+  box-shadow:
+    inset 0 0 0 2px rgba(62, 46, 29, 0.55),
+    inset 0 0 0 5px rgba(26, 20, 14, 0.32),
+    0 3px 0 var(--edge-shadow);
 }
 
 /* Jokers are wildcard art cards; the poker index now carries identity. */
@@ -1233,8 +1257,6 @@ html[data-theme="mythic"] .moment-trump-stamp {
     0 0 38px var(--gold-tint);
 }
 html[data-theme="mythic"] .leave-button.is-confirming {
-  background: var(--red);
-  box-shadow: 0 4px 0 var(--red-deep);
   color: #fff;
 }
 html[data-theme="mythic"] .clear-selection {
@@ -1462,33 +1484,18 @@ html[data-theme="mythic"] .loading-mark {
   text-shadow: none;
 }
 
-/* Team-role badges: square art cropped into table medallions. */
-html[data-theme="mythic"] .team-score-pill em {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 9px 3px 4px;
-}
+/* Team-role emblems remain complete, reusable square assets. No extra role
+   glyph or text is layered over the artwork. */
 html[data-theme="mythic"] .role-medallion {
   flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  border: 2px solid var(--gold);
-  border-radius: 50%;
-  object-fit: cover;
-  box-shadow:
-    0 0 0 1px var(--gold-deep),
-    0 2px 0 var(--edge-shadow);
+  border: 0;
+  border-radius: 0;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 1px var(--edge-shadow));
 }
-html[data-theme="mythic"] .role-char {
-  font-family: var(--font-game);
-  font-size: 1rem;
-  line-height: 1;
-}
-html[data-theme="mythic"] .role-en {
-  font-size: 0.5rem;
-  letter-spacing: 0.1em;
-  opacity: 0.75;
+html[data-theme="mythic"] .role-medallion-pending {
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 2px 0 rgba(0, 0, 0, 0.35);
 }
 
 /* Nameplate 攻/守 tag. */
@@ -1518,15 +1525,12 @@ html[data-theme="mythic"] .role-tag.role-defending {
 
 /* Points projection: the verdict if the round stopped right here. */
 html[data-theme="mythic"] .points-projection {
-  display: grid;
-  gap: 2px;
-  justify-items: center;
   border: 1px solid var(--panel-edge);
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.04);
-  padding: 5px 12px;
+  padding: 5px 9px;
   font-family: var(--font-game);
-  font-size: 0.95rem;
+  font-size: 0.75rem;
   font-style: normal;
   line-height: 1;
 }
@@ -1537,6 +1541,7 @@ html[data-theme="mythic"] .points-projection.is-defenders {
   color: #86b7ff;
 }
 html[data-theme="mythic"] .points-projection i {
+  justify-self: start;
   color: var(--faint);
   font-size: 0.5rem;
   font-style: normal;
@@ -1671,7 +1676,21 @@ html[data-theme="mythic"] .player-tag-surface {
   border: 1px solid color-mix(in srgb, var(--player-team-color, var(--gold)) 55%, #000);
   border-radius: 5px;
   background: #090806;
-  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.9);
+  box-shadow:
+    inset 0 0 12px rgba(0, 0, 0, 0.9),
+    0 0 11px color-mix(in srgb, var(--player-team-color, var(--gold)) 38%, transparent);
+}
+html[data-theme="mythic"] .table-seat .mini-card.is-top .card-back {
+  box-shadow:
+    0 3px 0 var(--edge-shadow),
+    0 0 0 1px color-mix(in srgb, var(--player-team-color, var(--gold)) 74%, #130d08),
+    0 0 14px color-mix(in srgb, var(--player-team-color, var(--gold)) 42%, transparent);
+}
+html[data-theme="mythic"] .team-score-pill.team-blue,
+html[data-theme="mythic"] .team-score-pill.team-red {
+  box-shadow:
+    inset 0 3px 0 rgba(0, 0, 0, 0.4),
+    0 0 12px color-mix(in srgb, var(--team-color) 28%, transparent);
 }
 html[data-theme="mythic"] .player-tag {
   border: 0;

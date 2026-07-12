@@ -24,7 +24,6 @@ describe("PlayerTag", () => {
         isYou
         isLeader
         role="defending"
-        handTotal={25}
         timer={{ deadline: "2099-01-01T00:00:00.000Z", now: () => 0 }}
       />,
     );
@@ -36,6 +35,20 @@ describe("PlayerTag", () => {
     expect(markup).toContain('data-player-tag-layer="content"');
     expect(markup).toContain('data-player-tag-layer="status"');
     expect(markup).toContain('data-player-tag-layer="timer"');
+    expect(markup).toContain('data-player-role="defending"');
+    expect(markup).toContain('data-round-leader="true"');
+    expect(markup).toContain('data-art-asset="ui.player-badge.round-leader"');
+    expect(markup).toContain('src="/art/ui/player-badge/round-leader.webp"');
+    expect(markup).toContain(
+      'srcSet="/art/ui/player-badge/round-leader.webp 1x, /art/ui/player-badge/round-leader@2x.webp 2x"',
+    );
+    expect(markup).toContain('data-art-asset="ui.player-badge.role-defend"');
+    expect(markup).toContain('src="/art/ui/player-badge/role-defend.webp"');
+    expect(markup).toContain(
+      'srcSet="/art/ui/player-badge/role-defend.webp 1x, /art/ui/player-badge/role-defend@2x.webp 2x"',
+    );
+    expect(markup).toContain('data-player-type="bot"');
+    expect(markup).toContain('data-art-asset="ui.player-badge.type-bot"');
     expect(markup).toContain('data-art-asset="ui.chrome.player-nameplate"');
     expect(markup).toContain('src="/art/ui/nameplate.webp"');
     expect(markup).toContain(
@@ -46,6 +59,20 @@ describe("PlayerTag", () => {
     );
     expect(markup).toContain('class="seat-portrait"');
     expect(markup).toContain(">You</strong>");
-    expect(markup).toContain("14/25");
+    expect(markup).not.toContain('class="seat-count"');
+    expect(markup).not.toContain("14/25");
+    expect(markup).not.toContain(">14</");
+    expect(markup).not.toContain(">BOT</");
+    expect(markup).not.toContain("Lv 2");
+    expect(markup).not.toContain("Blue");
+    expect(markup.indexOf('data-round-leader="true"')).toBeLessThan(
+      markup.indexOf('data-player-role="defending"'),
+    );
+    expect(markup.indexOf('data-player-role="defending"')).toBeLessThan(
+      markup.indexOf('data-player-type="bot"'),
+    );
+    expect(markup.indexOf('data-player-type="bot"')).toBeLessThan(
+      markup.indexOf('class="seat-timer-badge"'),
+    );
   });
 });

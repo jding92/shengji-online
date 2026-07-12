@@ -19,25 +19,29 @@ const houses = {
     source: "10-ui-chrome-and-deck/10-ui-chrome-and-deck-hearts-number-kit.png",
     crop: { left: 48, top: 28, width: 660, height: 980 },
     outer: { left: 0.022, top: 0.024, right: 0.978, bottom: 0.976 },
-    aperture: { left: 0.18, top: 0.175, right: 0.84, bottom: 0.83 },
+    aperture: { left: 0.105, top: 0.085, right: 0.895, bottom: 0.915 },
+    palette: { red: 122, green: 77, blue: 39 },
   },
   spades: {
     source: "10-ui-chrome-and-deck/10-ui-chrome-and-deck-spades-number-kit.png",
     crop: { left: 54, top: 12, width: 710, height: 1000 },
     outer: { left: 0.018, top: 0.012, right: 0.982, bottom: 0.988 },
-    aperture: { left: 0.17, top: 0.175, right: 0.88, bottom: 0.858 },
+    aperture: { left: 0.11, top: 0.1, right: 0.89, bottom: 0.9 },
+    palette: { red: 57, green: 68, blue: 69 },
   },
   diamonds: {
     source: "10-ui-chrome-and-deck/10-ui-chrome-and-deck-diamonds-number-kit.png",
     crop: { left: 72, top: 20, width: 690, height: 980 },
     outer: { left: 0.02, top: 0.026, right: 0.98, bottom: 0.974 },
-    aperture: { left: 0.205, top: 0.18, right: 0.86, bottom: 0.83 },
+    aperture: { left: 0.105, top: 0.09, right: 0.895, bottom: 0.91 },
+    palette: { red: 111, green: 64, blue: 42 },
   },
   clubs: {
     source: "10-ui-chrome-and-deck/10-ui-chrome-and-deck-clubs-number-kit.png",
     crop: { left: 48, top: 22, width: 700, height: 980 },
     outer: { left: 0.04, top: 0.035, right: 0.96, bottom: 0.965 },
-    aperture: { left: 0.19, top: 0.145, right: 0.81, bottom: 0.855 },
+    aperture: { left: 0.105, top: 0.09, right: 0.895, bottom: 0.91 },
+    palette: { red: 50, green: 79, blue: 68 },
   },
 };
 
@@ -71,7 +75,33 @@ function frameGeometry(x, y, definition) {
   return outer * (1 - aperture);
 }
 
-function extractOrnamentAlpha(red, green, blue, geometry) {
+const indexSafeZones = [
+  { left: 0.025, top: 0.015, right: 0.31, bottom: 0.315 },
+  { left: 0.69, top: 0.685, right: 0.975, bottom: 0.985 },
+];
+
+function safeZoneAttenuation(x, y) {
+  const antialiasWidth = 0.035;
+  const coverage = Math.max(
+    ...indexSafeZones.map((region) => rectangleCoverage(x, y, region, antialiasWidth)),
+  );
+  return 1 - coverage;
+}
+
+function quietOrnamentColor(red, green, blue, palette) {
+  // Court cards establish the clarity target: a restrained, mostly linear
+  // perimeter rather than a second focal illustration. Pull each source kit
+  // toward a subdued House-tinted ink, then let ordinary alpha blend it into
+  // the parchment or point illustration beneath.
+  const mix = 0.28;
+  return {
+    red: Math.round(red * (1 - mix) + palette.red * mix),
+    green: Math.round(green * (1 - mix) + palette.green * mix),
+    blue: Math.round(blue * (1 - mix) + palette.blue * mix),
+  };
+}
+
+function extractOrnamentAlpha(red, green, blue, geometry, attenuation) {
   const maximum = Math.max(red, green, blue);
   const minimum = Math.min(red, green, blue);
   const saturation = maximum === 0 ? 0 : (maximum - minimum) / maximum;
@@ -84,7 +114,8 @@ function extractOrnamentAlpha(red, green, blue, geometry) {
   const colorSignal =
     smoothstep((saturation - 0.24) / 0.18) * smoothstep((230 - luma) / 45);
   const ornamentSignal = Math.max(darkSignal, colorSignal);
-  const isolatedSignal = smoothstep((ornamentSignal - 0.34) / 0.12) * geometry;
+  const isolatedSignal =
+    smoothstep((ornamentSignal - 0.34) / 0.12) * geometry * 0.62 * attenuation;
   if (isolatedSignal < 0.025) return 0;
   if (isolatedSignal > 0.975) return 255;
   return Math.round(255 * isolatedSignal);
@@ -121,14 +152,16 @@ async function writeFrame(house, definition) {
       const red = data[sourceOffset] ?? 0;
       const green = data[sourceOffset + 1] ?? 0;
       const blue = data[sourceOffset + 2] ?? 0;
-      output[outputOffset] = red;
-      output[outputOffset + 1] = green;
-      output[outputOffset + 2] = blue;
+      const quietColor = quietOrnamentColor(red, green, blue, definition.palette);
+      output[outputOffset] = quietColor.red;
+      output[outputOffset + 1] = quietColor.green;
+      output[outputOffset + 2] = quietColor.blue;
       output[outputOffset + 3] = extractOrnamentAlpha(
         red,
         green,
         blue,
         frameGeometry(x, y, definition),
+        safeZoneAttenuation(x, y),
       );
     }
   }
@@ -145,6 +178,7 @@ function countAlphaRegion(data, region) {
   const bottom = Math.ceil(region.bottom * height);
   let nonTransparent = 0;
   let partial = 0;
+  let alphaSum = 0;
   let total = 0;
 
   for (let y = top; y < bottom; y += 1) {
@@ -152,10 +186,11 @@ function countAlphaRegion(data, region) {
       const alpha = data[(y * width + x) * 4 + 3] ?? 0;
       if (alpha > 0) nonTransparent += 1;
       if (alpha > 0 && alpha < 255) partial += 1;
+      alphaSum += alpha;
       total += 1;
     }
   }
-  return { nonTransparent, partial, total };
+  return { nonTransparent, partial, alphaSum, total };
 }
 
 async function assertFrameQuality(house, definition) {
@@ -192,17 +227,34 @@ async function assertFrameQuality(house, definition) {
     { left: 0, top: 0.988, right: 0.012, bottom: 1 },
     { left: 0.988, top: 0.988, right: 1, bottom: 1 },
   ].map((region) => countAlphaRegion(data, region));
+  const indexZones = [
+    { left: 0.035, top: 0.025, right: 0.275, bottom: 0.295 },
+    { left: 0.725, top: 0.705, right: 0.965, bottom: 0.975 },
+  ].map((region) => countAlphaRegion(data, region));
+  const controlZones = [
+    { left: 0.725, top: 0.025, right: 0.965, bottom: 0.295 },
+    { left: 0.035, top: 0.705, right: 0.275, bottom: 0.975 },
+  ].map((region) => countAlphaRegion(data, region));
 
   let opaque = 0;
   let partial = 0;
   let transparent = 0;
+  let alphaSum = 0;
   for (let offset = 3; offset < data.length; offset += 4) {
     const alpha = data[offset] ?? 0;
+    alphaSum += alpha;
     if (alpha === 0) transparent += 1;
     else if (alpha === 255) opaque += 1;
     else partial += 1;
   }
   const pixels = width * height;
+  const weightedCoverage = alphaSum / (pixels * 255);
+  const indexAlpha =
+    indexZones.reduce((sum, region) => sum + region.alphaSum, 0) /
+    indexZones.reduce((sum, region) => sum + region.total * 255, 0);
+  const controlAlpha =
+    controlZones.reduce((sum, region) => sum + region.alphaSum, 0) /
+    controlZones.reduce((sum, region) => sum + region.total * 255, 0);
   const failures = [];
   if (center.nonTransparent !== 0) {
     failures.push(
@@ -219,17 +271,29 @@ async function assertFrameQuality(house, definition) {
       `corners have ${corners.reduce((sum, region) => sum + region.nonTransparent, 0)} non-transparent pixels`,
     );
   }
-  if (opaque < pixels * 0.08) failures.push("retained ornament is unexpectedly sparse");
-  if (transparent < pixels * 0.45)
-    failures.push("transparent field is unexpectedly small");
-  if (partial === 0 || partial > pixels * 0.025) {
-    failures.push(`partial-alpha contour is outside the 0–2.5% budget (${partial})`);
+  if (partial < pixels * 0.1 || partial > pixels * 0.25) {
+    failures.push(`visible ornament is outside the 10–25% budget (${partial})`);
   }
+  if (opaque !== 0) {
+    failures.push(`quiet frame unexpectedly contains ${opaque} opaque pixels`);
+  }
+  if (weightedCoverage < 0.06 || weightedCoverage > 0.16) {
+    failures.push(
+      `weighted ornament coverage is outside the 6–16% budget (${weightedCoverage})`,
+    );
+  }
+  if (indexAlpha >= controlAlpha * 0.15) {
+    failures.push(
+      `index safe zones are not sufficiently quieter (${indexAlpha} vs ${controlAlpha})`,
+    );
+  }
+  if (transparent < pixels * 0.7)
+    failures.push("transparent field is unexpectedly small");
   if (failures.length > 0) {
     throw new Error(`Frame QA failed for ${house}: ${failures.join("; ")}`);
   }
   log(
-    `QA ${house}: center=0 exterior=0 corners=0 partial=${((partial / pixels) * 100).toFixed(2)}%`,
+    `QA ${house}: center=0 exterior=0 corners=0 visible=${((partial / pixels) * 100).toFixed(2)}% weighted=${(weightedCoverage * 100).toFixed(2)}% safe-zone=${((indexAlpha / controlAlpha) * 100).toFixed(1)}% of control`,
   );
 }
 

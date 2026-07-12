@@ -79,27 +79,27 @@ export function HandActions({
         </span>
       )}
       {actions.has("pass-bid") && (
-        <button
-          className="button button-ghost"
-          type="button"
+        <ChromeButton
+          className="table-action-button"
+          variant="neutral"
           onClick={() => submit({ type: "PASS_BID" })}
         >
           Pass
-        </button>
+        </ChromeButton>
       )}
       {actions.has("bid") && (
-        <button
-          className="button button-gold"
-          type="button"
+        <ChromeButton
+          className="table-action-button"
+          variant="gold"
           disabled={selectedIds.length === 0}
           onClick={() => submit({ type: "BID", cards: selectedIds })}
         >
           Bid selected
-        </button>
+        </ChromeButton>
       )}
       {actions.has("bury-bottom") && (
         <ChromeButton
-          className="button"
+          className="table-action-button"
           variant="primary"
           disabled={selectedIds.length !== bottomSize}
           onClick={() => submit({ type: "BURY_BOTTOM", cards: selectedIds })}
@@ -128,7 +128,7 @@ export function HandActions({
             )}
           </span>
           <ChromeButton
-            className="button"
+            className="table-action-button play-action-button"
             variant={isThrow ? "gold" : "primary"}
             disabled={
               selectedIds.length === 0 ||
