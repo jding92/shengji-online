@@ -70,13 +70,21 @@ describe("UPDATE_OPTIONS command", () => {
     });
   });
 
-  it("is rejected outside the lobby", () => {
+  it("rejects a structural change outside the lobby", () => {
+    // Phase 4 narrows this from "outside the lobby, full stop" to "outside
+    // the lobby, unless every changed key is in-game-editable" — see the
+    // dedicated in-game describe block below for the accepted case.
     const state: GameState = {
       ...lobby({ seatCount: 4, seated: [0], host: "p0" }),
       phase: "playing",
     };
     expect(() =>
-      validateCommand(state, "p0", { type: "UPDATE_OPTIONS", options: {} }, { now }),
+      validateCommand(
+        state,
+        "p0",
+        { type: "UPDATE_OPTIONS", options: { maxRedeals: 4 } },
+        { now },
+      ),
     ).toThrow("lobby");
   });
 
@@ -154,6 +162,122 @@ describe("UPDATE_OPTIONS command", () => {
       { now },
     );
     expect(replayEvents(state, events)).toEqual(replayEvents(state, events));
+  });
+});
+
+describe("UPDATE_OPTIONS command in-game (Phase 4)", () => {
+  it("accepts a timer-only diff mid-round without touching seats or ready", () => {
+    let state = lobby({ seatCount: 4, seated: [0, 1, 2, 3], host: "p0" });
+    for (const playerId of ["p1", "p2"]) {
+      state = applyEvent(state, {
+        type: "PLAYER_READY_CHANGED",
+        playerId,
+        ready: true,
+        at: now,
+      });
+    }
+    const midRound: GameState = { ...state, phase: "playing" };
+
+    const events = validateCommand(
+      midRound,
+      "p0",
+      { type: "UPDATE_OPTIONS", options: { timers: { playTimeoutSeconds: 45 } } },
+      { now },
+    );
+    const optionsUpdated = events[0] as Extract<GameEvent, { type: "OPTIONS_UPDATED" }>;
+    expect(optionsUpdated.ruleset.turns.playTimeoutSeconds).toBe(45);
+
+    const applied = replayEvents(midRound, events);
+    expect(applied.phase).toBe("playing");
+    expect(applied.seats).toEqual(midRound.seats);
+    expect(applied.players["p1"]?.ready).toBe(true);
+    expect(applied.players["p2"]?.ready).toBe(true);
+    expect(applied.rulesetSnapshot.turns.playTimeoutSeconds).toBe(45);
+  });
+
+  it("rejects a mixed timer + structural diff mid-round, naming the offender", () => {
+    const state = lobby({ seatCount: 4, seated: [0], host: "p0" });
+    const midRound: GameState = { ...state, phase: "playing" };
+    expect(() =>
+      validateCommand(
+        midRound,
+        "p0",
+        {
+          type: "UPDATE_OPTIONS",
+          options: { timers: { playTimeoutSeconds: 45 }, bottomSize: 10 },
+        },
+        { now },
+      ),
+    ).toThrow("bottomSize");
+  });
+
+  it("rejects a structural-only diff mid-round", () => {
+    const state = lobby({ seatCount: 4, seated: [0], host: "p0" });
+    const midRound: GameState = { ...state, phase: "bottom-exchange" };
+    expect(() =>
+      validateCommand(
+        midRound,
+        "p0",
+        { type: "UPDATE_OPTIONS", options: { maxRedeals: 5 } },
+        { now },
+      ),
+    ).toThrow("maxRedeals");
+  });
+
+  it("rejects a preset switch mid-round even when the options diff is timer-only", () => {
+    const state = lobby({ seatCount: 4, seated: [0], host: "p0" });
+    const midRound: GameState = { ...state, phase: "playing" };
+    expect(() =>
+      validateCommand(
+        midRound,
+        "p0",
+        {
+          type: "UPDATE_OPTIONS",
+          presetId: "shengji-6p-3d-fixed-v1",
+          options: {},
+        },
+        { now },
+      ),
+    ).toThrow("preset");
+  });
+
+  it("rejects UPDATE_OPTIONS once the game has ended", () => {
+    const state = lobby({ seatCount: 4, seated: [0], host: "p0" });
+    const finished: GameState = { ...state, phase: "game-over" };
+    expect(() =>
+      validateCommand(
+        finished,
+        "p0",
+        { type: "UPDATE_OPTIONS", options: { timers: { playTimeoutSeconds: 45 } } },
+        { now },
+      ),
+    ).toThrow("ended");
+  });
+
+  it("still requires the host in-game", () => {
+    const state = lobby({ seatCount: 4, seated: [0, 1], host: "p0" });
+    const midRound: GameState = { ...state, phase: "playing" };
+    expect(() =>
+      validateCommand(
+        midRound,
+        "p1",
+        { type: "UPDATE_OPTIONS", options: { timers: { playTimeoutSeconds: 45 } } },
+        { now },
+      ),
+    ).toThrow("Only the host");
+  });
+
+  it("existing lobby behavior is unchanged (regression)", () => {
+    const state = lobby({ seatCount: 4, seated: [0, 1, 2, 3], host: "p0" });
+    const events = validateCommand(
+      state,
+      "p0",
+      { type: "UPDATE_OPTIONS", options: { playerCount: 6, deckCount: 3 } },
+      { now },
+    );
+    const applied = replayEvents(state, events);
+    expect(applied.rulesetSnapshot.players.count).toBe(6);
+    expect(Object.keys(applied.seats)).toHaveLength(6);
   });
 });
 

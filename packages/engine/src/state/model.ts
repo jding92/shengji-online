@@ -265,4 +265,10 @@ export type GameEvent =
       ruleset: ShengJiRuleset;
       at: string;
     }
-  | { type: "HOST_CHANGED"; playerId: PlayerId; at: string };
+  | { type: "HOST_CHANGED"; playerId: PlayerId; at: string }
+  | {
+      type: "BOT_DIFFICULTY_CHANGED";
+      playerId: PlayerId;
+      difficulty: BotDifficulty;
+      at: string;
+    };

@@ -1,6 +1,6 @@
 # Game modes expansion — technical design
 
-Status: approved design, pre-implementation.
+Status: implemented (Phases 0–4); this doc is the design of record.
 Scope: engine, protocol, and server. Frontend UX is deliberately out of scope
 (the web app is mid-overhaul); each phase notes the protocol surface it exposes
 so the frontend can be built against it later.

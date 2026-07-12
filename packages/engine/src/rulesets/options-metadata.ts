@@ -119,3 +119,65 @@ export function optionsEditableInPhase(phase: GamePhase): (keyof GameOptions)[] 
   }
   return [...keys];
 }
+
+/** The set of `OPTION_METADATA` keys editable while in `phase`, dotted timers included. */
+export function editableOptionKeySet(phase: GamePhase): Set<string> {
+  const bucket = phase === "lobby" ? "lobby" : "in-game";
+  const keys = new Set<string>();
+  for (const meta of OPTION_METADATA) {
+    if (meta.editableIn.includes(bucket)) keys.add(meta.key);
+  }
+  return keys;
+}
+
+/** Structural equality for the small JSON-safe shapes `GameOptions` leaves hold. */
+function valuesEqual(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (Array.isArray(a) || Array.isArray(b)) {
+    return (
+      Array.isArray(a) &&
+      Array.isArray(b) &&
+      a.length === b.length &&
+      a.every((value, index) => valuesEqual(value, b[index]))
+    );
+  }
+  if (typeof a === "object" && a !== null && typeof b === "object" && b !== null) {
+    const aRecord = a as Record<string, unknown>;
+    const bRecord = b as Record<string, unknown>;
+    const keys = new Set([...Object.keys(aRecord), ...Object.keys(bRecord)]);
+    return [...keys].every((key) => valuesEqual(aRecord[key], bRecord[key]));
+  }
+  return false;
+}
+
+/**
+ * The `OPTION_METADATA` keys that differ between two option bags. `timers` is
+ * compared leaf-by-leaf (`"timers.playTimeoutSeconds"`, ...) so the result
+ * lines up 1:1 with `OPTION_METADATA` entries; every other key is compared as
+ * a whole (a change anywhere inside `scoring` or `throwPenalty` reports that
+ * top-level key, since neither is in-game editable regardless of which leaf
+ * moved).
+ */
+export function diffOptionKeys(a: GameOptions, b: GameOptions): string[] {
+  const topKeys = new Set<keyof GameOptions>([
+    ...(Object.keys(a) as (keyof GameOptions)[]),
+    ...(Object.keys(b) as (keyof GameOptions)[]),
+  ]);
+  const diffs: string[] = [];
+  for (const key of topKeys) {
+    if (key === "timers") {
+      const timerKeys = new Set([
+        ...Object.keys(a.timers ?? {}),
+        ...Object.keys(b.timers ?? {}),
+      ]);
+      for (const timerKey of timerKeys) {
+        const av = (a.timers as Record<string, unknown> | undefined)?.[timerKey];
+        const bv = (b.timers as Record<string, unknown> | undefined)?.[timerKey];
+        if (!valuesEqual(av, bv)) diffs.push(`timers.${timerKey}`);
+      }
+      continue;
+    }
+    if (!valuesEqual(a[key], b[key])) diffs.push(key);
+  }
+  return diffs;
+}

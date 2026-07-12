@@ -388,26 +388,40 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
       next.rulesetId = event.ruleset.id;
       next.presetId = event.presetId;
       next.pendingOptions = structuredClone(event.options);
-      // Rebuild the seat map to the new count: keep existing assignments,
-      // pad new seats with null, drop the empty tail. The command guards
-      // against shrinking below an occupied seat, so no seated player is lost.
-      const newCount = next.rulesetSnapshot.players.count;
-      const resizedSeats: Record<number, PlayerId | null> = {};
-      for (let seat = 0; seat < newCount; seat += 1) {
-        resizedSeats[seat] = next.seats[seat] ?? null;
+      // Mid-game, only in-game-safe keys (timers today) can have changed —
+      // validateCommand guarantees it — so seats and ready state stay put and
+      // the room's post-commit reschedule alone picks up the new values.
+      if (next.phase === "lobby") {
+        // Rebuild the seat map to the new count: keep existing assignments,
+        // pad new seats with null, drop the empty tail. The command guards
+        // against shrinking below an occupied seat, so no seated player is lost.
+        const newCount = next.rulesetSnapshot.players.count;
+        const resizedSeats: Record<number, PlayerId | null> = {};
+        for (let seat = 0; seat < newCount; seat += 1) {
+          resizedSeats[seat] = next.seats[seat] ?? null;
+        }
+        for (const [seatKey, occupant] of Object.entries(next.seats)) {
+          if (Number(seatKey) < newCount || occupant === null) continue;
+          const droppedPlayer = next.players[occupant];
+          if (droppedPlayer !== undefined) droppedPlayer.seat = null;
+        }
+        next.seats = resizedSeats;
+        // A rule change invalidates every prior consent; re-ready is required.
+        for (const player of Object.values(next.players)) player.ready = false;
       }
-      for (const [seatKey, occupant] of Object.entries(next.seats)) {
-        if (Number(seatKey) < newCount || occupant === null) continue;
-        const droppedPlayer = next.players[occupant];
-        if (droppedPlayer !== undefined) droppedPlayer.seat = null;
-      }
-      next.seats = resizedSeats;
-      // A rule change invalidates every prior consent; re-ready is required.
-      for (const player of Object.values(next.players)) player.ready = false;
       break;
     }
     case "HOST_CHANGED": {
       next.hostPlayerId = event.playerId;
+      break;
+    }
+    case "BOT_DIFFICULTY_CHANGED": {
+      const player = next.players[event.playerId];
+      if (player === undefined) throw new Error(`Unknown player ${event.playerId}`);
+      if (player.bot === undefined) {
+        throw new Error(`Player ${event.playerId} is not a bot`);
+      }
+      player.bot = { ...player.bot, difficulty: event.difficulty };
       break;
     }
   }

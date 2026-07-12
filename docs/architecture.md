@@ -21,6 +21,18 @@ reproducible from the server-generated round seed. Random seeds and timestamps
 enter through server command context or events, never from reducer-side clocks
 or random APIs.
 
+A `presetId` + sparse `GameOptions` layer sits above the dense
+`ShengJiRuleset`: `resolveRuleset` composes and validates the two into the
+snapshot everything else reads, so `rulesetSnapshot` is unchanged as the
+runtime source of truth. `UPDATE_OPTIONS`/`OPTIONS_UPDATED` embed the fully
+resolved ruleset, so replaying the event log never re-resolves options.
+Lobby edits reset seats and ready state (see Timers); mid-game edits are
+restricted to keys `OPTION_METADATA` marks in-game-safe (timers today) and
+leave seats and ready state untouched. In finding-friends games, a
+`friend-calling` phase sits between bottom exchange and play, where the
+declarer's `CALL_FRIENDS` produces `FRIENDS_CALLED`; the engine derives
+`FRIEND_REVEALED` events itself as called copies are played.
+
 SQLite inserts a command or timer's event batch and its resulting latest
 snapshot in one `BEGIN IMMEDIATE` transaction guarded by the previous revision.
 This favors simple recovery while retaining event rows for audit and replay.
@@ -85,5 +97,13 @@ is stored locally and applied before first paint.
 ## Extension points
 
 Rulesets own player/deck counts, teams, rank order, bidding, bottom, throws, and
-thresholds. UI exposes only the v1 preset. Finding-friends will require a dynamic
-team strategy and redacted identity events, not conditionals in fixed-team code.
+thresholds, behind a preset registry (`packages/engine/src/rulesets/registry.ts`,
+eight production presets) plus the options/host layer described above.
+`state/teams.ts` gives fixed and finding-friends tables the same team-membership
+surface (`knownTeamIdForSeat` for views and bots; `finalTeamIdForSeat`, engine-only,
+for end-of-round scoring), so finding-friends is a dynamic team strategy and a
+redacted identity event stream, not conditionals sprinkled through fixed-team
+code. The web UI still exposes only preset selection at room creation; the
+options/host/in-game-editing protocol surface (`GET /api/presets`,
+`UPDATE_OPTIONS`, bot-difficulty PATCH) is ready for a frontend to build
+against once the web app's overhaul lands.

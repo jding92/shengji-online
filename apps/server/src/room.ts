@@ -638,6 +638,27 @@ export class Room {
     });
   }
 
+  /**
+   * Host-independent, any-phase difficulty swap for a seated bot (mirrors the
+   * any-member auth pattern of add/remove/takeover, not host-only). The next
+   * scheduled bot decision reads `player.bot.difficulty` live, so no reschedule
+   * is strictly required — it is still called for symmetry with the other
+   * bot-administration methods.
+   */
+  changeBotDifficulty(
+    playerId: string,
+    difficulty: BotDifficulty,
+    at: string,
+  ): Promise<void> {
+    return this.serialize(() => {
+      const player = this.currentState.players[playerId];
+      if (player === undefined) throw new RangeError("Player not found");
+      if (player.bot === undefined) throw new RangeError("Player is not a bot");
+      this.commit([{ type: "BOT_DIFFICULTY_CHANGED", playerId, difficulty, at }]);
+      this.rescheduleTimers();
+    });
+  }
+
   takeoverByBot(
     playerId: string,
     difficulty: BotDifficulty,
