@@ -65,7 +65,7 @@ export function RoundSummaryModal({
 }: {
   view: PrivateGameView;
   actions: ReadonlySet<PrivateGameView["legalActions"][number]>;
-  submit: (command: WireClientCommand) => void;
+  submit: (command: WireClientCommand) => string | null;
 }) {
   const reducedMotion = useReducedMotion() ?? false;
   const round = view.publicRound;

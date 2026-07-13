@@ -42,9 +42,13 @@ export function useGameRoom(roomId: string) {
   const retryRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const attemptsRef = useRef(0);
   const intentionalCloseRef = useRef(false);
+  const claimedRequestIdsRef = useRef(new Set<string>());
   /** serverTime - clientTime, updated from TIMER_TICK; keeps countdowns honest. */
   const serverOffsetRef = useRef(0);
   const [turnDeadline, setTurnDeadline] = useState<string | null>(null);
+  const [trackedRejections, setTrackedRejections] = useState<
+    Map<string, { code: string; message: string }>
+  >(new Map());
 
   const updateView = useCallback((next: PrivateGameView) => {
     viewRef.current = next;
@@ -79,6 +83,20 @@ export function useGameRoom(roomId: string) {
         if (envelope.type === "TIMER_TICK") {
           serverOffsetRef.current = Date.parse(envelope.serverTime) - Date.now();
           setTurnDeadline(envelope.deadline);
+          return;
+        }
+        if (claimedRequestIdsRef.current.has(envelope.requestId)) {
+          setTrackedRejections((previous) => {
+            const next = new Map(previous);
+            next.set(envelope.requestId, {
+              code: envelope.code,
+              message: envelope.message,
+            });
+            return next;
+          });
+          if (envelope.code === "STALE_REVISION") {
+            socket.close(4000, "Refresh stale state");
+          }
           return;
         }
         setError(envelope.message);
@@ -133,28 +151,58 @@ export function useGameRoom(roomId: string) {
     [connect, roomId],
   );
 
-  const sendCommand = useCallback(
-    (command: WireClientCommand) => {
+  const sendCommandWithTracking = useCallback(
+    (command: WireClientCommand, tracked: boolean): string | null => {
+      const requestId = crypto.randomUUID();
+      if (tracked) claimedRequestIdsRef.current.add(requestId);
       const socket = socketRef.current;
       const current = viewRef.current;
       const token = safeStorage.get(sessionKey(roomId));
       if (socket?.readyState !== WebSocket.OPEN || current === null || token === null) {
+        if (tracked) claimedRequestIdsRef.current.delete(requestId);
         setError("You are not connected yet.");
-        return false;
+        return null;
       }
       socket.send(
         JSON.stringify({
           protocolVersion: PROTOCOL_VERSION,
           roomId,
           playerToken: token,
-          requestId: crypto.randomUUID(),
+          requestId,
           expectedRevision: current.revision,
           command,
         }),
       );
-      return true;
+      return requestId;
     },
     [roomId],
+  );
+
+  const sendCommand = useCallback(
+    (command: WireClientCommand) => sendCommandWithTracking(command, false),
+    [sendCommandWithTracking],
+  );
+
+  // There is no success ACK: callers track the id for a rejection and observe
+  // the next private snapshot for successful application.
+  const sendTrackedCommand = useCallback(
+    (command: WireClientCommand) => sendCommandWithTracking(command, true),
+    [sendCommandWithTracking],
+  );
+
+  const consumeRejection = useCallback(
+    (requestId: string): { code: string; message: string } | undefined => {
+      claimedRequestIdsRef.current.delete(requestId);
+      const rejection = trackedRejections.get(requestId);
+      setTrackedRejections((previous) => {
+        if (!previous.has(requestId)) return previous;
+        const next = new Map(previous);
+        next.delete(requestId);
+        return next;
+      });
+      return rejection;
+    },
+    [trackedRejections],
   );
 
   const leaveSession = useCallback(() => {
@@ -182,6 +230,9 @@ export function useGameRoom(roomId: string) {
     clearError: () => setError(null),
     join,
     sendCommand,
+    sendTrackedCommand,
+    trackedRejections,
+    consumeRejection,
     leaveSession,
     turnDeadline,
     serverNow,
