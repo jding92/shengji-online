@@ -67,6 +67,7 @@ export type PrivateGameView = {
   revision: number;
   /** The room's option authority; null before the first human joins. */
   hostPlayerId: string | null;
+  joinedPlayerCount: number;
   ruleset: {
     id: string;
     name: string;
@@ -134,6 +135,7 @@ export type PrivateGameView = {
         winner: "defenders" | "attackers";
         attackerPoints: number;
         levelDelta: number;
+        defenderSeats: number[];
       };
     };
     biddingDeadline?: string;

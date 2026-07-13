@@ -136,6 +136,32 @@ describe("UPDATE_OPTIONS command", () => {
     ).toThrow("seat(s) 5");
   });
 
+  it("rejects shrinking below the number of joined players", () => {
+    let state = lobby({
+      seatCount: 8,
+      options: { playerCount: 8, deckCount: 4 },
+      seated: [0],
+      host: "p0",
+    });
+    for (let index = 1; index < 5; index += 1) {
+      state = applyEvent(state, {
+        type: "PLAYER_JOINED",
+        playerId: `p${index}`,
+        name: `Player ${index}`,
+        at: now,
+      });
+    }
+
+    expect(() =>
+      validateCommand(
+        state,
+        "p0",
+        { type: "UPDATE_OPTIONS", options: { playerCount: 4, deckCount: 2 } },
+        { now },
+      ),
+    ).toThrow("Cannot shrink to 4 players while 5 players have joined");
+  });
+
   it("resizes seats up and down while preserving assignments", () => {
     const state = lobby({ seatCount: 4, seated: [0, 1], host: "p0" });
     const grow = replayEvents(

@@ -17,7 +17,7 @@ export const shengJiRulesetSchema = z
     name: z.string().min(1),
     version: z.string().min(1),
     players: z.object({
-      count: z.number().int().min(4).max(12),
+      count: z.number().int().min(4).max(8),
       seatOrder: z.literal("counterclockwise"),
     }),
     decks: z.object({

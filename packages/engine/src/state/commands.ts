@@ -932,6 +932,13 @@ export function validateCommand(
           `Cannot shrink to ${newCount} players while seat(s) ${conflictingSeats.join(", ")} are occupied`,
         );
       }
+      const joinedPlayerCount = Object.keys(state.players).length;
+      if (newCount < joinedPlayerCount) {
+        throw new CommandValidationError(
+          "INVALID_COMMAND",
+          `Cannot shrink to ${newCount} players while ${joinedPlayerCount} players have joined`,
+        );
+      }
       return [
         {
           type: "OPTIONS_UPDATED",

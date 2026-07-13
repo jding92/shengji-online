@@ -132,6 +132,7 @@ export function derivePrivateView(state: GameState, playerId: string): PrivateGa
     roomId: state.roomId,
     revision: state.revision,
     hostPlayerId: state.hostPlayerId ?? null,
+    joinedPlayerCount: Object.keys(state.players).length,
     ruleset: {
       id: state.rulesetSnapshot.id,
       name: state.rulesetSnapshot.name,
@@ -230,6 +231,7 @@ export function derivePrivateView(state: GameState, playerId: string): PrivateGa
                       winner: previousRound.outcome.winner,
                       attackerPoints: previousRound.outcome.attackerPoints,
                       levelDelta: previousRound.outcome.levelDelta,
+                      defenderSeats: previousRound.defenderSeats ?? [],
                     },
                   }),
             },

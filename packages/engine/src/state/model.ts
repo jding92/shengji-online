@@ -110,7 +110,7 @@ export type RoundHistoryEntry = {
   attackingTeamId: TeamId;
   winningTeamId: TeamId;
   outcome: RoundOutcome;
-  /** Finding-friends only: the declarer plus revealed friends. */
+  /** The seats that defended this completed round. */
   defenderSeats?: SeatIndex[];
 };
 

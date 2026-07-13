@@ -346,15 +346,21 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
         event.outcome.winner === "defenders"
           ? next.defendingTeamId
           : next.attackingTeamId;
-      // In finding-friends the round is over, so "publicly known defender"
-      // is final: the declarer plus every revealed friend.
+      // At scoring, defender membership is final in either team mode. In
+      // finding-friends this is the declarer plus every revealed friend.
       const defenderSeats =
         next.rulesetSnapshot.teams.mode === "finding-friends"
           ? Array.from(
               { length: next.rulesetSnapshot.players.count },
               (_, seat) => seat,
             ).filter((seat) => knownTeamIdForSeat(next, seat) === "defenders")
-          : undefined;
+          : Array.from(
+              { length: next.rulesetSnapshot.players.count },
+              (_, seat) => seat,
+            ).filter(
+              (seat) =>
+                teamIdForSeat(seat, next.rulesetSnapshot) === next.defendingTeamId,
+            );
       next.roundHistory = [
         ...(next.roundHistory ?? []),
         {
@@ -363,7 +369,7 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
           attackingTeamId: next.attackingTeamId,
           winningTeamId,
           outcome: { ...event.outcome },
-          ...(defenderSeats === undefined ? {} : { defenderSeats }),
+          defenderSeats,
         },
       ];
       next.phase = "round-scoring";

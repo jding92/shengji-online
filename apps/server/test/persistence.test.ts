@@ -4,6 +4,40 @@ import { SqliteStore } from "../src/persistence/sqlite-store.js";
 import { RoomManager } from "../src/room-manager.js";
 
 describe("SQLite room persistence", () => {
+  it("persists env-derived bid timers across a manager restart", async () => {
+    const previousPostDeal = process.env.BID_POST_DEAL_SECONDS;
+    const previousResponse = process.env.BID_RESPONSE_SECONDS;
+    process.env.BID_POST_DEAL_SECONDS = "41";
+    process.env.BID_RESPONSE_SECONDS = "17";
+    const store = new SqliteStore(":memory:");
+    try {
+      const firstManager = new RoomManager(store, { timersEnabled: false });
+      const room = await firstManager.createRoom("2026-07-10T12:00:00.000Z");
+      const roomId = room.state.roomId;
+      firstManager.close();
+
+      delete process.env.BID_POST_DEAL_SECONDS;
+      delete process.env.BID_RESPONSE_SECONDS;
+      const restoredManager = new RoomManager(store, { timersEnabled: false });
+      const restored = restoredManager.getRoom(roomId);
+      expect(restored?.state.pendingOptions?.timers).toEqual({
+        postDealWindowSeconds: 41,
+        responseWindowSeconds: 17,
+      });
+      expect(restored?.state.rulesetSnapshot.bidding).toMatchObject({
+        postDealWindowSeconds: 41,
+        responseWindowSeconds: 17,
+      });
+      restoredManager.close();
+    } finally {
+      if (previousPostDeal === undefined) delete process.env.BID_POST_DEAL_SECONDS;
+      else process.env.BID_POST_DEAL_SECONDS = previousPostDeal;
+      if (previousResponse === undefined) delete process.env.BID_RESPONSE_SECONDS;
+      else process.env.BID_RESPONSE_SECONDS = previousResponse;
+      store.close();
+    }
+  });
+
   it("persists room snapshots, events, and hashed resume sessions", async () => {
     const store = new SqliteStore(":memory:");
     const manager = new RoomManager(store);
