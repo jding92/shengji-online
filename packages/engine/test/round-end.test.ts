@@ -147,6 +147,7 @@ describe("round completion", () => {
         attackingTeamId: "team-1",
         winningTeamId: "team-0",
         outcome: { attackerPoints: 40, winner: "defenders", levelDelta: 1 },
+        defenderSeats: [0, 2],
       },
     ]);
   });

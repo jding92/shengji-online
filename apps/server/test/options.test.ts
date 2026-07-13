@@ -20,6 +20,7 @@ import {
   type WireClientCommand,
 } from "@shengji/protocol";
 import { SqliteStore } from "../src/persistence/sqlite-store.js";
+import { derivePrivateView } from "../src/private-views/derive-private-view.js";
 import { RoomManager, RulesetResolutionError } from "../src/room-manager.js";
 import { Room } from "../src/room.js";
 
@@ -91,6 +92,24 @@ async function sendExpectingReject(
     expect(socket.received.some(({ type }) => type === "COMMAND_REJECTED")).toBe(true),
   );
   return socket.received.find(({ type }) => type === "COMMAND_REJECTED")!;
+}
+
+async function withEnv(
+  values: Record<string, string>,
+  callback: () => Promise<void>,
+): Promise<void> {
+  const previous = Object.fromEntries(
+    Object.keys(values).map((key) => [key, process.env[key]]),
+  ) as Record<string, string | undefined>;
+  try {
+    for (const [key, value] of Object.entries(values)) process.env[key] = value;
+    await callback();
+  } finally {
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
 }
 
 describe("host-controlled lobby options", () => {
@@ -166,6 +185,122 @@ describe("host-controlled lobby options", () => {
 });
 
 describe("createRoom with presets and options", () => {
+  it("folds valid bid timer env overrides into the view options", async () => {
+    await withEnv(
+      { BID_POST_DEAL_SECONDS: "41", BID_RESPONSE_SECONDS: "17" },
+      async () => {
+        const store = new SqliteStore(":memory:");
+        const manager = new RoomManager(store, { timersEnabled: false });
+        const room = await manager.createRoom({
+          at: now,
+          options: {
+            timers: { postDealWindowSeconds: 99, responseWindowSeconds: 98 },
+          },
+        });
+        const joined = await manager.joinRoom({
+          roomId: room.state.roomId,
+          name: "Ada",
+          at: now,
+        });
+        const view = derivePrivateView(room.state, joined.playerId);
+
+        expect(room.state.pendingOptions?.timers).toEqual({
+          postDealWindowSeconds: 41,
+          responseWindowSeconds: 17,
+        });
+        expect(room.state.rulesetSnapshot.bidding).toMatchObject({
+          postDealWindowSeconds: 41,
+          responseWindowSeconds: 17,
+        });
+        expect(view.ruleset.options.timers).toEqual({
+          postDealWindowSeconds: 41,
+          responseWindowSeconds: 17,
+        });
+
+        manager.close();
+        store.close();
+      },
+    );
+  });
+
+  it("retains env-derived bid timers when the host changes another option", async () => {
+    await withEnv(
+      { BID_POST_DEAL_SECONDS: "41", BID_RESPONSE_SECONDS: "17" },
+      async () => {
+        const store = new SqliteStore(":memory:");
+        const manager = new RoomManager(store, { timersEnabled: false });
+        const room = await manager.createRoom({ at: now });
+        const host = await manager.joinRoom({
+          roomId: room.state.roomId,
+          name: "Ada",
+          at: now,
+        });
+        const socket = new FakeSocket();
+        room.connect(host.playerId, socket.asWebSocket());
+
+        await send(room, socket, {
+          type: "UPDATE_OPTIONS",
+          options: {
+            maxRedeals: 3,
+            timers: { postDealWindowSeconds: 41, responseWindowSeconds: 17 },
+          },
+        });
+
+        expect(room.state.pendingOptions).toEqual({
+          maxRedeals: 3,
+          timers: { postDealWindowSeconds: 41, responseWindowSeconds: 17 },
+        });
+        expect(room.state.rulesetSnapshot.bidding).toMatchObject({
+          maxRedeals: 3,
+          postDealWindowSeconds: 41,
+          responseWindowSeconds: 17,
+        });
+
+        manager.close();
+        store.close();
+      },
+    );
+  });
+
+  it("rejects shrinking below the joined-player count even when low seats are free", async () => {
+    const store = new SqliteStore(":memory:");
+    const manager = new RoomManager(store, { timersEnabled: false });
+    const room = await manager.createRoom({
+      at: now,
+      presetId: "shengji-8p-4d-fixed-v1",
+    });
+    const joined = [];
+    for (let index = 0; index < 5; index += 1) {
+      joined.push(
+        await manager.joinRoom({
+          roomId: room.state.roomId,
+          name: `Player ${index}`,
+          at: now,
+        }),
+      );
+    }
+    const socket = new FakeSocket();
+    room.connect(joined[0]!.playerId, socket.asWebSocket());
+    await send(room, socket, { type: "SIT", seat: 0 });
+
+    const rejected = await sendExpectingReject(room, socket, {
+      type: "UPDATE_OPTIONS",
+      options: { playerCount: 4, deckCount: 2 },
+    });
+    expect(rejected).toMatchObject({
+      type: "COMMAND_REJECTED",
+      code: "INVALID_COMMAND",
+    });
+    if (rejected.type === "COMMAND_REJECTED") {
+      expect(rejected.message).toBe(
+        "Cannot shrink to 4 players while 5 players have joined",
+      );
+    }
+
+    manager.close();
+    store.close();
+  });
+
   it("creates a room from a non-default (6p/3d) preset", async () => {
     const store = new SqliteStore(":memory:");
     const manager = new RoomManager(store, { timersEnabled: false });

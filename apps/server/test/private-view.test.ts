@@ -55,6 +55,7 @@ describe("private views", () => {
     const state = dealtState();
     for (let seat = 0; seat < 4; seat += 1) {
       const view = derivePrivateView(state, `p${seat}`);
+      expect(view.joinedPlayerCount).toBe(4);
       expect(view.you.hand).toHaveLength(25);
       expect(view.seats.map(({ cardCount }) => cardCount)).toEqual([25, 25, 25, 25]);
       const serialized = JSON.stringify(view);
@@ -150,6 +151,7 @@ describe("private views", () => {
         attackingTeamId: "team-1",
         winningTeamId: "team-1",
         outcome: { attackerPoints: 125, winner: "attackers", levelDelta: 1 },
+        defenderSeats: [0, 2],
       },
     ];
 
@@ -168,6 +170,7 @@ describe("private views", () => {
         winner: "attackers",
         attackerPoints: 125,
         levelDelta: 1,
+        defenderSeats: [0, 2],
       },
     });
 

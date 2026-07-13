@@ -31,6 +31,13 @@ function roomCode(): string {
   return [...bytes].map((byte) => ROOM_ALPHABET[byte % ROOM_ALPHABET.length]).join("");
 }
 
+function positiveIntegerEnv(name: string): number | undefined {
+  const value = process.env[name];
+  if (value === undefined) return undefined;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+}
+
 export type JoinResult = {
   roomId: string;
   playerId: string;
@@ -65,28 +72,30 @@ export class RoomManager {
     while (this.rooms.has(roomId) || this.store.loadRoom(roomId) !== null)
       roomId = roomCode();
     const presetId = options.presetId ?? DEFAULT_PRESET_ID;
-    const resolved = resolveRuleset(presetId, options.options ?? {});
+    const suppliedOptions = options.options ?? {};
+    const postDealWindowSeconds = positiveIntegerEnv("BID_POST_DEAL_SECONDS");
+    const responseWindowSeconds = positiveIntegerEnv("BID_RESPONSE_SECONDS");
+    const mergedOptions: GameOptions = {
+      ...suppliedOptions,
+      ...(postDealWindowSeconds === undefined && responseWindowSeconds === undefined
+        ? {}
+        : {
+            timers: {
+              ...suppliedOptions.timers,
+              ...(postDealWindowSeconds === undefined ? {} : { postDealWindowSeconds }),
+              ...(responseWindowSeconds === undefined ? {} : { responseWindowSeconds }),
+            },
+          }),
+    };
+    const resolved = resolveRuleset(presetId, mergedOptions);
     if (!resolved.ok) throw new RulesetResolutionError(resolved.issues);
     const ruleset = resolved.ruleset;
-    // Env bid-timer overrides are ops-level knobs applied after resolution.
-    if (process.env.BID_POST_DEAL_SECONDS !== undefined) {
-      ruleset.bidding.postDealWindowSeconds = Number.parseInt(
-        process.env.BID_POST_DEAL_SECONDS,
-        10,
-      );
-    }
-    if (process.env.BID_RESPONSE_SECONDS !== undefined) {
-      ruleset.bidding.responseWindowSeconds = Number.parseInt(
-        process.env.BID_RESPONSE_SECONDS,
-        10,
-      );
-    }
     const state = createGameState({
       roomId,
       ruleset,
       createdAt: at,
       presetId,
-      pendingOptions: options.options ?? {},
+      pendingOptions: mergedOptions,
     });
     this.store.createRoom(state);
     const room = new Room(state, this.store, this.roomOptions);

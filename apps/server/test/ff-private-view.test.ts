@@ -161,6 +161,8 @@ describe("finding-friends redaction", () => {
   it("shows the declarer and public calls while every unrevealed seat stays teamless", () => {
     const { holderAtOne } = calledCopyPlacements();
     const view = derivePrivateView(holderAtOne, "p3");
+    expect(view.joinedPlayerCount).toBe(5);
+    expect(view.publicRound?.roundStats.previousRound).toBeUndefined();
     expect(view.seats[0]).toMatchObject({ teamId: "defenders", role: "declarer" });
     for (let seat = 1; seat < 5; seat += 1) {
       expect("teamId" in view.seats[seat]!).toBe(false);

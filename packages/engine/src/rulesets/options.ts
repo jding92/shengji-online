@@ -16,7 +16,7 @@ import { shengJiRulesetSchema, type ShengJiRuleset } from "./schema.js";
  * composer that turns this bag plus a preset id into a dense `ShengJiRuleset`.
  */
 export const gameOptionsSchema = z.object({
-  playerCount: z.number().int().min(4).max(12).optional(),
+  playerCount: z.number().int().min(4).max(8).optional(),
   deckCount: z.number().int().positive().optional(),
   teamsMode: z.enum(["fixed", "finding-friends"]).optional(),
   /** Finding-friends only; validated in Phase 3. */

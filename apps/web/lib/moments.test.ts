@@ -38,6 +38,7 @@ function view({
     roomId: "ABC123",
     revision,
     hostPlayerId: null,
+    joinedPlayerCount: 0,
     ruleset: {
       id: "test",
       name: "Test",

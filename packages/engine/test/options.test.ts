@@ -20,6 +20,13 @@ describe("resolveRuleset", () => {
     expect(result.ruleset).toEqual(getPreset(DEFAULT_PRESET_ID)!.ruleset);
   });
 
+  it("rejects player counts above the product cap", () => {
+    const result = resolveRuleset(DEFAULT_PRESET_ID, { playerCount: 9 });
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error("expected failure");
+    expect(result.issues[0]?.path).toBe("players.count");
+  });
+
   it("re-derives teams, bottom, and thresholds when player/deck counts change", () => {
     const result = resolveRuleset(DEFAULT_PRESET_ID, { playerCount: 6, deckCount: 3 });
     expect(result.ok).toBe(true);
