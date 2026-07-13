@@ -51,7 +51,7 @@ import { ChromeButton } from "./ui-chrome";
 
 type GameTableProps = {
   view: PrivateGameView;
-  sendCommand: (command: WireClientCommand) => boolean;
+  sendCommand: (command: WireClientCommand) => string | null;
   onLeave: () => void;
   turnDeadline: string | null;
   serverNow: () => number;
@@ -198,8 +198,10 @@ export function GameTable({
   }, [throwKey]);
 
   const submit = useCallback(
-    (command: WireClientCommand) => {
-      if (sendCommand(command)) clear();
+    (command: WireClientCommand): string | null => {
+      const requestId = sendCommand(command);
+      if (requestId !== null) clear();
+      return requestId;
     },
     [sendCommand, clear],
   );

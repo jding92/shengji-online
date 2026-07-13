@@ -14,7 +14,7 @@ import { ChromeButton } from "./ui-chrome";
 
 type LobbyProps = {
   view: PrivateGameView;
-  sendCommand: (command: WireClientCommand) => boolean;
+  sendCommand: (command: WireClientCommand) => string | null;
   onLeave: () => void;
 };
 

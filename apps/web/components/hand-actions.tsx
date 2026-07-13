@@ -34,7 +34,7 @@ export function HandActions({
   hasPassedBid: boolean;
   requiredCardCount: number | undefined;
   trump: TrumpSpec | undefined;
-  submit: (command: WireClientCommand) => void;
+  submit: (command: WireClientCommand) => string | null;
 }) {
   const selectedIds = selectedCards.map(({ id }) => id);
   const isLeading = actions.has("attempt-throw");
