@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Sheng Ji · 升级 Online",
     short_name: "Sheng Ji",
-    description: "A polished private online table for four-player Sheng Ji.",
+    description: "A polished private online table for 4–8 players.",
     start_url: "/",
     display: "standalone",
     background_color: "#080906",

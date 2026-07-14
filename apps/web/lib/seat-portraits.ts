@@ -14,6 +14,15 @@ export const SEAT_PORTRAIT_IDS = [
 
 export type SeatPortraitId = (typeof SEAT_PORTRAIT_IDS)[number];
 
+export type SeatPortrait = {
+  id: SeatPortraitId;
+  assetId: (typeof SEAT_PORTRAIT_ASSETS)[SeatPortraitId];
+  src: string;
+  src2x: string;
+  /** Null for the original roster; later seats use their physical index. */
+  seatAccent: number | null;
+};
+
 const SEAT_PORTRAIT_ASSETS = {
   hadesKingYan: ART_ASSET_IDS.portrait("hades-king-yan"),
   persephonePlumBlossom: ART_ASSET_IDS.portrait("persephone-plum-blossom"),
@@ -21,18 +30,17 @@ const SEAT_PORTRAIT_ASSETS = {
   athenaGrandStrategist: ART_ASSET_IDS.portrait("athena-grand-strategist"),
 } as const satisfies Record<SeatPortraitId, ArtAssetId>;
 
-export function portraitForSeat(seat: number): {
-  id: SeatPortraitId;
-  assetId: (typeof SEAT_PORTRAIT_ASSETS)[SeatPortraitId];
-  src: string;
-  src2x: string;
-} {
-  const id = SEAT_PORTRAIT_IDS[seat % SEAT_PORTRAIT_IDS.length]!;
+export function portraitForSeat(seat: number): SeatPortrait {
+  const rosterIndex =
+    ((seat % SEAT_PORTRAIT_IDS.length) + SEAT_PORTRAIT_IDS.length) %
+    SEAT_PORTRAIT_IDS.length;
+  const id = SEAT_PORTRAIT_IDS[rosterIndex]!;
   const assetId = SEAT_PORTRAIT_ASSETS[id];
   return {
     id,
     assetId,
     src: artAssetPath(assetId, 1),
     src2x: artAssetPath(assetId, 2),
+    seatAccent: seat >= SEAT_PORTRAIT_IDS.length ? seat : null,
   };
 }

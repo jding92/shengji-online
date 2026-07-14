@@ -17,7 +17,6 @@ import {
 import {
   canHandOutbid,
   cardFaceKey,
-  fourPlayerTwoDeckFixedTeamRuleset,
   getEffectiveSuit,
   parseThrow,
   parseTrickFormat,
@@ -32,12 +31,13 @@ import { THROW_BANNER_MS, TRICK_WINNER_GLOW_MS } from "../lib/constants";
 import {
   compareForHandDisplay,
   defendingTeamIdForRound,
-  didLocalTeamWin,
   relativeSeatPosition,
   teamRoleForSeat,
   teamRoleForTeam,
 } from "../lib/cards";
-import { teamClassForSeat } from "../lib/strings";
+import { outcomeTeamForRound, resolveViewRuleset } from "../lib/rules";
+import { relativeSeatIndex, seatSlots } from "../lib/table-layout";
+import { teamClassForTeamId } from "../lib/strings";
 import { CardBack, PlayingCard } from "./card";
 import { FxCanvas } from "./fx-canvas";
 import { GameDashboard } from "./game-dashboard";
@@ -57,16 +57,6 @@ type GameTableProps = {
   serverNow: () => number;
 };
 
-const POINT_THRESHOLDS = [
-  ...new Set(
-    fourPlayerTwoDeckFixedTeamRuleset.scoring.thresholds.flatMap((threshold) =>
-      "min" in threshold ? [threshold.min] : [],
-    ),
-  ),
-]
-  .filter((threshold) => threshold > 0)
-  .sort((a, b) => a - b);
-const POINT_METER_MAX = Math.max(200, ...POINT_THRESHOLDS);
 const TABLE_FELT_ASSET = "texture.table-felt" as const;
 const BOARD_ART_STYLE = {
   "--table-felt-image": `image-set(url("${artAssetPath(TABLE_FELT_ASSET, 1)}") 1x, url("${artAssetPath(TABLE_FELT_ASSET, 2)}") 2x)`,
@@ -80,6 +70,35 @@ export function GameTable({
   serverNow,
 }: GameTableProps) {
   const round = view.publicRound;
+  const resolvedRuleset = resolveViewRuleset(view.ruleset);
+  const playerCount = resolvedRuleset.players.count;
+  const slots = useMemo(() => seatSlots(playerCount), [playerCount]);
+  const pointThresholds = useMemo(() => {
+    const thresholds = new Set<number>();
+    for (const threshold of resolvedRuleset.scoring.thresholds) {
+      if ("min" in threshold && threshold.min !== undefined) {
+        thresholds.add(threshold.min);
+      }
+    }
+    return [...thresholds].filter((threshold) => threshold > 0).sort((a, b) => a - b);
+  }, [resolvedRuleset]);
+  const pointMeterMax = Math.max(resolvedRuleset.decks.count * 100, ...pointThresholds);
+  const pointToneThresholds = useMemo(() => {
+    const thresholds: number[] = [];
+    for (const threshold of resolvedRuleset.scoring.thresholds) {
+      if (
+        threshold.winner === "attackers" &&
+        "min" in threshold &&
+        threshold.min !== undefined
+      ) {
+        thresholds.push(threshold.min);
+      }
+    }
+    return thresholds.sort((a, b) => a - b);
+  }, [resolvedRuleset]);
+  const lowToneThreshold = pointToneThresholds[0] ?? pointMeterMax;
+  const highToneThreshold = pointToneThresholds[1] ?? lowToneThreshold;
+  const startingRank = resolvedRuleset.ranks.sequence[0]!;
   const { moments, dismiss } = useGameMoments(view);
   useSoundEffects(moments);
   const { muted, toggleMuted } = useSoundPreference();
@@ -91,10 +110,10 @@ export function GameTable({
   const cards = useMemo(() => {
     const trump = round?.trumpSpec ?? {
       mode: "no-trump" as const,
-      rank: round?.trumpRank ?? "2",
+      rank: round?.trumpRank ?? startingRank,
     };
     return [...view.you.hand].sort((a, b) => compareForHandDisplay(a, b, trump));
-  }, [view.you.hand, round?.trumpSpec, round?.trumpRank]);
+  }, [view.you.hand, round?.trumpSpec, round?.trumpRank, startingRank]);
 
   const requiredCardCount = round?.currentTrick?.cardCount;
   const selectionLimit =
@@ -229,7 +248,7 @@ export function GameTable({
         hand: view.you.hand,
         currentRank: round.trumpRank,
         currentBid,
-        rules: fourPlayerTwoDeckFixedTeamRuleset.bidding,
+        rules: resolvedRuleset.bidding,
       })
     ) {
       autoPassedBid.current = signature;
@@ -342,16 +361,20 @@ export function GameTable({
   const attackerPoints =
     (round?.attackerPoints ?? 0) + (round?.throwPenaltyAdjustment ?? 0);
   const pointsTone =
-    attackerPoints < 80 ? "stat-low" : attackerPoints < 120 ? "stat-mid" : "stat-high";
+    attackerPoints < lowToneThreshold
+      ? "stat-low"
+      : attackerPoints < highToneThreshold
+        ? "stat-mid"
+        : "stat-high";
   // What the scoreboard would do if the round ended on the current points —
   // shown once cards are actually being played, so the stakes stay visible.
   const projectedOutcome =
     round !== undefined && (view.phase === "playing" || view.phase === "round-scoring")
-      ? scoreRound(attackerPoints, fourPlayerTwoDeckFixedTeamRuleset.scoring)
+      ? scoreRound(attackerPoints, resolvedRuleset.scoring)
       : null;
   const pointProgress = Math.max(
     0,
-    Math.min(100, (attackerPoints / POINT_METER_MAX) * 100),
+    Math.min(100, (attackerPoints / pointMeterMax) * 100),
   );
 
   // One timer at a time: the bidding window, then the current turn's clock.
@@ -359,6 +382,7 @@ export function GameTable({
     view.phase === "dealing" || view.phase === "post-deal-bidding"
       ? round?.biddingDeadline
       : view.phase === "bottom-exchange" ||
+          view.phase === "friend-calling" ||
           view.phase === "playing" ||
           view.phase === "round-scoring"
         ? (turnDeadline ?? undefined)
@@ -386,7 +410,7 @@ export function GameTable({
   const previousWinner =
     previousRound === undefined
       ? null
-      : previousRound.winningTeamId === view.you.teamId
+      : outcomeTeamForRound(view, previousRound) === previousRound.winner
         ? "Your team"
         : "Rivals";
   const bidFor = (seatIndex: number) =>
@@ -399,12 +423,12 @@ export function GameTable({
     view.you.seat !== null &&
     !actions.has("bid") &&
     !actions.has("pass-bid");
-  const yourTeamClass = youSeat === undefined ? "" : teamClassForSeat(youSeat.seat);
-  const enemyTeamClass =
-    enemySeat === undefined ? "" : teamClassForSeat(enemySeat.seat);
+  const yourTeamClass = teamClassForTeamId(view.you.teamId);
+  const enemyTeamClass = teamClassForTeamId(enemySeat?.teamId);
   const gameVictory =
     view.phase === "game-over" && round?.outcome !== undefined
-      ? didLocalTeamWin(view, round.outcome.winner)
+      ? outcomeTeamForRound({ view, resolved: resolvedRuleset }) ===
+        round.outcome.winner
       : false;
 
   return (
@@ -424,14 +448,14 @@ export function GameTable({
           teamClass: enemyTeamClass,
         }}
         roundNumber={round?.roundNumber ?? 1}
-        trumpRank={round?.trumpRank ?? "2"}
+        trumpRank={round?.trumpRank ?? startingRank}
         standingTrump={standingTrump}
         trumpCard={trumpCard}
         attackerPoints={attackerPoints}
         pointsTone={pointsTone}
         pointProgress={pointProgress}
-        pointThresholds={POINT_THRESHOLDS}
-        pointMeterMax={POINT_METER_MAX}
+        pointThresholds={pointThresholds}
+        pointMeterMax={pointMeterMax}
         projectedOutcome={projectedOutcome}
         previousResult={
           previousRound === undefined || previousWinner === null
@@ -481,7 +505,7 @@ export function GameTable({
         <LayoutGroup>
           <section className="table-stage">
             <div className="felt-table">
-              <div className="table-orbit">
+              <div className="table-orbit" data-players={playerCount}>
                 <img
                   className="table-ring"
                   data-art-asset={ART_ASSET_IDS.tableRing}
@@ -491,12 +515,24 @@ export function GameTable({
                   aria-hidden="true"
                   draggable={false}
                 />
-                {view.seats.map((seat) =>
-                  seat.playerId === view.you.playerId ? null : (
+                {view.seats.map((seat) => {
+                  if (seat.playerId === view.you.playerId) return null;
+                  const legacyPosition =
+                    playerCount === 4
+                      ? relativeSeatPosition(seat.seat, view.you.seat)
+                      : null;
+                  const slot =
+                    legacyPosition === null
+                      ? slots[
+                          relativeSeatIndex(seat.seat, view.you.seat ?? 0, playerCount)
+                        ]!
+                      : null;
+                  return (
                     <TableSeat
                       key={seat.seat}
                       seat={seat}
-                      position={relativeSeatPosition(seat.seat, view.you.seat)}
+                      position={legacyPosition}
+                      slot={slot}
                       currentTurn={round?.currentTurnSeat === seat.seat}
                       trickWinner={trickWinnerSeat === seat.seat}
                       isYou={false}
@@ -505,8 +541,8 @@ export function GameTable({
                       bid={bidFor(seat.seat)}
                       roomId={view.roomId}
                     />
-                  ),
-                )}
+                  );
+                })}
                 {/* Your tag stays below the ring and above the hand dock. */}
                 {youSeat && (
                   <div className="south-cluster">

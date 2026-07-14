@@ -7,7 +7,7 @@ import type {
 } from "@shengji/protocol";
 import { useState } from "react";
 import { addBot, removeBot } from "../lib/bot-api";
-import { teamLabelForSeat } from "../lib/strings";
+import { teamLabelForTeamId } from "../lib/strings";
 import { LeaveButton } from "./leave-button";
 import { SeatAvatar } from "./seat-avatar";
 import { ChromeButton } from "./ui-chrome";
@@ -69,11 +69,13 @@ export function Lobby({ view, sendCommand, onLeave }: LobbyProps) {
         </div>
 
         <div className="rules-ribbon" aria-label="Room rules">
-          <span>4 players</span>
+          <span>{view.ruleset.players} players</span>
           <i />
-          <span>2 decks</span>
+          <span>{view.ruleset.decks} decks</span>
           <i />
-          <span>Fixed teams</span>
+          <span>
+            {view.ruleset.teamsMode === "fixed" ? "Fixed teams" : "Finding friends"}
+          </span>
           <i />
           <span>Throws on</span>
         </div>
@@ -82,6 +84,7 @@ export function Lobby({ view, sendCommand, onLeave }: LobbyProps) {
           {view.seats.map((seat) => {
             const isYou = seat.playerId === view.you.playerId;
             const difficulty = difficultyBySeat[seat.seat] ?? "intermediate";
+            const teamLabel = teamLabelForTeamId(seat.teamId);
             return (
               <div key={seat.seat} className={`lobby-seat ${isYou ? "is-you" : ""}`}>
                 <button
@@ -104,7 +107,9 @@ export function Lobby({ view, sendCommand, onLeave }: LobbyProps) {
                         ? difficultyLabel(seat.botDifficulty)
                         : seat.playerId === null
                           ? "Tap to sit"
-                          : `Team ${teamLabelForSeat(seat.seat).toLowerCase()}`}
+                          : teamLabel === null
+                            ? "Side unrevealed"
+                            : `Team ${teamLabel.toLowerCase()}`}
                   </small>
                   {seat.isBot && <span className="bot-badge">BOT</span>}
                   {seat.ready && <span className="ready-stamp">READY</span>}
@@ -164,7 +169,9 @@ export function Lobby({ view, sendCommand, onLeave }: LobbyProps) {
 
         <footer className="lobby-footer">
           <div>
-            <strong>{occupied} / 4 seated</strong>
+            <strong>
+              {occupied} / {view.ruleset.players} seated
+            </strong>
             <span>All players must be ready to deal.</span>
           </div>
           <div className="lobby-footer-actions">

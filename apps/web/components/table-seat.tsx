@@ -5,7 +5,8 @@ import { AnimatePresence, motion } from "motion/react";
 import { useState, type CSSProperties } from "react";
 import { replaceWithBot } from "../lib/bot-api";
 import { cardFaceLabel, type TablePosition } from "../lib/cards";
-import { teamClassForSeat } from "../lib/strings";
+import { teamClassForTeamId } from "../lib/strings";
+import type { SeatSlot } from "../lib/table-layout";
 import { CardBack } from "./card";
 import { PlayerTag } from "./player-tag";
 import { ChromeButton, ChromePanel } from "./ui-chrome";
@@ -44,6 +45,7 @@ function MiniHand({ count, vertical }: { count: number; vertical: boolean }) {
 export function TableSeat({
   seat,
   position,
+  slot = null,
   currentTurn,
   isYou,
   isLeader,
@@ -54,7 +56,9 @@ export function TableSeat({
   trickWinner = false,
 }: {
   seat: PrivateGameView["seats"][number];
-  position: TablePosition;
+  position: TablePosition | null;
+  /** Radial geometry for non-four-player tables; legacy positions omit it. */
+  slot?: SeatSlot | null;
   currentTurn: boolean;
   isYou: boolean;
   /** The round's declarer, marked with the 庄 (banker) crest. */
@@ -74,6 +78,18 @@ export function TableSeat({
   const [replacing, setReplacing] = useState(false);
   const [replaceError, setReplaceError] = useState<string | null>(null);
   const canReplace = !isYou && seat.playerId !== null && !seat.connected && !seat.isBot;
+  const positionClass = position === null ? "seat-radial" : `seat-${position}`;
+  const vertical =
+    position === "east" ||
+    position === "west" ||
+    (position === null && (slot?.edge === "right" || slot?.edge === "left"));
+  const seatStyle =
+    slot === null
+      ? undefined
+      : ({
+          "--seat-x": `${slot.xPct}%`,
+          "--seat-y": `${slot.yPct}%`,
+        } as CSSProperties);
 
   async function takeOver(): Promise<void> {
     if (seat.playerId === null) return;
@@ -93,16 +109,13 @@ export function TableSeat({
 
   return (
     <div
-      className={`table-seat seat-${position} ${teamClassForSeat(seat.seat)} ${currentTurn ? "is-turn" : ""} ${trickWinner ? "is-trick-winner" : ""} ${timer === undefined ? "" : "has-timer"}`}
-      data-seat-position={position}
+      className={`table-seat ${positionClass} ${teamClassForTeamId(seat.teamId)} ${currentTurn ? "is-turn" : ""} ${trickWinner ? "is-trick-winner" : ""} ${timer === undefined ? "" : "has-timer"}`}
+      data-seat-position={position === null ? undefined : position}
+      data-seat-edge={slot?.edge}
+      style={seatStyle}
     >
       {/* Your own hand is face-up in the dock below — no backs needed. */}
-      {!isYou && (
-        <MiniHand
-          count={seat.cardCount}
-          vertical={position === "east" || position === "west"}
-        />
-      )}
+      {!isYou && <MiniHand count={seat.cardCount} vertical={vertical} />}
       <PlayerTag
         seat={seat}
         isYou={isYou}

@@ -3,22 +3,15 @@
 import type { PrivateGameView } from "@shengji/protocol";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { cardFaceLabel, relativeSeatPosition, type TablePosition } from "../lib/cards";
+import { cardFaceLabel, relativeSeatPosition } from "../lib/cards";
 import { TRICK_RESULT_HOLD_MS, TRICK_SWEEP_MS } from "../lib/constants";
 import { ART_ASSET_IDS, artAssetPath, artAssetSrcSet } from "../lib/art-registry";
+import { relativeSeatIndex, seatSlots, type SeatSlot } from "../lib/table-layout";
 import { PlayingCard } from "./card";
 
 type PublicCompletedTrick = NonNullable<
   NonNullable<PrivateGameView["publicRound"]>["lastCompletedTrick"]
 >;
-
-/** Pixel offset from table center toward each seat, for the sweep exit. */
-const SWEEP_VECTORS: Record<TablePosition, { x: number; y: number }> = {
-  south: { x: 0, y: 300 },
-  north: { x: 0, y: -300 },
-  east: { x: 340, y: 0 },
-  west: { x: -340, y: 0 },
-};
 
 type Sweep = {
   plays: PublicCompletedTrick["plays"];
@@ -137,7 +130,9 @@ function phaseMessage(view: PrivateGameView): { key: string; node: ReactNode } |
         <div className="phase-message">
           <span className="bottom-icon">底</span>
           <strong>
-            {view.you.seat === round?.leaderSeat ? "Bury 8 cards" : "Leader is burying"}
+            {view.you.seat === round?.leaderSeat
+              ? `Bury ${view.ruleset.bottomSize} cards`
+              : "Leader is burying"}
           </strong>
           <small>Bottom points count only if attackers take the last trick.</small>
         </div>
@@ -168,10 +163,14 @@ export function TrickCenter({ view }: { view: PrivateGameView }) {
   const message = phaseMessage(view);
   const sweep = useTrickSweep(view);
   const reducedMotion = useReducedMotion() ?? false;
+  const playerCount = view.ruleset.players;
+  const slots = seatSlots(playerCount);
+  const slotForSeat = (seat: number): SeatSlot =>
+    slots[relativeSeatIndex(seat, view.you.seat ?? 0, playerCount)]!;
   const sweepVector =
     sweep === null || reducedMotion
       ? { x: 0, y: 0 }
-      : SWEEP_VECTORS[relativeSeatPosition(sweep.winnerSeat, view.you.seat)];
+      : slotForSeat(sweep.winnerSeat).sweep;
   const displayedPlays = sweep?.plays ?? round?.currentTrick?.plays;
   return (
     <div className="trick-center">
@@ -211,19 +210,32 @@ export function TrickCenter({ view }: { view: PrivateGameView }) {
                 }
           }
         >
-          {displayedPlays.map((play) => (
-            <motion.div
-              className={`center-play play-${relativeSeatPosition(play.seat, view.you.seat)}`}
-              key={play.seat}
-              initial={{ scale: 0.82 }}
-              animate={{ scale: 1 }}
-            >
-              {play.cards.map((card) => (
-                <PlayingCard key={card.id} card={card} />
-              ))}
-              {sweep === null && <span>Seat {play.seat + 1}</span>}
-            </motion.div>
-          ))}
+          {displayedPlays.map((play) => {
+            const legacyPosition =
+              playerCount === 4 ? relativeSeatPosition(play.seat, view.you.seat) : null;
+            const slot = legacyPosition === null ? slotForSeat(play.seat) : null;
+            const playStyle =
+              slot === null
+                ? undefined
+                : {
+                    left: `${50 + (slot.xPct - 50) * 0.62}%`,
+                    top: `${50 + (slot.yPct - 50) * 0.62}%`,
+                  };
+            return (
+              <motion.div
+                className={`center-play ${legacyPosition === null ? "play-radial" : `play-${legacyPosition}`}`}
+                key={play.seat}
+                initial={{ scale: 0.82 }}
+                animate={{ scale: 1 }}
+                {...(playStyle === undefined ? {} : { style: playStyle })}
+              >
+                {play.cards.map((card) => (
+                  <PlayingCard key={card.id} card={card} />
+                ))}
+                {sweep === null && <span>Seat {play.seat + 1}</span>}
+              </motion.div>
+            );
+          })}
         </motion.div>
       )}
     </div>
