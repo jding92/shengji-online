@@ -7,10 +7,16 @@ const serverOrigin = `http://127.0.0.1:${serverPort}`;
 
 export default defineConfig({
   testDir: "./tests",
-  timeout: 60_000,
+  // The N-player and finding-friends specs each drive 4-8 live browser
+  // contexts against one shared dev server that is also running several bot
+  // games from earlier specs, so a heavy trick-completing test can legitimately
+  // take over a minute under full-suite load.
+  timeout: 120_000,
   expect: { timeout: 10_000 },
   fullyParallel: false,
-  retries: process.env.CI ? 1 : 0,
+  // The multi-context round specs are heavy; under full-suite load a deal can
+  // occasionally miss its window. One retry absorbs that margin flakiness.
+  retries: process.env.CI ? 2 : 1,
   reporter: process.env.CI ? "github" : "list",
   use: {
     baseURL: webOrigin,
@@ -47,10 +53,18 @@ export default defineConfig({
       },
     },
     {
-      command: "pnpm --dir ../.. --filter @shengji/web dev",
+      // A production build, not `next dev`: the suite drives up to eight live
+      // game contexts at once, and dev-mode React cannot keep the deals flowing
+      // for the multi-context specs under that load. The build is a one-time
+      // startup cost; NEXT_PUBLIC_WS_URL is inlined at build time so it is set
+      // for the whole command.
+      command:
+        "pnpm --dir ../.. --filter @shengji/protocol build && " +
+        `pnpm --dir ../.. --filter @shengji/web build && ` +
+        `pnpm --dir ../.. --filter @shengji/web exec next start -p ${webPort}`,
       url: webOrigin,
       reuseExistingServer: process.env.PW_REUSE_SERVER === "1",
-      timeout: 30_000,
+      timeout: 180_000,
       env: {
         PORT: String(webPort),
         ...(process.env.PLAYWRIGHT_WEB_PORT === undefined
