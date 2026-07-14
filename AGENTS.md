@@ -6,14 +6,16 @@ some older explanations can lag behind the code.
 
 ## Product boundary
 
-The shipped experience is `shengji-4p-2d-fixed-v1`: four players, two decks,
-fixed teams `[0, 2]` and `[1, 3]`, and one private friend room. The six-player
-ruleset is an engine/schema fixture only. The server always clones the
-four-player preset when it creates a room, and several web layout helpers
-assume exactly four seats.
+The production catalog has eight presets for 4–8 players and 2–4 decks, covering
+fixed teams and finding-friends tables. Room creation accepts `presetId` and
+`options`; hosts alone edit the full ruleset in the lobby and timer options
+in-game. Player count is capped at 8, and joined-player shrink is rejected.
 
-Practice mode is not a separate engine mode. It creates a normal room with
-server-side bot seats, then the web client auto-sits and readies the human.
+Practice mode is not a separate engine mode. It creates a normal room and fills
+the remaining N−1 seats with server-side bots for any preset, then the web
+client auto-sits and readies the human. The web table renders 4–8 seats
+radially while preserving the tuned four-player layout, and finding-friends
+calling, dashboard, and round UI are complete.
 
 There is no player-removal command. “Leave” closes the socket and forgets the
 local resume token; it does not free the joined player or seat. New joins are

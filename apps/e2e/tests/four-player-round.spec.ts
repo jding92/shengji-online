@@ -1,22 +1,12 @@
+import { expect, test } from "@playwright/test";
 import {
-  expect,
-  test,
-  type BrowserContext,
-  type Locator,
-  type Page,
-} from "@playwright/test";
-
-type Player = { context: BrowserContext; page: Page };
-
-async function clickCard(card: Locator): Promise<void> {
-  await card.evaluate((element: HTMLButtonElement) => element.click());
-}
-
-function playButton(page: Page): Locator {
-  return page.locator(".hand-actions").getByRole("button", {
-    name: /^Play(?:\s|$)/,
-  });
-}
+  clickCard,
+  closePlayers,
+  joinPlayers,
+  playButton,
+  type Player,
+  readyPlayers,
+} from "./helpers";
 
 test("four players join, bid, bury, and complete a legal trick", async ({
   browser,
@@ -25,38 +15,26 @@ test("four players join, bid, bury, and complete a legal trick", async ({
   const created = await request.post("/api/rooms", { data: {} });
   expect(created.ok()).toBe(true);
   const roomId = ((await created.json()) as { room: { roomId: string } }).room.roomId;
-  const players: Player[] = [];
+  const players: Player[] = await joinPlayers(browser, roomId, 4);
 
   try {
-    for (let seat = 0; seat < 4; seat += 1) {
-      const context = await browser.newContext();
-      const page = await context.newPage();
-      players.push({ context, page });
-      await page.goto(`/room/${roomId}`);
-      await page.getByLabel("Display name").fill(`Player ${seat + 1}`);
-      await page.getByRole("button", { name: "Take a seat" }).click();
-      await expect(page.getByRole("heading", { name: `Room ${roomId}` })).toBeVisible();
-      // The REST-backed room screen can render before its WebSocket is ready.
-      // Wait for the authoritative command channel before seating/readying so
-      // a full-suite compile spike cannot drop one player's first command.
-      await expect(page.locator(".connection-connected")).toContainText("Live");
-      await page.locator(".lobby-seat").nth(seat).click();
-    }
-
-    for (const { page } of players) {
-      await page.getByRole("button", { name: "Ready up" }).click();
-    }
+    await readyPlayers(players);
     for (const { page } of players) {
       await expect(page.locator(".hand-scroll .playing-card")).toHaveCount(25, {
-        timeout: 20_000,
+        timeout: 30_000,
       });
-      await expect(page.getByText("Declare trump")).toBeVisible();
+      // Generous: under full-suite load the shared dev server runs several bot
+      // games at once, so the deal→bidding transition can lag.
+      await expect(page.getByText("Declare trump")).toBeVisible({ timeout: 20_000 });
     }
     await players[3]!.page.reload();
     await expect(players[3]!.page.locator(".hand-scroll .playing-card")).toHaveCount(
       25,
+      { timeout: 30_000 },
     );
-    await expect(players[3]!.page.getByText("Declare trump")).toBeVisible();
+    await expect(players[3]!.page.getByText("Declare trump")).toBeVisible({
+      timeout: 20_000,
+    });
 
     let bidderSeat = -1;
     let bidLabel = "";
@@ -133,6 +111,6 @@ test("four players join, bid, bury, and complete a legal trick", async ({
       await expect(page.locator(".hand-scroll .playing-card")).toHaveCount(24);
     }
   } finally {
-    await Promise.allSettled(players.map(({ context }) => context.close()));
+    await closePlayers(players);
   }
 });
