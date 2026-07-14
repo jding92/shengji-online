@@ -235,6 +235,8 @@ export function GameDashboard({
   onToggleBottom,
   muted,
   onToggleMuted,
+  showTableSettings = false,
+  onOpenTableSettings = () => undefined,
   onLeave,
 }: {
   roomId: string;
@@ -257,6 +259,8 @@ export function GameDashboard({
   onToggleBottom: () => void;
   muted: boolean;
   onToggleMuted: () => void;
+  showTableSettings?: boolean;
+  onOpenTableSettings?: () => void;
   onLeave: () => void;
 }) {
   const clampedPointProgress = Math.max(0, Math.min(100, pointProgress));
@@ -468,6 +472,11 @@ export function GameDashboard({
         >
           {muted ? "Sound off" : "Sound on"}
         </ChromeButton>
+        {showTableSettings && (
+          <ChromeButton variant="neutral" onClick={onOpenTableSettings}>
+            Table settings · 桌面设置
+          </ChromeButton>
+        )}
         <LeaveButton onLeave={onLeave} />
       </div>
     </aside>

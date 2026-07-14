@@ -14,34 +14,41 @@ import type {
 function legalActions(state: GameState, playerId: string): LegalAction[] {
   const player = state.players[playerId];
   if (player === undefined) return [];
+  const withHostOptions = (actions: LegalAction[]): LegalAction[] => {
+    if (state.hostPlayerId === playerId && state.phase !== "game-over") {
+      actions.push("update-options");
+    }
+    return actions;
+  };
   const seat = player.seat;
   if (state.phase === "lobby") {
     const actions: LegalAction[] = seat === null ? ["sit"] : ["sit", "ready"];
-    if (state.hostPlayerId === playerId) actions.push("update-options");
-    return actions;
+    return withHostOptions(actions);
   }
-  if (seat === null) return [];
-  if (state.phase === "dealing") return ["bid"];
+  if (seat === null) return withHostOptions([]);
+  if (state.phase === "dealing") return withHostOptions(["bid"]);
   if (state.phase === "post-deal-bidding") {
-    return state.round?.passedBidSeats.includes(seat) === true
-      ? []
-      : ["bid", "pass-bid"];
+    return withHostOptions(
+      state.round?.passedBidSeats.includes(seat) === true ? [] : ["bid", "pass-bid"],
+    );
   }
   if (state.phase === "bottom-exchange" && state.leaderSeat === seat) {
-    return ["bury-bottom"];
+    return withHostOptions(["bury-bottom"]);
   }
   if (state.phase === "friend-calling") {
-    return state.round?.declarerSeat === seat ? ["call-friends"] : [];
+    return withHostOptions(state.round?.declarerSeat === seat ? ["call-friends"] : []);
   }
   if (state.phase === "playing" && state.round?.currentTurnSeat === seat) {
-    return state.round.currentTrick === undefined
-      ? ["play-cards", "attempt-throw"]
-      : ["play-cards"];
+    return withHostOptions(
+      state.round.currentTrick === undefined
+        ? ["play-cards", "attempt-throw"]
+        : ["play-cards"],
+    );
   }
   if (state.phase === "round-scoring" && state.leaderSeat === seat) {
-    return ["start-next-round"];
+    return withHostOptions(["start-next-round"]);
   }
-  return [];
+  return withHostOptions([]);
 }
 
 export function derivePrivateView(state: GameState, playerId: string): PrivateGameView {

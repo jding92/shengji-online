@@ -89,6 +89,23 @@ describe("private views", () => {
     expect(derivePrivateView(state, "p1").legalActions).toEqual(["bid", "pass-bid"]);
   });
 
+  it("exposes option updates to the host in-game but never at game over", () => {
+    const state = dealtState();
+    state.hostPlayerId = "p0";
+    state.players["p0"]!.seat = null;
+
+    state.phase = "playing";
+    expect(derivePrivateView(state, "p0").legalActions).toContain("update-options");
+    expect(derivePrivateView(state, "p1").legalActions).not.toContain("update-options");
+
+    state.phase = "game-over";
+    for (let seat = 0; seat < 4; seat += 1) {
+      expect(derivePrivateView(state, `p${seat}`).legalActions).not.toContain(
+        "update-options",
+      );
+    }
+  });
+
   it("exposes bot identity without widening the card boundary", () => {
     let state = dealtState();
     state = applyEvent(state, {

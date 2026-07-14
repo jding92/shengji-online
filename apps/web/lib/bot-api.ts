@@ -4,7 +4,7 @@ import { roomSessionToken } from "./session";
 async function botRequest(
   roomId: string,
   path: string,
-  method: "POST" | "DELETE",
+  method: "POST" | "PATCH" | "DELETE",
   payload: Record<string, unknown> = {},
 ): Promise<void> {
   const playerToken = roomSessionToken(roomId);
@@ -29,6 +29,16 @@ export function addBot(
 
 export function removeBot(roomId: string, botId: string): Promise<void> {
   return botRequest(roomId, `/bots/${encodeURIComponent(botId)}`, "DELETE");
+}
+
+export function changeBotDifficulty(
+  roomId: string,
+  botId: string,
+  difficulty: BotDifficulty,
+): Promise<void> {
+  return botRequest(roomId, `/bots/${encodeURIComponent(botId)}`, "PATCH", {
+    difficulty,
+  });
 }
 
 export function replaceWithBot(
