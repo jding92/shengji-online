@@ -1,5 +1,6 @@
 import type { PrivateGameView } from "@shengji/protocol";
 import { ART_ASSET_IDS, artAssetPath, artAssetSrcSet } from "../lib/art-registry";
+import { portraitForSeat } from "../lib/seat-portraits";
 import { Countdown } from "./countdown";
 import { SeatAvatar } from "./seat-avatar";
 import { ChromePortrait } from "./ui-chrome";
@@ -28,6 +29,7 @@ export function PlayerTag({
         );
   const playerType = seat.isBot ? "bot" : "human";
   const playerTypeAsset = ART_ASSET_IDS.playerBadgeIcon(`type-${playerType}`);
+  const portrait = portraitForSeat(seat.seat);
 
   return (
     <div
@@ -49,7 +51,13 @@ export function PlayerTag({
         aria-hidden="true"
         draggable={false}
       />
-      <ChromePortrait className="player-tag-portrait" data-player-tag-layer="portrait">
+      <ChromePortrait
+        className="player-tag-portrait"
+        data-player-tag-layer="portrait"
+        {...(portrait.seatAccent === null
+          ? {}
+          : { "data-seat-accent": portrait.seatAccent })}
+      >
         <SeatAvatar seat={seat.seat} />
       </ChromePortrait>
 

@@ -1162,6 +1162,23 @@ button:disabled:not(.playing-card) {
   transform: translateY(-50%);
   flex-direction: column-reverse;
 }
+.seat-radial {
+  top: var(--seat-y);
+  left: var(--seat-x);
+  transform: translate(-50%, -50%);
+}
+.seat-radial[data-seat-edge="top"] {
+  flex-direction: column;
+}
+.seat-radial[data-seat-edge="right"] {
+  flex-direction: column-reverse;
+}
+.seat-radial[data-seat-edge="bottom"] {
+  flex-direction: column-reverse;
+}
+.seat-radial[data-seat-edge="left"] {
+  flex-direction: column;
+}
 .player-tag {
   --player-tag-portrait-size: 46px;
 
@@ -1333,13 +1350,50 @@ button:disabled:not(.playing-card) {
 .play-selection-progress b {
   font-size: 1.05em;
 }
-/* Team coding: even seats blue, odd seats red — reinforces the plaque
-   labels. The turn glow (gold) has higher specificity and still wins. */
+/* Fixed team IDs carry the plaque colors; unknown finding-friends seats stay
+   muted. The turn glow (gold) has higher specificity and still wins. */
 .table-seat.team-blue {
   --player-team-color: var(--team-blue);
 }
 .table-seat.team-red {
   --player-team-color: var(--team-red);
+}
+.table-seat.team-neutral {
+  --player-team-color: var(--muted);
+}
+.team-score-pill.team-neutral {
+  --team-color: var(--muted);
+}
+
+/* Radial tables have more nameplates around the same orbit. Keep their
+   footprint compact without changing the tuned four-player dimensions. */
+.table-orbit[data-players="5"] {
+  --player-tag-height: 58px;
+}
+.table-orbit[data-players="6"],
+.table-orbit[data-players="7"],
+.table-orbit[data-players="8"] {
+  --player-tag-height: 52px;
+}
+.table-orbit[data-players="5"] .player-tag {
+  --player-tag-portrait-size: 42px;
+
+  width: 196px;
+}
+.table-orbit[data-players="6"] .player-tag,
+.table-orbit[data-players="7"] .player-tag,
+.table-orbit[data-players="8"] .player-tag {
+  --player-tag-portrait-size: 38px;
+
+  width: 176px;
+}
+.table-orbit[data-players="5"] .seat-radial .mini-hand,
+.table-orbit[data-players="6"] .seat-radial .mini-hand,
+.table-orbit[data-players="7"] .seat-radial .mini-hand,
+.table-orbit[data-players="8"] .seat-radial .mini-hand {
+  --mini-card-width: 50px;
+  --mini-card-height: 73px;
+  --mini-fan-step: 13px;
 }
 /* Fan of card backs; the component computes size and per-card offsets. */
 .mini-hand {
@@ -1535,6 +1589,9 @@ button:disabled:not(.playing-card) {
   top: 50%;
   left: 4%;
   translate: 0 -50%;
+}
+.play-radial {
+  translate: -50% -50%;
 }
 /* Dense trick fans are a compact-screen fallback only. On a roomy table every
    card stays fully readable and each play remains anchored to its seat. */

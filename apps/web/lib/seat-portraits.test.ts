@@ -10,7 +10,11 @@ describe("v1 seat portraits", () => {
       "poseidonDragonKing",
       "athenaGrandStrategist",
     ]);
-    expect(portraitForSeat(4)).toEqual(portraitForSeat(0));
+    expect(portraitForSeat(4)).toMatchObject({
+      id: "hadesKingYan",
+      seatAccent: 4,
+    });
+    expect(portraitForSeat(0).seatAccent).toBeNull();
     expect(portraitForSeat(0)).toMatchObject({
       assetId: "portrait.hades-king-yan",
       src: "/art/avatars/hades-king-yan.webp",
