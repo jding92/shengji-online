@@ -150,6 +150,137 @@ describe("deriveMoments", () => {
     ]);
   });
 
+  it("emits one friend reveal moment when a called copy is revealed", () => {
+    const call = {
+      face: { kind: "standard" as const, suit: "spades" as const, rank: "K" as const },
+      copyIndex: 1,
+    };
+    expect(
+      deriveMoments(
+        view({ round: { friendCalls: [call] } }),
+        view({
+          revision: 2,
+          round: {
+            friendCalls: [{ ...call, revealed: { seat: 3, trickNumber: 4 } }],
+          },
+        }),
+      ),
+    ).toEqual([
+      {
+        id: "friend-revealed:1:0",
+        type: "FRIEND_REVEALED",
+        seat: 3,
+        face: call.face,
+        copyIndex: 1,
+        trickNumber: 4,
+      },
+    ]);
+  });
+
+  it("emits one reveal per call when one play crosses multiple thresholds", () => {
+    const firstCall = {
+      face: { kind: "standard" as const, suit: "spades" as const, rank: "K" as const },
+      copyIndex: 1,
+    };
+    const secondCall = { ...firstCall, copyIndex: 2 };
+    const nextPlay = { seat: 2, cards: [card("played-k")] };
+    const moments = deriveMoments(
+      view({ round: { friendCalls: [firstCall, secondCall] } }),
+      view({
+        revision: 2,
+        round: {
+          friendCalls: [
+            { ...firstCall, revealed: { seat: 2, trickNumber: 1 } },
+            { ...secondCall, revealed: { seat: 2, trickNumber: 1 } },
+          ],
+          currentTrick: { leadSeat: 2, cardCount: 1, plays: [nextPlay] },
+        },
+      }),
+    );
+
+    expect(moments).toEqual([
+      { id: "play:1:0:0", type: "CARD_PLAYED", seat: 2, cards: nextPlay.cards },
+      {
+        id: "friend-revealed:1:0",
+        type: "FRIEND_REVEALED",
+        seat: 2,
+        face: firstCall.face,
+        copyIndex: 1,
+        trickNumber: 1,
+      },
+      {
+        id: "friend-revealed:1:1",
+        type: "FRIEND_REVEALED",
+        seat: 2,
+        face: secondCall.face,
+        copyIndex: 2,
+        trickNumber: 1,
+      },
+    ]);
+  });
+
+  it("keeps same-seat double reveals keyed by call index", () => {
+    const calls = [
+      {
+        face: { kind: "standard" as const, suit: "clubs" as const, rank: "A" as const },
+        copyIndex: 1,
+      },
+      {
+        face: { kind: "standard" as const, suit: "clubs" as const, rank: "A" as const },
+        copyIndex: 2,
+      },
+    ];
+    const moments = deriveMoments(
+      view({ round: { friendCalls: calls } }),
+      view({
+        revision: 2,
+        round: {
+          friendCalls: calls.map((call, callIndex) => ({
+            ...call,
+            revealed: { seat: 1, trickNumber: callIndex + 2 },
+          })),
+        },
+      }),
+    );
+
+    const reveals = moments.filter(
+      (moment): moment is Extract<typeof moment, { type: "FRIEND_REVEALED" }> =>
+        moment.type === "FRIEND_REVEALED",
+    );
+    expect(reveals.map(({ id, seat, copyIndex }) => ({ id, seat, copyIndex }))).toEqual(
+      [
+        { id: "friend-revealed:1:0", seat: 1, copyIndex: 1 },
+        { id: "friend-revealed:1:1", seat: 1, copyIndex: 2 },
+      ],
+    );
+  });
+
+  it("suppresses old friend reveals across a resync gap", () => {
+    const call = {
+      face: {
+        kind: "standard" as const,
+        suit: "diamonds" as const,
+        rank: "Q" as const,
+      },
+      copyIndex: 1,
+    };
+    expect(
+      deriveMoments(
+        view({ round: { friendCalls: [call] } }),
+        view({
+          revision: 10,
+          round: {
+            friendCalls: [{ ...call, revealed: { seat: 4, trickNumber: 6 } }],
+            completedTricksSummary: [
+              { leadSeat: 0, winnerSeat: 1, points: 0 },
+              { leadSeat: 1, winnerSeat: 2, points: 0 },
+            ],
+          },
+        }),
+      ),
+    ).toEqual([]);
+  });
+
   it("emits a trump declaration with the declaring seat when available", () => {
     const moments = deriveMoments(
       view({

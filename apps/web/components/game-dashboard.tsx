@@ -1,10 +1,17 @@
-import type { CardInstance, PrivateGameView } from "@shengji/protocol";
+import type {
+  CardInstance,
+  PrivateGameView,
+  PublicFriendCall,
+  SeatView,
+} from "@shengji/protocol";
 import type { ComponentProps, ReactNode } from "react";
 import { ART_ASSET_IDS, artAssetPath, artAssetSrcSet } from "../lib/art-registry";
 import type { TeamRole } from "../lib/cards";
+import { callLabel } from "../lib/friend-calls";
 import { PlayingCard } from "./card";
 import { LeaveButton } from "./leave-button";
-import { ChromeArtPanel, ChromeButton, ChromePanel } from "./ui-chrome";
+import { SeatAvatar } from "./seat-avatar";
+import { ChromeArtPanel, ChromeButton, ChromePanel, ChromePortrait } from "./ui-chrome";
 
 type TeamSummary = {
   label: string;
@@ -25,6 +32,122 @@ type ProjectedOutcome = {
 };
 
 type StandingTrump = NonNullable<PrivateGameView["publicRound"]>["trumpSpec"];
+type FindingFriendsSummary = {
+  declarerSeat: number | undefined;
+  calls: NonNullable<NonNullable<PrivateGameView["publicRound"]>["friendCalls"]>;
+  seats: SeatView[];
+  roundsWonBySeat: Record<number, number>;
+  outcome: NonNullable<PrivateGameView["publicRound"]>["outcome"];
+};
+
+function seatName(seat: SeatView | undefined, fallbackSeat?: number): string {
+  return seat?.name ?? `Seat ${(fallbackSeat ?? seat?.seat ?? 0) + 1}`;
+}
+
+function FriendCallStrip({
+  calls,
+  seats,
+}: {
+  calls: readonly PublicFriendCall[];
+  seats: readonly SeatView[];
+}) {
+  return (
+    <DashboardSection label="FRIEND CALLS · 叫朋友" className="friend-call-strip">
+      <div className="friend-call-chips" aria-label="Friend calls">
+        {calls.map((call, index) => {
+          const revealer =
+            call.revealed === undefined
+              ? undefined
+              : seats.find((seat) => seat.seat === call.revealed?.seat);
+          return (
+            <span
+              className={`friend-call-chip${call.revealed === undefined ? "" : " is-revealed"}`}
+              data-call-index={index}
+              key={`friend-call-${index}`}
+            >
+              <strong>{callLabel(call)}</strong>
+              {call.revealed !== undefined && (
+                <small>
+                  {seatName(revealer, call.revealed.seat)} · TRICK{" "}
+                  {call.revealed.trickNumber} · 第{call.revealed.trickNumber}墩
+                </small>
+              )}
+            </span>
+          );
+        })}
+      </div>
+    </DashboardSection>
+  );
+}
+
+function FindingFriendsSidePanel({ summary }: { summary: FindingFriendsSummary }) {
+  const declarer = summary.seats.find((seat) => seat.seat === summary.declarerSeat);
+  const roundEntries = Object.entries(summary.roundsWonBySeat).sort(
+    ([left], [right]) => Number(left) - Number(right),
+  );
+
+  return (
+    <div className="finding-friends-panel" data-finding-friends="true">
+      <div className="friend-declarer">
+        {declarer === undefined ? (
+          <span className="friend-declarer-portrait friend-declarer-portrait-unknown">
+            ?
+          </span>
+        ) : (
+          <ChromePortrait className="friend-declarer-portrait">
+            <SeatAvatar seat={declarer.seat} />
+          </ChromePortrait>
+        )}
+        <span className="friend-declarer-copy">
+          <small>DECLARER · 庄家</small>
+          <strong>{seatName(declarer, summary.declarerSeat)}</strong>
+        </span>
+      </div>
+      <div className="friend-slots" aria-label="Called friend seats">
+        {summary.calls.map((call, index) => {
+          const revealedSeat =
+            call.revealed === undefined
+              ? undefined
+              : summary.seats.find((seat) => seat.seat === call.revealed?.seat);
+          return (
+            <span
+              className={`friend-slot${call.revealed === undefined ? " is-hidden" : " is-revealed"}`}
+              data-call-index={index}
+              key={`friend-slot-${index}`}
+            >
+              <strong>
+                {call.revealed === undefined
+                  ? "?"
+                  : seatName(revealedSeat, call.revealed.seat)}
+              </strong>
+              <small>{callLabel(call)}</small>
+            </span>
+          );
+        })}
+        {summary.calls.length === 0 && (
+          <span className="friend-slot friend-slot-pending">
+            CALLS PENDING · 等待叫牌
+          </span>
+        )}
+      </div>
+      <DashboardSection label="ROUNDS WON · 胜局" className="friend-rounds-won">
+        <div className="friend-rounds-list">
+          {roundEntries.map(([seat, wins]) => {
+            const player = summary.seats.find(
+              (candidate) => candidate.seat === Number(seat),
+            );
+            return (
+              <span className="friend-round-row" key={seat}>
+                <strong>{seatName(player, Number(seat))}</strong>
+                <b>{wins}</b>
+              </span>
+            );
+          })}
+        </div>
+      </DashboardSection>
+    </div>
+  );
+}
 
 /** A labelled HUD well whose content remains independent from panel artwork. */
 export function DashboardSection({
@@ -95,6 +218,7 @@ export function GameDashboard({
   roomId,
   yourTeam,
   rivalTeam,
+  findingFriends,
   roundNumber,
   trumpRank,
   standingTrump,
@@ -116,6 +240,7 @@ export function GameDashboard({
   roomId: string;
   yourTeam: TeamSummary;
   rivalTeam: TeamSummary;
+  findingFriends?: FindingFriendsSummary;
   roundNumber: number;
   trumpRank: string;
   standingTrump: StandingTrump | undefined;
@@ -155,27 +280,31 @@ export function GameDashboard({
         className="dashboard-panel"
         contentClassName="round-pills"
       >
-        <div className="team-score-pills" aria-label="Team standings">
-          {[yourTeam, rivalTeam].map((team) => (
-            <ChromePanel
-              key={team.label}
-              className={`team-score-pill ${team.teamClass} is-${team.role}`}
-              aria-label={`${dashboardTeamLabel(team.label)}, rank ${team.rank ?? "unknown"}, ${team.role}`}
-            >
-              <small className="team-score-name">
-                {dashboardTeamLabel(team.label)}
-              </small>
-              <TeamRoleBadge role={team.role} />
-              <span className="team-rank">
-                <small>RANK</small>
-                <strong>{team.rank ?? "—"}</strong>
-              </span>
-            </ChromePanel>
-          ))}
-          <span className="team-versus" aria-hidden="true">
-            VS
-          </span>
-        </div>
+        {findingFriends === undefined ? (
+          <div className="team-score-pills" aria-label="Team standings">
+            {[yourTeam, rivalTeam].map((team) => (
+              <ChromePanel
+                key={team.label}
+                className={`team-score-pill ${team.teamClass} is-${team.role}`}
+                aria-label={`${dashboardTeamLabel(team.label)}, rank ${team.rank ?? "unknown"}, ${team.role}`}
+              >
+                <small className="team-score-name">
+                  {dashboardTeamLabel(team.label)}
+                </small>
+                <TeamRoleBadge role={team.role} />
+                <span className="team-rank">
+                  <small>RANK</small>
+                  <strong>{team.rank ?? "—"}</strong>
+                </span>
+              </ChromePanel>
+            ))}
+            <span className="team-versus" aria-hidden="true">
+              VS
+            </span>
+          </div>
+        ) : (
+          <FindingFriendsSidePanel summary={findingFriends} />
+        )}
 
         <div className="round-overview-row">
           <DashboardSection label="ROUND" className="game-stats-pill">
@@ -221,52 +350,94 @@ export function GameDashboard({
           </DashboardSection>
         </div>
 
-        <DashboardSection label="ROUND POINTS" className="points-pill">
-          <div className="points-total">
-            <TeamRoleBadge role="attacking" compact />
-            <strong className={pointsTone}>{attackerPoints}</strong>
-          </div>
-          <span
-            className="points-meter"
-            role="progressbar"
-            aria-label="Attacker scoring progress"
-            aria-valuemin={0}
-            aria-valuemax={pointMeterMax}
-            aria-valuenow={Math.max(0, Math.min(pointMeterMax, attackerPoints))}
-          >
+        {findingFriends === undefined ? (
+          <DashboardSection label="ROUND POINTS" className="points-pill">
+            <div className="points-total">
+              <TeamRoleBadge role="attacking" compact />
+              <strong className={pointsTone}>{attackerPoints}</strong>
+            </div>
             <span
-              className="points-meter-fill"
-              style={{ width: `${clampedPointProgress}%` }}
-              aria-hidden="true"
-            />
-            {pointThresholds.map((threshold) => (
-              <i
-                key={threshold}
-                style={{ left: `${(threshold / pointMeterMax) * 100}%` }}
+              className="points-meter"
+              role="progressbar"
+              aria-label="Attacker scoring progress"
+              aria-valuemin={0}
+              aria-valuemax={pointMeterMax}
+              aria-valuenow={Math.max(0, Math.min(pointMeterMax, attackerPoints))}
+            >
+              <span
+                className="points-meter-fill"
+                style={{ width: `${clampedPointProgress}%` }}
                 aria-hidden="true"
               />
-            ))}
-          </span>
-          {projectedOutcome !== null && (
-            <em
-              className={`points-projection is-${projectedOutcome.winner}`}
-              title="Outcome if the round ended at the current points"
+              {pointThresholds.map((threshold) => (
+                <i
+                  key={threshold}
+                  style={{ left: `${(threshold / pointMeterMax) * 100}%` }}
+                  aria-hidden="true"
+                />
+              ))}
+            </span>
+            {projectedOutcome !== null && (
+              <em
+                className={`points-projection is-${projectedOutcome.winner}`}
+                title="Outcome if the round ended at the current points"
+              >
+                <TeamRoleBadge
+                  role={
+                    projectedOutcome.winner === "attackers" ? "attacking" : "defending"
+                  }
+                  compact
+                />
+                <b>
+                  {projectedOutcome.levelDelta > 0
+                    ? `+${projectedOutcome.levelDelta} level`
+                    : "Takes lead"}
+                </b>
+                <i>IF ENDED NOW</i>
+              </em>
+            )}
+          </DashboardSection>
+        ) : (
+          <DashboardSection
+            label={
+              findingFriends.outcome === undefined &&
+              findingFriends.calls.some((call) => call.revealed === undefined)
+                ? "ROUND POINTS · PROVISIONAL · 暂计"
+                : "ROUND POINTS"
+            }
+            className="points-pill"
+          >
+            <div className="points-total">
+              <TeamRoleBadge role="attacking" compact />
+              <strong className={pointsTone}>{attackerPoints}</strong>
+            </div>
+            <span
+              className="points-meter"
+              role="progressbar"
+              aria-label="Attacker scoring progress"
+              aria-valuemin={0}
+              aria-valuemax={pointMeterMax}
+              aria-valuenow={Math.max(0, Math.min(pointMeterMax, attackerPoints))}
             >
-              <TeamRoleBadge
-                role={
-                  projectedOutcome.winner === "attackers" ? "attacking" : "defending"
-                }
-                compact
+              <span
+                className="points-meter-fill"
+                style={{ width: `${clampedPointProgress}%` }}
+                aria-hidden="true"
               />
-              <b>
-                {projectedOutcome.levelDelta > 0
-                  ? `+${projectedOutcome.levelDelta} level`
-                  : "Takes lead"}
-              </b>
-              <i>IF ENDED NOW</i>
-            </em>
-          )}
-        </DashboardSection>
+              {pointThresholds.map((threshold) => (
+                <i
+                  key={threshold}
+                  style={{ left: `${(threshold / pointMeterMax) * 100}%` }}
+                  aria-hidden="true"
+                />
+              ))}
+            </span>
+          </DashboardSection>
+        )}
+
+        {findingFriends !== undefined && findingFriends.calls.length > 0 && (
+          <FriendCallStrip calls={findingFriends.calls} seats={findingFriends.seats} />
+        )}
 
         {buriedPoints !== null && (
           <ChromeButton

@@ -2,12 +2,28 @@
 
 import type { PrivateGameView } from "@shengji/protocol";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ComponentProps,
+  type ReactNode,
+} from "react";
 import { cardFaceLabel, relativeSeatPosition } from "../lib/cards";
 import { TRICK_RESULT_HOLD_MS, TRICK_SWEEP_MS } from "../lib/constants";
 import { ART_ASSET_IDS, artAssetPath, artAssetSrcSet } from "../lib/art-registry";
 import { relativeSeatIndex, seatSlots, type SeatSlot } from "../lib/table-layout";
 import { PlayingCard } from "./card";
+import { Countdown } from "./countdown";
+import { FriendCallPanel } from "./friend-call-panel";
+
+type FriendCallPanelControls = {
+  sendTrackedCommand: ComponentProps<typeof FriendCallPanel>["sendTrackedCommand"];
+  trackedRejections: ComponentProps<typeof FriendCallPanel>["trackedRejections"];
+  consumeRejection: ComponentProps<typeof FriendCallPanel>["consumeRejection"];
+  turnDeadline: string | null;
+  serverNow: () => number;
+};
 
 type PublicCompletedTrick = NonNullable<
   NonNullable<PrivateGameView["publicRound"]>["lastCompletedTrick"]
@@ -75,7 +91,11 @@ function useTrickSweep(view: PrivateGameView): Sweep | null {
 }
 
 /** The single centered status message for the current phase, keyed for exits. */
-function phaseMessage(view: PrivateGameView): { key: string; node: ReactNode } | null {
+function phaseMessage(
+  view: PrivateGameView,
+  turnDeadline: string | null,
+  serverNow: () => number,
+): { key: string; node: ReactNode } | null {
   const round = view.publicRound;
   if (view.phase === "dealing") {
     const bid = round?.currentBid;
@@ -139,6 +159,34 @@ function phaseMessage(view: PrivateGameView): { key: string; node: ReactNode } |
       ),
     };
   }
+  if (view.phase === "friend-calling") {
+    // The declarer's call panel occupies this same phase slot. A declarer with
+    // no panel controls is still treated as waiting, so this message never
+    // exposes any private selection state.
+    if (view.legalActions.includes("call-friends")) return null;
+    const declarerSeat = round?.declarerSeat;
+    const declarer =
+      declarerSeat === undefined
+        ? undefined
+        : view.seats.find((seat) => seat.seat === declarerSeat);
+    const declarerName =
+      declarer?.name ??
+      (declarerSeat === undefined ? "The declarer" : `Seat ${declarerSeat + 1}`);
+    return {
+      key: "friend-calling",
+      node: (
+        <div className="phase-message friend-calling-message">
+          <span className="bottom-icon">友</span>
+          <strong>{declarerName} is calling friends · 找朋友</strong>
+          <span className="phase-countdown" aria-live="polite">
+            <span>AUTO-CALL IN</span>
+            <Countdown deadline={turnDeadline ?? undefined} now={serverNow} />
+            <span>· 自动叫牌</span>
+          </span>
+        </div>
+      ),
+    };
+  }
   if (
     view.phase === "playing" &&
     round !== undefined &&
@@ -158,9 +206,19 @@ function phaseMessage(view: PrivateGameView): { key: string; node: ReactNode } |
   return null;
 }
 
-export function TrickCenter({ view }: { view: PrivateGameView }) {
+export function TrickCenter({
+  view,
+  friendCallPanel,
+}: {
+  view: PrivateGameView;
+  friendCallPanel?: FriendCallPanelControls;
+}) {
   const round = view.publicRound;
-  const message = phaseMessage(view);
+  const message = phaseMessage(
+    view,
+    friendCallPanel?.turnDeadline ?? null,
+    friendCallPanel?.serverNow ?? (() => Date.now()),
+  );
   const sweep = useTrickSweep(view);
   const reducedMotion = useReducedMotion() ?? false;
   const playerCount = view.ruleset.players;
@@ -172,24 +230,41 @@ export function TrickCenter({ view }: { view: PrivateGameView }) {
       ? { x: 0, y: 0 }
       : slotForSeat(sweep.winnerSeat).sweep;
   const displayedPlays = sweep?.plays ?? round?.currentTrick?.plays;
+  const friendCallContent =
+    view.phase === "friend-calling" &&
+    view.legalActions.includes("call-friends") &&
+    friendCallPanel !== undefined ? (
+      <FriendCallPanel
+        view={view}
+        sendTrackedCommand={friendCallPanel.sendTrackedCommand}
+        trackedRejections={friendCallPanel.trackedRejections}
+        consumeRejection={friendCallPanel.consumeRejection}
+        turnDeadline={friendCallPanel.turnDeadline}
+        serverNow={friendCallPanel.serverNow}
+      />
+    ) : null;
+  const phaseContent = friendCallContent ?? message?.node;
+  const phaseKey = friendCallContent === null ? message?.key : "friend-call-panel";
   return (
-    <div className="trick-center">
+    <div
+      className={`trick-center${friendCallContent !== null ? " has-friend-call-panel" : ""}`}
+    >
       {/*
         Concurrent mode (not mode="wait"): entering and exiting messages
         overlap in an absolutely-positioned slot, so a missed exit callback
         can never wedge the next phase's message out of the tree.
       */}
       <AnimatePresence>
-        {sweep === null && message && (
+        {sweep === null && phaseContent !== undefined && (
           <motion.div
             className="phase-slot"
-            key={message.key}
+            key={phaseKey}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.2 }}
           >
-            {message.node}
+            {phaseContent}
           </motion.div>
         )}
       </AnimatePresence>

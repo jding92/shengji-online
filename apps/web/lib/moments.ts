@@ -1,10 +1,22 @@
-import type { CardInstance, PrivateGameView } from "@shengji/protocol";
+import type {
+  CardInstance,
+  PrivateGameView,
+  PublicFriendCall,
+} from "@shengji/protocol";
 
 type RoundView = NonNullable<PrivateGameView["publicRound"]>;
 
 export type GameMoment =
   | { id: string; type: "TRUMP_DECLARED"; seat?: number }
   | { id: string; type: "CARD_PLAYED"; seat: number; cards: CardInstance[] }
+  | {
+      id: string;
+      type: "FRIEND_REVEALED";
+      seat: number;
+      face: PublicFriendCall["face"];
+      copyIndex: number;
+      trickNumber: number;
+    }
   | {
       id: string;
       type: "TRICK_WON";
@@ -35,6 +47,24 @@ function completedCount(round: RoundView | undefined): number {
 
 function playCount(round: RoundView | undefined): number {
   return round?.currentTrick?.plays.length ?? 0;
+}
+
+function friendRevealMoments(prevRound: RoundView, nextRound: RoundView): GameMoment[] {
+  if (prevRound.roundNumber !== nextRound.roundNumber) return [];
+  return (nextRound.friendCalls ?? []).flatMap((call, callIndex) => {
+    const previousReveal = prevRound.friendCalls?.[callIndex]?.revealed;
+    if (previousReveal !== undefined || call.revealed === undefined) return [];
+    return [
+      {
+        id: `friend-revealed:${nextRound.roundNumber}:${callIndex}`,
+        type: "FRIEND_REVEALED" as const,
+        seat: call.revealed.seat,
+        face: call.face,
+        copyIndex: call.copyIndex,
+        trickNumber: call.revealed.trickNumber,
+      },
+    ];
+  });
 }
 
 function stickyMoments(
@@ -136,6 +166,10 @@ export function deriveMoments(
         cards: play.cards,
       });
     });
+  }
+
+  if (!comparisonsReset) {
+    moments.push(...friendRevealMoments(prevRound, nextRound));
   }
 
   if (!comparisonsReset && completedGrowth === 1 && nextRound.lastCompletedTrick) {
