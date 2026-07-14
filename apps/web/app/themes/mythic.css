@@ -649,6 +649,14 @@ html[data-theme="mythic"] .chrome-modal-heading h2 {
   font-family: var(--font-game);
   font-size: 1.25rem;
 }
+html[data-theme="mythic"] .table-bot-row {
+  border: 1px solid var(--panel-edge);
+  background: rgba(0, 0, 0, 0.16);
+}
+html[data-theme="mythic"] .table-bot-heading small,
+html[data-theme="mythic"] .difficulty-picker-label {
+  color: var(--muted);
+}
 html[data-theme="mythic"] .lobby-notice {
   border: 1px solid var(--gold-deep);
   border-radius: 7px;

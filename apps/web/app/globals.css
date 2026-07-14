@@ -1219,6 +1219,33 @@ button:disabled:not(.playing-card) {
   min-height: 44px;
   font-style: normal;
 }
+.table-settings-section + .table-settings-section {
+  margin-top: 24px;
+}
+.table-bot-list {
+  display: grid;
+  gap: 14px;
+}
+.table-bot-row {
+  display: grid;
+  gap: 7px;
+  padding: 12px;
+}
+.table-bot-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.table-bot-heading small,
+.difficulty-picker-label {
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.difficulty-picker-label {
+  display: block;
+}
 .capitalize {
   text-transform: capitalize;
 }

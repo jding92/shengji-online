@@ -45,6 +45,7 @@ import { HandActions } from "./hand-actions";
 import { HandDock } from "./hand-dock";
 import { MomentLayer } from "./moment-layer";
 import { RoundSummaryModal } from "./round-summary-modal";
+import { TableSettingsModal } from "./table-settings-modal";
 import { TableSeat } from "./table-seat";
 import { TrickCenter } from "./trick-center";
 import { ChromeButton } from "./ui-chrome";
@@ -113,6 +114,10 @@ export function GameTable({
   const reducedMotion = useReducedMotion() ?? false;
   const splashPrefetched = useRef<HTMLImageElement[]>([]);
   const actions = useMemo(() => new Set(view.legalActions), [view.legalActions]);
+  const hasBots = view.seats.some((seat) => seat.isBot);
+  const showTableSettings =
+    view.phase !== "lobby" && (actions.has("update-options") || hasBots);
+  const [tableSettingsOpen, setTableSettingsOpen] = useState(false);
   // Sort trump-aware: before a suit is declared, treat the level rank as
   // no-trump so level cards group with the jokers instead of their suits.
   const cards = useMemo(() => {
@@ -487,6 +492,8 @@ export function GameTable({
         onToggleBottom={() => setShowBuried((open) => !open)}
         muted={muted}
         onToggleMuted={toggleMuted}
+        showTableSettings={showTableSettings}
+        onOpenTableSettings={() => setTableSettingsOpen(true)}
         onLeave={onLeave}
         {...(isFindingFriends
           ? {
@@ -499,6 +506,14 @@ export function GameTable({
               },
             }
           : {})}
+      />
+      <TableSettingsModal
+        open={tableSettingsOpen}
+        view={view}
+        sendTrackedCommand={sendTrackedCommand}
+        trackedRejections={trackedRejections}
+        consumeRejection={consumeRejection}
+        onClose={() => setTableSettingsOpen(false)}
       />
 
       <section className="board" style={BOARD_ART_STYLE}>
