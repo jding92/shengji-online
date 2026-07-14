@@ -504,6 +504,16 @@ html[data-theme="mythic"] .difficulty-option[aria-pressed="true"] {
   color: #17130f;
   box-shadow: none;
 }
+html[data-theme="mythic"] .home-preset-picker > small {
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+html[data-theme="mythic"] .house-rules-toggle {
+  color: var(--text-soft);
+  font-family: var(--font-game);
+  font-size: 0.66rem;
+  letter-spacing: 0.05em;
+}
 html[data-theme="mythic"] .menu-error {
   background: rgba(8, 9, 6, 0.88);
 }
@@ -634,6 +644,25 @@ html[data-theme="mythic"] .chrome-modal-scrim {
 html[data-theme="mythic"] .chrome-modal-card {
   color: var(--ink);
 }
+html[data-theme="mythic"] .chrome-modal-heading h2 {
+  color: var(--text-bright);
+  font-family: var(--font-game);
+  font-size: 1.25rem;
+}
+html[data-theme="mythic"] .lobby-notice {
+  border: 1px solid var(--gold-deep);
+  border-radius: 7px;
+  background: var(--gold-tint);
+  color: var(--gold);
+  font-family: var(--font-game);
+  font-size: 0.68rem;
+  letter-spacing: 0.035em;
+}
+html[data-theme="mythic"] .lobby-notice button {
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1;
+}
 
 /* Join and lobby */
 html[data-theme="mythic"] .join-shell > strong {
@@ -707,6 +736,16 @@ html[data-theme="mythic"] .rules-ribbon i {
   background: var(--red);
   transform: rotate(45deg);
 }
+html[data-theme="mythic"] .rules-ribbon-custom {
+  border: 1px solid var(--gold-deep);
+  border-radius: 999px;
+  background: var(--gold-tint);
+  color: var(--gold);
+  padding: 4px 7px;
+}
+html[data-theme="mythic"] .lobby-heading-actions .chrome-button {
+  white-space: nowrap;
+}
 html[data-theme="mythic"] .lobby-seat {
   border: 2px solid var(--panel-edge);
   border-radius: 10px;
@@ -755,6 +794,17 @@ html[data-theme="mythic"] .lobby-seat strong {
 }
 html[data-theme="mythic"] .lobby-seat small {
   color: var(--text-soft);
+}
+html[data-theme="mythic"] .host-badge {
+  border: 1px solid var(--gold-deep);
+  border-radius: 4px;
+  background: var(--gold-tint);
+  color: var(--gold);
+  font-family: var(--font-game);
+  font-size: 0.52rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  line-height: 1;
 }
 /* Approval stamp, slapped on crooked. */
 html[data-theme="mythic"] .ready-stamp {

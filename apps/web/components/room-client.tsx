@@ -226,7 +226,14 @@ export function RoomClient({
         <small>Shuffling the deck and seating your bots.</small>
       </main>
     ) : view.phase === "lobby" ? (
-      <Lobby view={view} sendCommand={sendCommand} onLeave={leaveSession} />
+      <Lobby
+        view={view}
+        sendCommand={sendCommand}
+        sendTrackedCommand={sendTrackedCommand}
+        trackedRejections={trackedRejections}
+        consumeRejection={consumeRejection}
+        onLeave={leaveSession}
+      />
     ) : (
       <GameTable
         view={view}
