@@ -1,11 +1,26 @@
 "use client";
 
+import { DEFAULT_PRESET_ID, type GameOptions } from "@shengji/engine";
 import type { BotDifficulty } from "@shengji/protocol";
 import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent, type KeyboardEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type KeyboardEvent,
+} from "react";
+import {
+  OptionsEditor,
+  type OptionServerIssues,
+  type OptionsEditorValue,
+} from "../components/options-editor";
+import { PresetPicker } from "../components/options-editor";
 import { ChromeButton, ChromeLink } from "../components/ui-chrome";
 import { ART, art2x } from "../lib/art";
+import { fetchPresets, type PresetSummary } from "../lib/presets";
 import { safeStorage } from "../lib/safe-storage";
 import { sessionKey } from "../lib/session";
 
@@ -32,21 +47,78 @@ export default function HomePage() {
   const [botDifficulty, setBotDifficulty] = useState<BotDifficulty>("intermediate");
   const [menuMode, setMenuMode] = useState<MenuMode>("create");
   const [error, setError] = useState<string | null>(null);
+  const [presets, setPresets] = useState<PresetSummary[]>([]);
+  const [presetsLoading, setPresetsLoading] = useState(false);
+  const [presetsError, setPresetsError] = useState<string | null>(null);
+  const [createRules, setCreateRules] = useState<OptionsEditorValue>({
+    presetId: DEFAULT_PRESET_ID,
+    options: {},
+  });
+  const [houseRulesOpen, setHouseRulesOpen] = useState(false);
+  const [serverIssues, setServerIssues] = useState<OptionServerIssues | undefined>();
+  const presetsAttempted = useRef(false);
+
+  const loadPresets = useCallback(
+    async (retry = false) => {
+      if ((!retry && presetsAttempted.current) || presetsLoading) return;
+      presetsAttempted.current = true;
+      setPresetsLoading(true);
+      setPresetsError(null);
+      try {
+        const response = await fetchPresets();
+        setPresets(response.presets);
+      } catch (cause) {
+        setPresetsError(
+          cause instanceof Error ? cause.message : "Could not load game presets",
+        );
+      } finally {
+        setPresetsLoading(false);
+      }
+    },
+    [presetsLoading],
+  );
+
+  useEffect(() => {
+    if (menuMode === "create" || menuMode === "practice") void loadPresets();
+  }, [loadPresets, menuMode]);
 
   async function createRoom(practice = false) {
     setCreating(true);
     setError(null);
+    setServerIssues(undefined);
+    const requestBody: {
+      practice?: boolean;
+      botDifficulty?: BotDifficulty;
+      presetId?: string;
+      options?: GameOptions;
+    } = practice ? { practice: true, botDifficulty } : {};
+    if (createRules.presetId !== DEFAULT_PRESET_ID) {
+      requestBody.presetId = createRules.presetId;
+    }
+    if (Object.keys(createRules.options).length > 0) {
+      requestBody.options = createRules.options;
+    }
     try {
       const response = await fetch("/api/rooms", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(practice ? { practice: true, botDifficulty } : {}),
+        body: JSON.stringify(requestBody),
       });
       const body = (await response.json()) as {
         room?: { roomId: string };
         error?: string;
+        issues?: readonly { path: string; message: string }[];
       };
       if (!response.ok || body.room === undefined) {
+        if (response.status === 400) {
+          const issues: OptionServerIssues | undefined =
+            body.issues ??
+            (body.error === undefined ? undefined : { error: body.error });
+          if (issues !== undefined) {
+            setServerIssues(issues);
+            setHouseRulesOpen(true);
+          }
+        }
         throw new Error(body.error ?? "Could not create a table");
       }
       if (practice) {
@@ -188,6 +260,51 @@ export default function HomePage() {
                 <p className="menu-panel-copy">
                   Open an invite-only room and bring your crew to the table.
                 </p>
+                <div className="home-preset-picker">
+                  {presets.length > 0 && (
+                    <PresetPicker
+                      presets={presets}
+                      selectedPresetId={createRules.presetId}
+                      disabled={creating}
+                      onChange={(presetId) => setCreateRules({ presetId, options: {} })}
+                    />
+                  )}
+                  {presetsLoading && <small>Loading presets…</small>}
+                  {presetsError && (
+                    <p className="inline-error preset-load-error" role="alert">
+                      {presetsError}{" "}
+                      <ChromeButton
+                        className="preset-retry"
+                        variant="neutral"
+                        disabled={presetsLoading}
+                        onClick={() => void loadPresets(true)}
+                      >
+                        Retry
+                      </ChromeButton>
+                    </p>
+                  )}
+                </div>
+                <div className="house-rules">
+                  <ChromeButton
+                    className="house-rules-toggle"
+                    variant={houseRulesOpen ? "gold" : "neutral"}
+                    aria-expanded={houseRulesOpen}
+                    onClick={() => setHouseRulesOpen((open) => !open)}
+                  >
+                    HOUSE RULES · 自定义
+                  </ChromeButton>
+                  {houseRulesOpen && (
+                    <OptionsEditor
+                      presets={presets}
+                      phase="lobby"
+                      value={createRules}
+                      onChange={setCreateRules}
+                      occupiedSeats={[]}
+                      joinedPlayerCount={0}
+                      {...(serverIssues === undefined ? {} : { serverIssues })}
+                    />
+                  )}
+                </div>
                 <ChromeButton
                   className="arcade-action"
                   variant="primary"
@@ -234,6 +351,30 @@ export default function HomePage() {
               <>
                 <p className="menu-panel-kicker">Solo training</p>
                 <h2>Choose your rivals</h2>
+                <div className="home-preset-picker">
+                  {presets.length > 0 && (
+                    <PresetPicker
+                      presets={presets}
+                      selectedPresetId={createRules.presetId}
+                      disabled={creating}
+                      onChange={(presetId) => setCreateRules({ presetId, options: {} })}
+                    />
+                  )}
+                  {presetsLoading && <small>Loading presets…</small>}
+                  {presetsError && (
+                    <p className="inline-error preset-load-error" role="alert">
+                      {presetsError}{" "}
+                      <ChromeButton
+                        className="preset-retry"
+                        variant="neutral"
+                        disabled={presetsLoading}
+                        onClick={() => void loadPresets(true)}
+                      >
+                        Retry
+                      </ChromeButton>
+                    </p>
+                  )}
+                </div>
                 <fieldset className="difficulty-picker" disabled={creating}>
                   <legend>Practice difficulty</legend>
                   <div className="difficulty-options">
