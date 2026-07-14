@@ -1566,17 +1566,38 @@ button:disabled:not(.playing-card) {
 .table-orbit[data-players="8"] {
   --player-tag-height: 52px;
 }
+/* Six-plus nameplates need more room around the ring than the four-player
+   layout reserves. There is spare horizontal lane once the orbit is this
+   crowded (the sidebar has folded to a top bar by then), so widen the orbit
+   floor to keep diagonally-adjacent nameplates from clipping. */
+.table-orbit[data-players="6"],
+.table-orbit[data-players="7"],
+.table-orbit[data-players="8"] {
+  --orbit-size: max(380px, min(640px, calc(100cqh - 210px), calc(100cqw - 470px)));
+}
+.table-orbit[data-players="8"] {
+  --orbit-size: max(432px, min(660px, calc(100cqh - 150px), calc(100cqw - 430px)));
+}
 .table-orbit[data-players="5"] .player-tag {
   --player-tag-portrait-size: 42px;
 
-  width: 196px;
+  width: 184px;
 }
 .table-orbit[data-players="6"] .player-tag,
 .table-orbit[data-players="7"] .player-tag,
 .table-orbit[data-players="8"] .player-tag {
-  --player-tag-portrait-size: 38px;
+  --player-tag-portrait-size: 36px;
 
-  width: 176px;
+  /* Narrow enough that two nameplates sharing a vertical edge never clip on
+     the tightest supported table (six-plus seats at ~1100px wide). */
+  width: 150px;
+}
+/* Eight seats pack the ring tightest; trim the plate a touch more so the two
+   diagonal pairs nearest the top and bottom keep clear. */
+.table-orbit[data-players="8"] .player-tag {
+  --player-tag-portrait-size: 34px;
+
+  width: 132px;
 }
 .table-orbit[data-players="5"] .seat-radial .mini-hand,
 .table-orbit[data-players="6"] .seat-radial .mini-hand,
@@ -1584,7 +1605,11 @@ button:disabled:not(.playing-card) {
 .table-orbit[data-players="8"] .seat-radial .mini-hand {
   --mini-card-width: 50px;
   --mini-card-height: 73px;
-  --mini-fan-step: 13px;
+  /* Two seats share each vertical edge on a crowded radial table, so the fan's
+     footprint must stay bounded regardless of hand size (a 3-deck hand fans 25+
+     backs). Cap the total spread to a compact pile so it does not swamp a
+     neighbour's nameplate; the exact hand size is shown numerically on the tag. */
+  --mini-fan-step: min(13px, 52px / max(1, var(--fan-count) - 1));
 }
 /* Fan of card backs; the component computes size and per-card offsets. */
 .mini-hand {

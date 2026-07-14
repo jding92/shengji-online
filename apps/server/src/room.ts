@@ -255,6 +255,19 @@ export class Room {
   }
 
   private scheduleBotActions(): void {
+    // A room with no connected human should not keep advancing its bots — it
+    // wastes CPU on a game nobody is watching, and lets abandoned practice
+    // games pile up. Reconnecting re-runs rescheduleTimers(), which calls this
+    // again and resumes play.
+    const connectedHuman = Object.values(this.currentState.players).some(
+      (player) => player.bot === undefined && player.connected,
+    );
+    if (!connectedHuman) {
+      for (const { timer } of this.botTimers.values()) clearTimeout(timer);
+      this.botTimers.clear();
+      return;
+    }
+
     const actionable = new Map<string, string>();
     for (const player of Object.values(this.currentState.players)) {
       const key = this.botActionKey(player.id);
