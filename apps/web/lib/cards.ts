@@ -12,6 +12,10 @@ import type { PrivateGameView } from "@shengji/protocol";
 
 const SUIT_GLYPHS = { spades: "♠", hearts: "♥", clubs: "♣", diamonds: "♦" } as const;
 
+export function suitGlyph(suit: Suit): (typeof SUIT_GLYPHS)[Suit] {
+  return SUIT_GLYPHS[suit];
+}
+
 /**
  * Suit display order that keeps colors alternating (black/red/black/red),
  * the way people fan a real hand. The engine's canonical order is already
@@ -55,7 +59,7 @@ export function compareForHandDisplay(
 /** Short display for a card face, e.g. "2♠" or "小王". */
 export function cardFaceLabel(face: CardFace): string {
   if (face.kind === "joker") return face.joker === "big" ? "大王" : "小王";
-  return `${face.rank}${SUIT_GLYPHS[face.suit]}`;
+  return `${face.rank}${suitGlyph(face.suit)}`;
 }
 
 /** Names the shape of a parsed lead ("pair", "tractor", …) or null for a single. */
@@ -140,15 +144,6 @@ export function teamRoleForTeam(
 ): TeamRole {
   if (teamId === undefined || defendingTeamId === undefined) return "pending";
   return teamId === defendingTeamId ? "defending" : "attacking";
-}
-
-export function didLocalTeamWin(
-  view: PrivateGameView,
-  winner: "defenders" | "attackers",
-): boolean {
-  const defendingTeamId = defendingTeamIdForRound(view);
-  if (defendingTeamId === undefined || view.you.teamId === undefined) return false;
-  return (winner === "defenders") === (view.you.teamId === defendingTeamId);
 }
 
 /** Rotates absolute seat indexes so the local player is always south. */

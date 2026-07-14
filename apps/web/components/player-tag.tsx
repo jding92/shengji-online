@@ -10,12 +10,14 @@ export function PlayerTag({
   isYou,
   isLeader,
   role,
+  isFriend = false,
   timer,
 }: {
   seat: PrivateGameView["seats"][number];
   isYou: boolean;
   isLeader: boolean;
   role: "attacking" | "defending" | null;
+  isFriend?: boolean;
   timer?: { deadline: string; now: () => number };
 }) {
   const playerName = isYou ? "You" : (seat.name ?? `Seat ${seat.seat + 1}`);
@@ -77,6 +79,17 @@ export function PlayerTag({
               title="Round leader · 庄家"
               draggable={false}
             />
+          )}
+          {isFriend && (
+            <span
+              className="player-friend-badge"
+              data-friend-badge="true"
+              role="img"
+              aria-label="Revealed friend · 朋友"
+              title="Revealed friend · 朋友"
+            >
+              友
+            </span>
           )}
           {roleAsset !== null && (
             <img

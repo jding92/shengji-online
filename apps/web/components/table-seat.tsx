@@ -50,6 +50,7 @@ export function TableSeat({
   isYou,
   isLeader,
   role = null,
+  isFriend = false,
   bid,
   roomId,
   timer,
@@ -65,6 +66,8 @@ export function TableSeat({
   isLeader: boolean;
   /** This seat's side this round; shown with the reusable role art on the nameplate. */
   role?: "attacking" | "defending" | null;
+  /** A finding-friends reveal marker; never inferred for unknown seats. */
+  isFriend?: boolean;
   /** This seat's standing trump bid, shown as a badge until finalization. */
   bid?: CurrentBid | undefined;
   roomId: string;
@@ -121,6 +124,7 @@ export function TableSeat({
         isYou={isYou}
         isLeader={isLeader}
         role={role}
+        isFriend={isFriend}
         {...(timer !== undefined ? { timer } : {})}
       />
       {canReplace && (

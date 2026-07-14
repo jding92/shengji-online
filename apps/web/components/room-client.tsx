@@ -71,6 +71,9 @@ export function RoomClient({
     clearError,
     join,
     sendCommand,
+    sendTrackedCommand,
+    trackedRejections,
+    consumeRejection,
     leaveSession,
     turnDeadline,
     serverNow,
@@ -228,6 +231,9 @@ export function RoomClient({
       <GameTable
         view={view}
         sendCommand={sendCommand}
+        sendTrackedCommand={sendTrackedCommand}
+        trackedRejections={trackedRejections}
+        consumeRejection={consumeRejection}
         onLeave={leaveSession}
         turnDeadline={turnDeadline}
         serverNow={serverNow}

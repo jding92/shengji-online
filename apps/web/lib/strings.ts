@@ -22,5 +22,11 @@ export function teamClassForTeamId(
   teamId: string | undefined,
 ): "team-blue" | "team-red" | "team-neutral" {
   const index = fixedTeamIndex(teamId);
-  return index === 0 ? "team-blue" : index === 1 ? "team-red" : "team-neutral";
+  return teamId === "defenders"
+    ? "team-red"
+    : index === 0
+      ? "team-blue"
+      : index === 1
+        ? "team-red"
+        : "team-neutral";
 }

@@ -101,4 +101,92 @@ describe("GameDashboard", () => {
     expect(markup).toContain('data-chrome-layer="content">Leave</span>');
     expect(markup).toContain('data-chrome-button-surface="ui.button.neutral"');
   });
+
+  test("renders finding-friends calls by index with provisional points", () => {
+    const callFace = {
+      kind: "standard" as const,
+      suit: "spades" as const,
+      rank: "K" as const,
+    };
+    const markup = renderToStaticMarkup(
+      <GameDashboard
+        roomId="FF1234"
+        yourTeam={{
+          label: "我方 · YOUR TEAM",
+          rank: null,
+          role: "pending",
+          teamClass: "team-neutral",
+        }}
+        rivalTeam={{
+          label: "对方 · RIVALS",
+          rank: null,
+          role: "pending",
+          teamClass: "team-neutral",
+        }}
+        findingFriends={{
+          declarerSeat: 0,
+          calls: [
+            { face: callFace, copyIndex: 1 },
+            { face: callFace, copyIndex: 2, revealed: { seat: 2, trickNumber: 3 } },
+          ],
+          seats: [
+            {
+              seat: 0,
+              playerId: "p0",
+              name: "Declarer",
+              connected: true,
+              isBot: false,
+              ready: true,
+              rank: "2",
+              cardCount: 25,
+              role: "declarer",
+              teamId: "defenders",
+            },
+            {
+              seat: 2,
+              playerId: "p2",
+              name: "Friend",
+              connected: true,
+              isBot: false,
+              ready: true,
+              rank: "2",
+              cardCount: 24,
+              role: "friend",
+              teamId: "defenders",
+            },
+          ],
+          roundsWonBySeat: { 0: 1, 2: 2 },
+          outcome: undefined,
+        }}
+        roundNumber={1}
+        trumpRank="7"
+        standingTrump={undefined}
+        trumpCard={undefined}
+        attackerPoints={35}
+        pointsTone="stat-mid"
+        pointProgress={17.5}
+        pointThresholds={[40, 80, 120, 160, 200]}
+        pointMeterMax={200}
+        projectedOutcome={null}
+        previousResult={null}
+        buriedPoints={null}
+        bottomOpen={false}
+        onToggleBottom={() => undefined}
+        muted={false}
+        onToggleMuted={() => undefined}
+        onLeave={() => undefined}
+      />,
+    );
+
+    expect(markup).toContain('data-finding-friends="true"');
+    expect(markup).toContain("PROVISIONAL");
+    expect(markup).toContain("暂计");
+    expect(markup).toContain("Declarer");
+    expect(markup).toContain("Friend");
+    expect(markup).toContain(">?</strong>");
+    expect(markup).toContain('data-call-index="0"');
+    expect(markup).toContain('data-call-index="1"');
+    expect(markup).toContain("TRICK 3");
+    expect(markup).toContain("ROUNDS WON · 胜局");
+  });
 });

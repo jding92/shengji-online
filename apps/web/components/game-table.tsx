@@ -52,6 +52,11 @@ import { ChromeButton } from "./ui-chrome";
 type GameTableProps = {
   view: PrivateGameView;
   sendCommand: (command: WireClientCommand) => string | null;
+  sendTrackedCommand: (command: WireClientCommand) => string | null;
+  trackedRejections: ReadonlyMap<string, { code: string; message: string }>;
+  consumeRejection: (
+    requestId: string,
+  ) => { code: string; message: string } | undefined;
   onLeave: () => void;
   turnDeadline: string | null;
   serverNow: () => number;
@@ -65,6 +70,9 @@ const BOARD_ART_STYLE = {
 export function GameTable({
   view,
   sendCommand,
+  sendTrackedCommand,
+  trackedRejections,
+  consumeRejection,
   onLeave,
   turnDeadline,
   serverNow,
@@ -425,6 +433,14 @@ export function GameTable({
     !actions.has("pass-bid");
   const yourTeamClass = teamClassForTeamId(view.you.teamId);
   const enemyTeamClass = teamClassForTeamId(enemySeat?.teamId);
+  const isFindingFriends = resolvedRuleset.teams.mode === "finding-friends";
+  const declarerOrLeaderSeat = round?.declarerSeat ?? round?.leaderSeat;
+  const displayRoleForSeat = (seat: PrivateGameView["seats"][number]) =>
+    isFindingFriends
+      ? seat.role === "declarer" || seat.role === "friend"
+        ? ("defending" as const)
+        : null
+      : teamRoleForSeat(view, seat);
   const gameVictory =
     view.phase === "game-over" && round?.outcome !== undefined
       ? outcomeTeamForRound({ view, resolved: resolvedRuleset }) ===
@@ -472,10 +488,21 @@ export function GameTable({
         muted={muted}
         onToggleMuted={toggleMuted}
         onLeave={onLeave}
+        {...(isFindingFriends
+          ? {
+              findingFriends: {
+                declarerSeat: round?.declarerSeat,
+                calls: round?.friendCalls ?? [],
+                seats: view.seats,
+                roundsWonBySeat: round?.roundStats.roundsWonBySeat ?? {},
+                outcome: round?.outcome,
+              },
+            }
+          : {})}
       />
 
       <section className="board" style={BOARD_ART_STYLE}>
-        <MomentLayer moments={moments} dismiss={dismiss} />
+        <MomentLayer moments={moments} dismiss={dismiss} view={view} />
         <FxCanvas moments={moments} gameVictory={gameVictory} />
         <AnimatePresence>
           {round?.lastThrow && dismissedThrow !== throwKey && (
@@ -536,8 +563,9 @@ export function GameTable({
                       currentTurn={round?.currentTurnSeat === seat.seat}
                       trickWinner={trickWinnerSeat === seat.seat}
                       isYou={false}
-                      isLeader={round?.leaderSeat === seat.seat}
-                      role={teamRoleForSeat(view, seat)}
+                      isLeader={declarerOrLeaderSeat === seat.seat}
+                      role={displayRoleForSeat(seat)}
+                      isFriend={isFindingFriends && seat.role === "friend"}
                       bid={bidFor(seat.seat)}
                       roomId={view.roomId}
                     />
@@ -563,8 +591,9 @@ export function GameTable({
                       currentTurn={round?.currentTurnSeat === youSeat.seat}
                       trickWinner={trickWinnerSeat === youSeat.seat}
                       isYou
-                      isLeader={round?.leaderSeat === youSeat.seat}
-                      role={teamRoleForSeat(view, youSeat)}
+                      isLeader={declarerOrLeaderSeat === youSeat.seat}
+                      role={displayRoleForSeat(youSeat)}
+                      isFriend={isFindingFriends && youSeat.role === "friend"}
                       bid={bidFor(youSeat.seat)}
                       roomId={view.roomId}
                       {...(timerDeadline === undefined
@@ -585,7 +614,16 @@ export function GameTable({
                     </div>
                   </div>
                 )}
-                <TrickCenter view={view} />
+                <TrickCenter
+                  view={view}
+                  friendCallPanel={{
+                    sendTrackedCommand,
+                    trackedRejections,
+                    consumeRejection,
+                    turnDeadline: timerDeadline ?? null,
+                    serverNow,
+                  }}
+                />
                 {buried && (
                   <button
                     type="button"

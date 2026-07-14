@@ -7,6 +7,7 @@ import type { GameMoment } from "./moments";
  */
 export type SoundEvent =
   | GameMoment["type"]
+  | "FRIEND_REVEALED"
   | "YOUR_TURN"
   | "CARD_SELECT"
   | "BUTTON_PRESS";
@@ -19,6 +20,8 @@ export const SOUND_REGISTRY: Record<
   TRUMP_DECLARED: null,
   // TODO(audio): card play thwack -- prompt in docs/audio-prompts.md §card-played.ogg
   CARD_PLAYED: null,
+  // TODO(audio): friend reveal stamp -- prompt to be written when audio lands.
+  FRIEND_REVEALED: null,
   // TODO(audio): trick sweep whoosh + coin chime -- prompt in docs/audio-prompts.md §trick-won.ogg
   TRICK_WON: null,
   // TODO(audio): points coin-chime -- prompt in docs/audio-prompts.md §points-captured.ogg

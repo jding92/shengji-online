@@ -763,6 +763,28 @@ button:disabled:not(.playing-card) {
   height: 72%;
   object-fit: cover;
 }
+.moment-friend-revealed {
+  position: absolute;
+  top: 34%;
+  left: 0;
+  right: 0;
+  display: grid;
+  width: min(360px, 86%);
+  margin-inline: auto;
+  place-items: center;
+}
+.moment-friend-stamp {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  width: 100%;
+  padding: 18px 22px;
+  text-align: center;
+}
+.moment-friend-stamp strong,
+.moment-friend-stamp span {
+  display: block;
+}
 /* Dashboard information is composed from independent wells, emblems and live
    readouts. The decorative rail frame remains a replaceable art layer. */
 .round-pills {
@@ -964,6 +986,101 @@ button:disabled:not(.playing-card) {
   font-size: 0.55rem;
   font-weight: 850;
   transform: translate(-50%, -50%);
+}
+.finding-friends-panel {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 8px;
+  min-width: 0;
+}
+.friend-declarer {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 9px;
+  padding: 5px;
+}
+.friend-declarer-portrait {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  flex-shrink: 0;
+}
+.friend-declarer-copy {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+.friend-declarer-copy strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.friend-slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+  gap: 5px;
+}
+.friend-slot {
+  display: grid;
+  min-width: 0;
+  min-height: 54px;
+  align-content: center;
+  justify-items: center;
+  gap: 3px;
+  padding: 5px 4px;
+  text-align: center;
+}
+.friend-slot strong,
+.friend-slot small {
+  overflow: hidden;
+  max-width: 100%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.friend-slot-pending {
+  grid-column: 1 / -1;
+}
+.friend-rounds-won {
+  grid-column: 1 / -1;
+  min-height: 0;
+}
+.friend-rounds-list {
+  display: grid;
+  width: 100%;
+  gap: 3px;
+}
+.friend-round-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.friend-call-strip {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+.friend-call-chips {
+  display: flex;
+  width: 100%;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 5px;
+}
+.friend-call-chip {
+  display: inline-grid;
+  min-width: 0;
+  gap: 2px;
+  padding: 5px 7px;
+  text-align: center;
+}
+.friend-call-chip strong,
+.friend-call-chip small {
+  overflow: hidden;
+  max-width: 100%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .role-medallion {
   display: grid;
@@ -1259,6 +1376,13 @@ button:disabled:not(.playing-card) {
 .leader-badge {
   flex: 0 0 22px;
 }
+.player-friend-badge {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  place-items: center;
+}
 .player-status {
   z-index: 2;
   display: grid;
@@ -1506,11 +1630,107 @@ button:disabled:not(.playing-card) {
   display: grid;
   place-items: center;
 }
+.trick-center.has-friend-call-panel {
+  inset: 4%;
+}
 .phase-message {
   display: grid;
   place-items: center;
   gap: 10px;
   text-align: center;
+}
+.phase-countdown {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+.friend-call-panel {
+  width: min(560px, 100%);
+  max-height: min(78cqh, 700px);
+  overflow: auto;
+}
+.friend-call-panel > form {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+.friend-call-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 14px;
+}
+.friend-call-heading h2,
+.friend-call-heading p {
+  margin: 0;
+}
+.friend-call-heading h2 {
+  margin-top: 3px;
+}
+.friend-call-heading small {
+  display: block;
+  margin-top: 5px;
+}
+.friend-call-countdown {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+  text-align: right;
+}
+.friend-call-countdown .countdown {
+  width: auto;
+  min-width: 42px;
+  height: auto;
+  padding: 4px 7px;
+}
+.friend-call-rows {
+  display: grid;
+  gap: 9px;
+}
+.friend-call-row {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+  margin: 0;
+  padding: 8px;
+}
+.friend-call-row legend {
+  padding-inline: 4px;
+}
+.friend-call-option-group {
+  display: grid;
+  gap: 4px;
+}
+.friend-call-option-label {
+  display: block;
+}
+.friend-call-options {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.friend-call-option {
+  min-height: 34px;
+  padding: 4px 9px;
+}
+.friend-call-suit-option {
+  width: 38px;
+  padding-inline: 0;
+}
+.friend-call-copy-option {
+  flex: 1 1 110px;
+}
+.friend-call-row-error,
+.friend-call-validation-error,
+.friend-call-rejection {
+  display: block;
+}
+.friend-call-submit {
+  justify-self: end;
 }
 .deal-spinner,
 .bottom-icon {
@@ -1953,6 +2173,15 @@ button:disabled:not(.playing-card) {
 }
 .round-summary h2 {
   margin: 0;
+}
+.summary-defenders {
+  display: grid;
+  gap: 4px;
+  margin-top: 16px;
+}
+.summary-defenders small,
+.summary-defenders strong {
+  display: block;
 }
 .summary-score {
   display: grid;

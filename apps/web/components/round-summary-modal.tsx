@@ -4,7 +4,7 @@ import type { PrivateGameView, WireClientCommand } from "@shengji/protocol";
 import { AnimatePresence, animate, motion, useReducedMotion } from "motion/react";
 import { useEffect, useState } from "react";
 import { ART, art2x } from "../lib/art";
-import { didLocalTeamWin } from "../lib/cards";
+import { outcomeTeamForRound, resolveViewRuleset } from "../lib/rules";
 import { PlayingCard } from "./card";
 import { GameOverSplash } from "./game-over-splash";
 import { ChromeButton } from "./ui-chrome";
@@ -73,7 +73,24 @@ export function RoundSummaryModal({
   const outcome =
     view.phase === "round-scoring" || gameOver ? round?.outcome : undefined;
   const yourTeamWon =
-    outcome === undefined ? false : didLocalTeamWin(view, outcome.winner);
+    outcome === undefined ? false : outcomeTeamForRound(view) === outcome.winner;
+  const findingFriends =
+    resolveViewRuleset(view.ruleset).teams.mode === "finding-friends";
+  const finalDefenderSeats =
+    findingFriends && round?.declarerSeat !== undefined
+      ? [
+          round.declarerSeat,
+          ...(round.friendCalls ?? [])
+            .flatMap((call) =>
+              call.revealed === undefined ? [] : [call.revealed.seat],
+            )
+            .concat(
+              view.seats
+                .filter((seat) => seat.role === "friend")
+                .map((seat) => seat.seat),
+            ),
+        ].filter((seat, index, seats) => seats.indexOf(seat) === index)
+      : [];
   const banner =
     outcome?.winner === "attackers" ? ART.ui.attackersBanner : ART.ui.defendersBanner;
   return (
@@ -125,6 +142,20 @@ export function RoundSummaryModal({
                     : "Attackers break through"}
                 </h2>
               </>
+            )}
+            {findingFriends && finalDefenderSeats.length > 0 && (
+              <div className="summary-defenders">
+                <small>FINAL DEFENDERS · 最终守方</small>
+                <strong>
+                  {finalDefenderSeats
+                    .map(
+                      (seat) =>
+                        view.seats.find((candidate) => candidate.seat === seat)?.name ??
+                        `Seat ${seat + 1}`,
+                    )
+                    .join(" · ")}
+                </strong>
+              </div>
             )}
             <div className="summary-score">
               <span>

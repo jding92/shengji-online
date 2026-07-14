@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, test } from "vitest";
+import type { PrivateGameView, SeatView } from "@shengji/protocol";
 import type { GameMoment } from "../lib/moments";
 import { isMomentLayerMoment, MomentLayer } from "./moment-layer";
 
@@ -34,5 +35,31 @@ describe("MomentLayer", () => {
     expect(markup).toContain(
       'srcSet="/art/ui/trump-declaration.webp 1x, /art/ui/trump-declaration@2x.webp 2x"',
     );
+  });
+
+  test("renders a named friend reveal stamp", () => {
+    const reveal: GameMoment = {
+      id: "friend-revealed:1:0",
+      type: "FRIEND_REVEALED",
+      seat: 2,
+      face: { kind: "standard", suit: "spades", rank: "K" },
+      copyIndex: 1,
+      trickNumber: 3,
+    };
+    const markup = renderToStaticMarkup(
+      <MomentLayer
+        moments={[reveal]}
+        dismiss={() => undefined}
+        view={
+          {
+            seats: [{ seat: 2, name: "Lan", playerId: "p2" } as SeatView],
+          } as PrivateGameView
+        }
+      />,
+    );
+
+    expect(isMomentLayerMoment(reveal)).toBe(true);
+    expect(markup).toContain("FRIEND REVEALED · 找到朋友");
+    expect(markup).toContain("Lan joins the declarer");
   });
 });

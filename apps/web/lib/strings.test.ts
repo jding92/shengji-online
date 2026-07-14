@@ -13,6 +13,7 @@ describe("team display helpers", () => {
     expect(teamLabelForTeamId(undefined)).toBeNull();
     expect(teamLabelForTeamId("defenders")).toBeNull();
     expect(teamClassForTeamId(undefined)).toBe("team-neutral");
+    expect(teamClassForTeamId("defenders")).toBe("team-red");
     expect(teamClassForTeamId("attackers")).toBe("team-neutral");
   });
 });
