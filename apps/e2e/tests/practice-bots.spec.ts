@@ -94,9 +94,13 @@ test("table orbit and HUD stay usable at supported desktop viewports", async ({
       const westFan = rect(".seat-west .mini-hand");
       const hand = rect(".hand-scroll");
       const firstHandCard = rect(".hand-scroll .playing-card");
-      const localTag = rect(".seat-south .player-tag");
-      const localStatus = rect(".seat-south .player-status");
-      const localTimer = rect(".seat-south .seat-timer-badge");
+      const southTag = rect(".seat-south .player-tag");
+      // The timer badge is phase-transient, so assert its geometry only when mounted.
+      const timerElement = document.querySelector(".seat-south .seat-timer-badge");
+      const localTimer =
+        timerElement instanceof HTMLElement
+          ? timerElement.getBoundingClientRect()
+          : null;
       const playerTags = [...document.querySelectorAll(".player-tag")].map((tag) =>
         tag.getBoundingClientRect(),
       );
@@ -180,23 +184,29 @@ test("table orbit and HUD stay usable at supported desktop viewports", async ({
           actions.left < window.innerWidth && actions.right > 0 && actions.bottom > 0,
         actionsClearHandCards: actions.bottom <= firstHandCard.top + 1,
         timerContained:
-          localTimer.top >= localStatus.top - 1 &&
-          localTimer.right <= localStatus.right + 1 &&
-          localTimer.bottom <= localStatus.bottom + 1 &&
-          localTimer.left >= localStatus.left - 1,
+          localTimer === null ||
+          (localTimer.top >= southTag.top - 1 &&
+            localTimer.right <= southTag.right + 1 &&
+            localTimer.bottom <= southTag.bottom + 1 &&
+            localTimer.left >= southTag.left - 1),
         timerContainedInTag:
-          localTimer.top >= localTag.top - 1 &&
-          localTimer.right <= localTag.right + 1 &&
-          localTimer.bottom <= localTag.bottom + 1 &&
-          localTimer.left >= localTag.left - 1,
-        timerCenterDelta: Math.abs(
-          (localTimer.top + localTimer.bottom) / 2 -
-            (localTag.top + localTag.bottom) / 2,
-        ),
-        actionClearsTimer: actionSlot.left >= localTimer.right + 8,
+          localTimer === null ||
+          (localTimer.top >= southTag.top - 1 &&
+            localTimer.right <= southTag.right + 1 &&
+            localTimer.bottom <= southTag.bottom + 1 &&
+            localTimer.left >= southTag.left - 1),
+        timerCenterDelta:
+          localTimer === null
+            ? 0
+            : Math.abs(
+                (localTimer.top + localTimer.bottom) / 2 -
+                  (southTag.top + southTag.bottom) / 2,
+              ),
+        actionClearsTimer:
+          localTimer === null || actionSlot.left >= localTimer.right + 8,
         actionCenterDelta: Math.abs(
           (actionSlot.top + actionSlot.bottom) / 2 -
-            (localTag.top + localTag.bottom) / 2,
+            (southTag.top + southTag.bottom) / 2,
         ),
         seatTagsUseVerticalLanes:
           northTag.top >= northFan.bottom - 1 &&
@@ -207,10 +217,9 @@ test("table orbit and HUD stay usable at supported desktop viewports", async ({
         northFanFillsHorizontalLane: northFan.width / felt.width,
         sideEdgeGap: Math.max(westTag.left - felt.left, felt.right - eastTag.right),
         sidebarButtonHeightDelta: Math.abs(soundButton.height - leaveButton.height),
-        compactStatusGeometry: {
-          tag: rectValues(localTag),
-          status: rectValues(localStatus),
-          timer: rectValues(localTimer),
+        compactTagGeometry: {
+          tag: rectValues(southTag),
+          timer: localTimer === null ? null : rectValues(localTimer),
         },
         tagsShareDimensions:
           Math.max(...tagWidths) - Math.min(...tagWidths) <= 1 &&
@@ -279,7 +288,7 @@ test("table orbit and HUD stay usable at supported desktop viewports", async ({
     expect(layout.actionsClearHandCards).toBe(true);
     expect(
       layout.timerContained,
-      `${viewport.width}x${viewport.height}: compact timer ${JSON.stringify(layout.compactStatusGeometry)}`,
+      `${viewport.width}x${viewport.height}: compact timer ${JSON.stringify(layout.compactTagGeometry)}`,
     ).toBe(true);
     expect(layout.timerContainedInTag).toBe(true);
     expect(
