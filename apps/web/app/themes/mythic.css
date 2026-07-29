@@ -421,13 +421,17 @@ html[data-theme="mythic"] .menu-mode-panel {
 }
 html[data-theme="mythic"] .menu-panel-kicker,
 html[data-theme="mythic"] .arcade-field-label,
-html[data-theme="mythic"] .difficulty-picker legend {
+html[data-theme="mythic"] .difficulty-picker legend,
+html[data-theme="mythic"] .start-opponents legend {
   color: var(--red-bright);
   font-family: inherit;
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+}
+html[data-theme="mythic"] .menu-mode-panel h2.start-heading {
+  font-size: clamp(1.5rem, 2.4vw, 1.9rem);
 }
 html[data-theme="mythic"] .menu-mode-panel h2 {
   font-family: inherit;
@@ -484,6 +488,9 @@ html[data-theme="mythic"] .arcade-action:not(:disabled):active {
 html[data-theme="mythic"] .difficulty-picker {
   border: 0;
 }
+html[data-theme="mythic"] .start-opponents {
+  border: 0;
+}
 html[data-theme="mythic"] .difficulty-options {
   background: transparent;
 }
@@ -503,6 +510,14 @@ html[data-theme="mythic"] .difficulty-option[aria-pressed="true"] {
   background: transparent;
   color: #17130f;
   box-shadow: none;
+}
+html[data-theme="mythic"] .start-opponents .option-hint {
+  color: var(--muted);
+  font-size: 0.64rem;
+  line-height: 1.35;
+}
+html[data-theme="mythic"] .start-game-panel .start-summary {
+  font-size: 0.62rem;
 }
 html[data-theme="mythic"] .home-preset-picker > small {
   color: var(--muted);
