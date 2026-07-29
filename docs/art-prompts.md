@@ -36,6 +36,7 @@ Paste this at the end of every prompt (referred to below as `[STYLE]`):
 Consistency tips for ChatGPT image gen:
 
 - Generate in the **same conversation** as the reference sheets and say "match the style of the card faces above."
+- When using Codex CLI/gpt-image-2, attach approved masters as reference images (`codex exec -i master1.png,master2.png,...`) and pin the parchment background plus a centered ~78% safe circle in the prompt; the UI circle-crops portraits.
 - Card faces: portrait **2:3**. Avatar badges: **1:1**. Banners/logos: **4:3** or **16:9**.
 - Ask for "clean edges suitable for cutting out as a game asset, plain parchment background."
 - Regenerate characters one at a time for finals; use multi-up sheets only for exploration.
