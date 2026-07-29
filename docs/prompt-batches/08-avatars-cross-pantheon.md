@@ -121,3 +121,71 @@ Character: Charon as a gaunt hooded ferryman with a long lantern-pole oar over h
 
 STYLE: Persona 5 × Hades hybrid illustration — heavy black ink outlines, high-contrast cel shading with painted rim light, lacquer black, vermilion red, imperial gold on off-white aged-parchment background, ghost-teal accent. East Asian character design, wuxia and Chinese-opera costuming. Flat graphic background, no photorealism. Clean edges suitable for cutting out as a game asset.
 ```
+
+## Final prompts used (2026-07)
+
+Tool for each: `gpt-image-2` via Codex CLI 0.144.3 built-in image generation (`codex exec` + imagegen), with the four batch-07 masters attached as style references via `-i`.
+
+### Thor × Thunder Brawler
+
+> Match the established art style and shield-crest badge frame of the four attached reference badges.
+>
+> Player avatar badge, square 1:1, for a Chinese trump card game: bust portrait inside the jagged shield-crest frame — spiked gold-edged border, auspicious clouds at the lower corners, chevron point at the bottom.
+>
+> Character: Thor as a barrel-chested redheaded brawler grinning through a braided beard, his hammer resting head-down like a market mallet, knuckles crackling with lightning. A belt of gold rings at his waist, two goat silhouettes butting heads engraved on his pauldron.
+>
+> Background field: uniform near-white off-white aged parchment exactly matching the lightest reference badges — not warm tan, no heavy texture.
+>
+> Compose the bust and all key facial and accent features fully inside a centered circle spanning about 78% of the image width; only the crest frame's points may extend beyond that circle.
+>
+> STYLE: Persona 5 × Hades hybrid illustration — heavy black ink outlines, high-contrast cel shading with painted rim light, lacquer black, vermilion red, imperial gold on off-white aged-parchment background, ice-blue lightning accent. East Asian character design, wuxia and Chinese-opera costuming reinterpreting Norse myth. Confident theatrical expression. Flat graphic background, no photorealism. Clean edges suitable for cutting out as a game asset. Square 1:1.
+
+Selection note: 3 candidates were generated; the shipped master is the reviewer-selected candidate (native resolution, no upscale).
+
+### Freyja × Valkyrie Queen
+
+> Match the established art style and shield-crest badge frame of the four attached reference badges.
+>
+> Player avatar badge, square 1:1, for a Chinese trump card game: bust portrait inside the jagged shield-crest frame — spiked gold-edged border, auspicious clouds at the lower corners, chevron point at the bottom.
+>
+> Character: Freyja, golden-haired war goddess, holding a falcon-feather cloak half-drawn across her like a fan of cards. The amber necklace Brísingamen glows at her throat. Two enormous long-haired cats flank her shoulders inside the badge frame. Her expression is equal parts love and war.
+>
+> Background field: uniform near-white off-white aged parchment exactly matching the lightest reference badges — not warm tan, no heavy texture.
+>
+> Compose the bust and all key facial and accent features fully inside a centered circle spanning about 78% of the image width; only the crest frame's points may extend beyond that circle.
+>
+> STYLE: Persona 5 × Hades hybrid illustration — heavy black ink outlines, high-contrast cel shading with painted rim light, lacquer black, vermilion red, imperial gold on off-white aged-parchment background, amber accent. East Asian character design, wuxia and Chinese-opera costuming reinterpreting Norse myth. Confident theatrical expression. Flat graphic background, no photorealism. Clean edges suitable for cutting out as a game asset. Square 1:1.
+
+Selection note: 3 candidates were generated; the shipped master is the reviewer-selected candidate (native resolution, no upscale).
+
+### Anubis × The Jackal Judge
+
+> Match the established art style and shield-crest badge frame of the four attached reference badges.
+>
+> Player avatar badge, square 1:1, for a Chinese trump card game: bust portrait inside the jagged shield-crest frame — spiked gold-edged border, auspicious clouds at the lower corners, chevron point at the bottom.
+>
+> Character: Anubis as an elegant judge in black-and-gold robes wearing a sleek jackal mask, turquoise eyes glowing inside the mask's shadow. From one finger dangles a small brass scale — a feather on one pan, a playing card on the other.
+>
+> Background field: uniform near-white off-white aged parchment exactly matching the lightest reference badges — not warm tan, no heavy texture.
+>
+> Compose the bust and all key facial and accent features fully inside a centered circle spanning about 78% of the image width; only the crest frame's points may extend beyond that circle.
+>
+> STYLE: Persona 5 × Hades hybrid illustration — heavy black ink outlines, high-contrast cel shading with painted rim light, lacquer black, vermilion red, imperial gold on off-white aged-parchment background, turquoise accent. East Asian character design, wuxia and Chinese-opera costuming reinterpreting Egyptian myth. Confident theatrical expression. Flat graphic background, no photorealism. Clean edges suitable for cutting out as a game asset. Square 1:1.
+
+Selection note: 3 candidates were generated; the shipped master is the reviewer-selected candidate (native resolution, no upscale).
+
+### Artemis × Chang'e, the Moon Huntress
+
+> Match the established art style and shield-crest badge frame of the four attached reference badges.
+>
+> Player avatar badge, square 1:1, for a Chinese trump card game: bust portrait inside the jagged shield-crest frame — spiked gold-edged border, auspicious clouds at the lower corners, chevron point at the bottom.
+>
+> Character: Artemis fused with Chang'e — a cool silver-and-black moon goddess archer, crescent-moon recurve bow across her back, white-silver hair with a jade crescent pin. A jade rabbit wearing a tiny quiver sits on her shoulder. Aloof, faintly amused.
+>
+> Background field: uniform near-white off-white aged parchment exactly matching the lightest reference badges — not warm tan, no heavy texture.
+>
+> Compose the bust and all key facial and accent features fully inside a centered circle spanning about 78% of the image width; only the crest frame's points may extend beyond that circle.
+>
+> STYLE: Persona 5 × Hades hybrid illustration — heavy black ink outlines, high-contrast cel shading with painted rim light, lacquer black, vermilion red, imperial gold on off-white aged-parchment background, silver-white moonlight accent. East Asian character design, wuxia and Chinese-opera costuming. Confident theatrical expression. Flat graphic background, no photorealism. Clean edges suitable for cutting out as a game asset. Square 1:1.
+
+Selection note: 3 candidates were generated; the shipped master is the reviewer-selected candidate (native resolution, no upscale).
