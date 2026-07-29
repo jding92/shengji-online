@@ -385,6 +385,38 @@ button:disabled:not(.playing-card) {
   min-width: 0;
   gap: 18px;
 }
+.options-primary {
+  display: grid;
+  min-width: 0;
+  gap: 14px;
+}
+.options-primary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.option-row-wide {
+  grid-column: 1 / -1;
+}
+.options-primary .option-row {
+  padding: 9px 11px;
+}
+.options-primary .option-segment {
+  min-height: 34px;
+}
+.options-advanced {
+  display: grid;
+  min-width: 0;
+  gap: 12px;
+}
+.options-advanced-toggle {
+  justify-self: start;
+}
+.options-advanced-body {
+  display: grid;
+  min-width: 0;
+  gap: 18px;
+}
 .preset-picker {
   display: grid;
   min-width: 0;
@@ -2606,6 +2638,9 @@ button:disabled:not(.playing-card) {
   }
   .difficulty-options {
     grid-template-columns: repeat(2, 1fr);
+  }
+  .options-primary-grid {
+    grid-template-columns: 1fr;
   }
 }
 

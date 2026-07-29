@@ -508,11 +508,15 @@ html[data-theme="mythic"] .home-preset-picker > small {
   color: var(--muted);
   font-size: 0.68rem;
 }
-html[data-theme="mythic"] .house-rules-toggle {
+html[data-theme="mythic"] .house-rules-toggle,
+html[data-theme="mythic"] .options-advanced-toggle {
   color: var(--text-soft);
   font-family: var(--font-game);
   font-size: 0.66rem;
   letter-spacing: 0.05em;
+}
+html[data-theme="mythic"] .options-advanced-body {
+  border-top: 1px solid var(--line);
 }
 html[data-theme="mythic"] .menu-error {
   background: rgba(8, 9, 6, 0.88);

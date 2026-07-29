@@ -3,18 +3,21 @@
 import {
   RANKS,
   resolveRuleset,
+  type GameOptions,
   type GamePhase,
   type ShengJiRuleset,
 } from "@shengji/engine";
 import type { PrivateGameView } from "@shengji/protocol";
-import { useMemo, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import {
   OPTION_FIELDS,
+  adjustedPlayerCountForMode,
   editableOptionKeySet,
   effectiveValue,
   hasOptionOverride,
   mapIssuesToFields,
   resolveViewRuleset,
+  snapToBestPreset,
   setOption,
   clearOption,
   type IssueFieldKey,
@@ -22,66 +25,9 @@ import {
   type OptionFieldKey,
   type OptionsEditorValue,
 } from "../lib/rules";
-import type { PresetSummary } from "../lib/presets";
 import { ChromeButton } from "./ui-chrome";
 
 export type { OptionsEditorValue } from "../lib/rules";
-
-export type PresetPickerProps = {
-  presets: readonly PresetSummary[];
-  value?: string;
-  selectedPresetId?: string;
-  onChange: (presetId: string) => void;
-  disabled?: boolean;
-};
-
-export function PresetPicker({
-  presets,
-  value,
-  selectedPresetId,
-  onChange,
-  disabled = false,
-}: PresetPickerProps) {
-  const selected = selectedPresetId ?? value;
-  return (
-    <div className="preset-picker">
-      <p className="eyebrow">PRESETS · 规则预设</p>
-      <div className="preset-grid" aria-label="Ruleset presets">
-        {presets.map((preset) => {
-          const isSelected = preset.id === selected;
-          return (
-            <ChromeButton
-              key={preset.id}
-              className="preset-card"
-              variant={isSelected ? "gold" : "neutral"}
-              aria-pressed={isSelected}
-              disabled={disabled}
-              onClick={() => onChange(preset.id)}
-            >
-              <span className="preset-card-heading">
-                <strong>{preset.name}</strong>
-                <span className="preset-chips">
-                  <span className="preset-chip">
-                    {preset.players}P · {preset.players}人
-                  </span>
-                  <span className="preset-chip">
-                    {preset.decks}D · {preset.decks}副
-                  </span>
-                  <span className="preset-chip">
-                    {preset.teamsMode === "fixed"
-                      ? "FIXED · 固定"
-                      : "FINDING FRIENDS · 找朋友"}
-                  </span>
-                </span>
-              </span>
-              <small>{preset.description}</small>
-            </ChromeButton>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 
 export type OptionServerIssues =
   | readonly { path: string; message: string }[]
@@ -94,7 +40,6 @@ function isIssueList(
 }
 
 export type OptionsEditorProps = {
-  presets: readonly PresetSummary[];
   phase: GamePhase;
   value: OptionsEditorValue;
   onChange: (next: OptionsEditorValue) => void;
@@ -118,6 +63,18 @@ const GROUPS: readonly { id: OptionField["group"]; label: string }[] = [
 const PLAYER_COUNTS = [4, 5, 6, 7, 8];
 const DECK_COUNTS = [1, 2, 3, 4];
 const TEAM_MODES = ["fixed", "finding-friends"] as const;
+const IDENTITY_KEYS: readonly OptionFieldKey[] = [
+  "playerCount",
+  "deckCount",
+  "teamsMode",
+];
+const PRIMARY_TABLE_ORDER: readonly OptionFieldKey[] = [
+  "teamsMode",
+  "playerCount",
+  "deckCount",
+  "friendCallCount",
+  "scoring.bandSize",
+];
 
 function fieldId(key: OptionFieldKey): string {
   return `option-${key.replaceAll(".", "-")}`;
@@ -147,7 +104,6 @@ function TeamModeLabel({ value }: { value: (typeof TEAM_MODES)[number] }) {
 }
 
 export function OptionsEditor({
-  presets,
   phase,
   value,
   onChange,
@@ -191,22 +147,61 @@ export function OptionsEditor({
   ];
   const editableKeys = editableOptionKeySet(phase);
   const fields = OPTION_FIELDS.filter((field) => editableKeys.has(field.metadataKey));
+  const primaryFields = fields.filter((field) => field.tier === "primary");
+  const advancedFields = fields.filter((field) => field.tier === "advanced");
+  const visiblePrimaryFields = primaryFields.filter(
+    (field) =>
+      field.key !== "friendCallCount" ||
+      effectiveRuleset.teams.mode === "finding-friends",
+  );
+  const primaryTimerFields = visiblePrimaryFields.filter(
+    (field) => field.group === "TIMERS",
+  );
+  // Teams mode leads: it decides which player counts are legal. Any primary field
+  // missing from the order list still renders, appended, rather than vanishing.
+  const orderedTableFields = PRIMARY_TABLE_ORDER.flatMap((key) =>
+    visiblePrimaryFields.filter((field) => field.key === key),
+  );
+  const primaryTableFields = [
+    ...orderedTableFields,
+    ...visiblePrimaryFields.filter(
+      (field) => field.group !== "TIMERS" && !PRIMARY_TABLE_ORDER.includes(field.key),
+    ),
+  ];
+  const advancedFieldHasIssue = advancedFields.some(
+    (field) => issueText(mapped.byField, field.key).length > 0,
+  );
+  const [manuallyOpen, setManuallyOpen] = useState(false);
+  const advancedOpen = manuallyOpen || advancedFieldHasIssue;
   const minimumPlayers = Math.max(
     joinedPlayerCount,
     Math.max(-1, ...occupiedSeats) + 1,
   );
   const invalid = !resolution.ok;
 
+  function commit(nextOptions: GameOptions, changedKey: OptionFieldKey) {
+    const next = { ...value, options: nextOptions };
+    onChange(
+      phase === "lobby" && IDENTITY_KEYS.includes(changedKey)
+        ? snapToBestPreset(next)
+        : next,
+    );
+  }
+
   function updateOption(key: OptionFieldKey, nextValue: unknown) {
-    onChange({ ...value, options: setOption(value.options, key, nextValue) });
+    let nextOptions = setOption(value.options, key, nextValue);
+    if (key === "teamsMode") {
+      const mode = nextValue as "fixed" | "finding-friends";
+      const players = effectiveValue(effectiveRuleset, "playerCount") as number;
+      const adjusted = adjustedPlayerCountForMode(mode, players, minimumPlayers);
+      if (adjusted !== players)
+        nextOptions = setOption(nextOptions, "playerCount", adjusted);
+    }
+    commit(nextOptions, key);
   }
 
   function resetOption(key: OptionFieldKey) {
-    onChange({ ...value, options: clearOption(value.options, key) });
-  }
-
-  function selectPreset(presetId: string) {
-    onChange({ presetId, options: {} });
+    commit(clearOption(value.options, key), key);
   }
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -221,20 +216,38 @@ export function OptionsEditor({
         : field.key === "deckCount"
           ? DECK_COUNTS
           : TEAM_MODES;
+    function modeConflict(choice: number): boolean {
+      return (
+        field.key === "playerCount" &&
+        ((effectiveRuleset.teams.mode === "fixed" && choice % 2 !== 0) ||
+          (effectiveRuleset.teams.mode === "finding-friends" && choice < 5))
+      );
+    }
+    const modeHint =
+      effectiveRuleset.teams.mode === "fixed"
+        ? "Fixed teams need an even count · 固定队需偶数"
+        : "Finding friends needs 5+ · 找朋友需至少5人";
     return (
       <div className="option-segmented" role="group" aria-label={field.label}>
         {choices.map((choice) => {
           const selected = current === choice;
           const isPlayerCount = field.key === "playerCount";
           const belowOccupancy = isPlayerCount && (choice as number) < minimumPlayers;
+          const modeDisabled = modeConflict(choice as number);
           return (
             <ChromeButton
               key={String(choice)}
               className="option-segment"
               variant={selected ? "gold" : "neutral"}
               aria-pressed={selected}
-              disabled={disabled || belowOccupancy}
-              title={belowOccupancy ? "Seats in use / players joined" : undefined}
+              disabled={disabled || belowOccupancy || modeDisabled}
+              title={
+                belowOccupancy
+                  ? "Seats in use / players joined"
+                  : modeDisabled
+                    ? modeHint
+                    : undefined
+              }
               onClick={() => updateOption(field.key, choice)}
             >
               {field.key === "teamsMode" ? (
@@ -248,6 +261,10 @@ export function OptionsEditor({
         {field.key === "playerCount" && minimumPlayers > 4 && (
           <small className="option-hint">Seats in use / players joined</small>
         )}
+        {field.key === "playerCount" &&
+          choices.some((choice) => modeConflict(choice as number)) && (
+            <small className="option-hint">{modeHint}</small>
+          )}
       </div>
     );
   }
@@ -337,11 +354,7 @@ export function OptionsEditor({
         inputMode="numeric"
         min={optionNumberMin(field.key)}
         value={numberDisplay(current)}
-        disabled={
-          disabled ||
-          (field.key === "friendCallCount" &&
-            effectiveRuleset.teams.mode !== "finding-friends")
-        }
+        disabled={disabled}
         onChange={(event) => updateOption(field.key, event.currentTarget.valueAsNumber)}
         aria-label={field.label}
       />
@@ -404,14 +417,54 @@ export function OptionsEditor({
     }
   }
 
+  function renderFieldRow(field: OptionField, extraClassName?: string) {
+    const current = fieldValue(effectiveRuleset, field.key);
+    const overridden = hasOptionOverride(value.options, field.key);
+    const issues = issueText(mapped.byField, field.key);
+    return (
+      <div
+        className={
+          extraClassName === undefined ? "option-row" : `option-row ${extraClassName}`
+        }
+        key={field.key}
+      >
+        <div className="option-row-heading">
+          <label
+            className="arcade-field-label"
+            htmlFor={field.control === "number" ? fieldId(field.key) : undefined}
+          >
+            {field.label}
+          </label>
+          {overridden && (
+            <span className="option-override">
+              OVERRIDE · 覆盖
+              <ChromeButton
+                className="option-reset"
+                variant="neutral"
+                disabled={disabled}
+                onClick={() => resetOption(field.key)}
+              >
+                默认
+              </ChromeButton>
+            </span>
+          )}
+        </div>
+        {renderControl(field, current)}
+        {issues.map((issue) => (
+          <p
+            className="option-issue"
+            role="alert"
+            key={`${issue.path}:${issue.message}`}
+          >
+            {issue.message}
+          </p>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <form className="options-editor" onSubmit={submit} noValidate>
-      <PresetPicker
-        presets={presets}
-        value={value.presetId}
-        disabled={disabled}
-        onChange={selectPreset}
-      />
       {issueText(mapped.byField, "presetId").map((issue) => (
         <p
           className="option-issue inline-error"
@@ -422,63 +475,61 @@ export function OptionsEditor({
         </p>
       ))}
 
-      {GROUPS.map((group) => {
-        const groupFields = fields.filter((field) => field.group === group.id);
-        if (groupFields.length === 0) return null;
-        return (
-          <section className="options-group" key={group.id}>
-            <p className="eyebrow">{group.label}</p>
-            {groupFields.map((field) => {
-              const current = fieldValue(effectiveRuleset, field.key);
-              const overridden = hasOptionOverride(value.options, field.key);
-              const issues = issueText(mapped.byField, field.key);
-              return (
-                <div className="option-row" key={field.key}>
-                  <div className="option-row-heading">
-                    <label
-                      className="arcade-field-label"
-                      htmlFor={
-                        field.control === "number" ? fieldId(field.key) : undefined
-                      }
-                    >
-                      {field.label}
-                    </label>
-                    {overridden && (
-                      <span className="option-override">
-                        OVERRIDE · 覆盖
-                        <ChromeButton
-                          className="option-reset"
-                          variant="neutral"
-                          disabled={disabled}
-                          onClick={() => resetOption(field.key)}
-                        >
-                          默认
-                        </ChromeButton>
-                      </span>
-                    )}
-                  </div>
-                  {renderControl(field, current)}
-                  {field.key === "friendCallCount" &&
-                    effectiveRuleset.teams.mode !== "finding-friends" && (
-                      <small className="option-hint">
-                        Finding friends only · 仅找朋友模式
-                      </small>
-                    )}
-                  {issues.map((issue) => (
-                    <p
-                      className="option-issue"
-                      role="alert"
-                      key={`${issue.path}:${issue.message}`}
-                    >
-                      {issue.message}
-                    </p>
-                  ))}
-                </div>
-              );
-            })}
-          </section>
-        );
-      })}
+      {primaryTableFields.length > 0 || primaryTimerFields.length > 0 ? (
+        <div className="options-primary">
+          {primaryTableFields.length > 0 && (
+            <section className="options-group">
+              <p className="eyebrow">TABLE · 牌桌</p>
+              <div className="options-primary-grid">
+                {primaryTableFields.map((field) =>
+                  field.key === "teamsMode"
+                    ? renderFieldRow(field, "option-row-wide")
+                    : renderFieldRow(field),
+                )}
+              </div>
+            </section>
+          )}
+          {primaryTimerFields.length > 0 && (
+            <section className="options-group">
+              <p className="eyebrow">TIMERS · 时限</p>
+              <div className="options-primary-grid options-timer-grid">
+                {primaryTimerFields.map((field) => renderFieldRow(field))}
+              </div>
+            </section>
+          )}
+        </div>
+      ) : null}
+
+      {advancedFields.length > 0 && (
+        <div className="options-advanced">
+          <ChromeButton
+            className="options-advanced-toggle"
+            variant={advancedOpen ? "gold" : "neutral"}
+            aria-expanded={advancedOpen}
+            aria-controls="options-advanced-body"
+            disabled={disabled}
+            onClick={() => setManuallyOpen((open) => !open)}
+          >
+            ADVANCED · 高级
+          </ChromeButton>
+          {advancedOpen && (
+            <div className="options-advanced-body" id="options-advanced-body">
+              {GROUPS.map((group) => {
+                const groupFields = advancedFields.filter(
+                  (field) => field.group === group.id,
+                );
+                if (groupFields.length === 0) return null;
+                return (
+                  <section className="options-group" key={group.id}>
+                    <p className="eyebrow">{group.label}</p>
+                    {groupFields.map((field) => renderFieldRow(field))}
+                  </section>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {formIssues.map((issue) => (
         <p

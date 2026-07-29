@@ -7,7 +7,6 @@ import type {
 } from "@shengji/protocol";
 import { useEffect, useRef, useState } from "react";
 import { addBot, removeBot } from "../lib/bot-api";
-import { fetchPresets, type PresetSummary } from "../lib/presets";
 import { describeRules, resolveViewRuleset, rulesetSignature } from "../lib/rules";
 import { teamLabelForTeamId } from "../lib/strings";
 import type { OptionServerIssues, OptionsEditorValue } from "./options-editor";
@@ -65,8 +64,6 @@ export function LobbyRulesChangedNotice({
 export type LobbyRulesEditorProps = {
   open: boolean;
   draft: OptionsEditorValue | null;
-  presets: readonly PresetSummary[];
-  presetLoadError: string | null;
   canEdit: boolean;
   occupiedSeats: number[];
   joinedPlayerCount: number;
@@ -80,8 +77,6 @@ export type LobbyRulesEditorProps = {
 export function LobbyRulesEditor({
   open,
   draft,
-  presets,
-  presetLoadError,
   canEdit,
   occupiedSeats,
   joinedPlayerCount,
@@ -108,10 +103,8 @@ export function LobbyRulesEditor({
           Close
         </ChromeButton>
       </div>
-      {presetLoadError && <p className="inline-error">{presetLoadError}</p>}
       {draft !== null && (
         <OptionsEditor
-          presets={presets}
           phase="lobby"
           value={draft}
           onChange={onChange}
@@ -148,9 +141,6 @@ export function Lobby({
   const [botError, setBotError] = useState<string | null>(null);
   const [rulesOpen, setRulesOpen] = useState(false);
   const [rulesDraft, setRulesDraft] = useState<OptionsEditorValue | null>(null);
-  const [presets, setPresets] = useState<PresetSummary[]>([]);
-  const [presetLoadError, setPresetLoadError] = useState<string | null>(null);
-  const presetsRequested = useRef(false);
   const [rulesServerIssues, setRulesServerIssues] = useState<
     OptionServerIssues | undefined
   >();
@@ -171,18 +161,6 @@ export function Lobby({
   const ruleStrings = describeRules(resolvedRuleset, view.ruleset);
   const isHost = view.hostPlayerId === view.you.playerId;
   const canEditRules = view.legalActions.includes("update-options") && isHost;
-
-  useEffect(() => {
-    if (!rulesOpen || presetsRequested.current) return;
-    presetsRequested.current = true;
-    void fetchPresets()
-      .then((response) => setPresets(response.presets))
-      .catch((cause: unknown) => {
-        setPresetLoadError(
-          cause instanceof Error ? cause.message : "Could not load game presets",
-        );
-      });
-  }, [rulesOpen]);
 
   useEffect(() => {
     const nextSignature = rulesetSignature(view.ruleset);
@@ -426,8 +404,6 @@ export function Lobby({
       <LobbyRulesEditor
         open={rulesOpen}
         draft={rulesDraft}
-        presets={presets}
-        presetLoadError={presetLoadError}
         canEdit={canEditRules}
         occupiedSeats={view.seats
           .filter(({ playerId }) => playerId !== null)

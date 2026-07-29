@@ -9,17 +9,6 @@ import {
   shouldShowRulesChangedNotice,
 } from "./lobby";
 
-const presets = [
-  {
-    id: DEFAULT_PRESET_ID,
-    name: "Sheng Ji 4P Fixed Teams",
-    players: 4,
-    decks: 2,
-    teamsMode: "fixed" as const,
-    description: "Four players, two decks, fixed alternating teams.",
-  },
-];
-
 function makeView(
   options: GameOptions = {},
   overrides: Partial<PrivateGameView> = {},
@@ -85,8 +74,6 @@ describe("Lobby", () => {
       <LobbyRulesEditor
         open
         draft={draft}
-        presets={presets}
-        presetLoadError={null}
         canEdit
         occupiedSeats={[0]}
         joinedPlayerCount={1}
@@ -100,8 +87,6 @@ describe("Lobby", () => {
       <LobbyRulesEditor
         open
         draft={draft}
-        presets={presets}
-        presetLoadError={null}
         canEdit={false}
         occupiedSeats={[0]}
         joinedPlayerCount={1}
