@@ -45,7 +45,7 @@ async function assertSeatGeometry(
   // The full seat box includes the decorative fanned card backs, which may
   // cosmetically bleed toward a neighbour on a dense table; it must still stay
   // on screen. The meaningful non-collision contract is on the nameplates —
-  // name, role, card count, and timer must each stay individually readable.
+  // their portrait, name, badges, and timer must remain legible.
   const seatRects = await readRects(seats);
   for (const rect of seatRects) {
     expect(
@@ -66,8 +66,8 @@ async function assertSeatGeometry(
     ).toBeLessThanOrEqual(viewport.height + 8);
   }
 
-  // Two nameplates must not substantially cover each other: name, role, card
-  // count, and timer stay readable on every seat. A minor corner graze on the
+  // Two nameplates must not substantially cover each other: their portrait,
+  // name, badges, and timer stay readable on every seat. A minor corner graze on the
   // densest tables (eight seats at the narrowest supported width) is cosmetic;
   // a real regression stacks seats and covers most of a plate. Gate on the
   // covered fraction of the smaller plate so the check flags collapse, not a
