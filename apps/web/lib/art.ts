@@ -61,6 +61,10 @@ const AVATARS = {
   athenaGrandStrategist: artAssetPath(
     ART_ASSET_IDS.portrait("athena-grand-strategist"),
   ),
+  thorThunderBrawler: artAssetPath(ART_ASSET_IDS.portrait("thor-thunder-brawler")),
+  freyjaValkyrieQueen: artAssetPath(ART_ASSET_IDS.portrait("freyja-valkyrie-queen")),
+  anubisJackalJudge: artAssetPath(ART_ASSET_IDS.portrait("anubis-jackal-judge")),
+  changeMoonHuntress: artAssetPath(ART_ASSET_IDS.portrait("change-moon-huntress")),
 } as const;
 
 export function art2x(path: string): string {

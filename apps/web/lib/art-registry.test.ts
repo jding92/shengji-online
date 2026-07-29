@@ -82,6 +82,19 @@ describe("art registry", () => {
     );
   });
 
+  test("registers the cross-pantheon Thor portrait source", () => {
+    expect(getArtAsset(ART_ASSET_IDS.portrait("thor-thunder-brawler"))).toMatchObject({
+      id: "portrait.thor-thunder-brawler",
+      build: {
+        source:
+          "08-avatars-cross-pantheon/08-avatars-cross-pantheon-thor-thunder-brawler.png",
+      },
+      outputs: expect.arrayContaining([
+        expect.objectContaining({ path: "avatars/thor-thunder-brawler.webp" }),
+      ]),
+    });
+  });
+
   test("marks fully generated aces, courts, and jokers for later decomposition", () => {
     const deferred = ART_ASSETS.filter(
       (asset) => asset.lifecycle === "legacy-deferred",
