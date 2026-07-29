@@ -90,6 +90,34 @@ function postDealState(roomId: string): GameState {
 }
 
 describe("server bot orchestration", () => {
+  it("names bots from their physical seat personas", async () => {
+    const store = new SqliteStore(":memory:");
+    const manager = new RoomManager(store, { timersEnabled: false });
+    const room = await manager.createRoom({
+      at: now,
+      presetId: "shengji-6p-3d-fixed-v1",
+    });
+
+    const seatFiveBotId = await manager.addBot(
+      room.state.roomId,
+      5,
+      "intermediate",
+      now,
+    );
+    const seatZeroBotId = await manager.addBot(
+      room.state.roomId,
+      0,
+      "intermediate",
+      now,
+    );
+
+    expect(room.state.players[seatFiveBotId]?.name).toBe("Freyja");
+    expect(room.state.players[seatZeroBotId]?.name).toBe("Hades");
+
+    manager.close();
+    store.close();
+  });
+
   it("creates practice rooms with three ready sessionless bots", async () => {
     const store = new SqliteStore(":memory:");
     const manager = new RoomManager(store, { timersEnabled: false });
