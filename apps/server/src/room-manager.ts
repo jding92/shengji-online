@@ -8,6 +8,7 @@ import {
   type GameState,
   type ResolveIssue,
 } from "@shengji/engine";
+import { personaNameForSeat } from "@shengji/protocol";
 import { Room, type RoomOptions } from "./room.js";
 import type { SqliteStore } from "./persistence/sqlite-store.js";
 
@@ -20,7 +21,6 @@ export class RulesetResolutionError extends Error {
 }
 
 const ROOM_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
-const BOT_NAMES = ["Ming", "Wei", "Lan", "Jun", "Mei", "Bo"] as const;
 
 function tokenHash(token: string): string {
   return createHash("sha256").update(token).digest("hex");
@@ -184,10 +184,7 @@ export class RoomManager {
   ): Promise<string> {
     const room = this.getRoom(roomId);
     if (room === null) throw new RangeError("Room not found");
-    const botCount = Object.values(room.state.players).filter(
-      ({ bot }) => bot !== undefined,
-    ).length;
-    return room.addBot(BOT_NAMES[botCount % BOT_NAMES.length]!, seat, difficulty, at);
+    return room.addBot(personaNameForSeat(seat), seat, difficulty, at);
   }
 
   roomSummary(state: Readonly<GameState>) {

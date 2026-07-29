@@ -29,9 +29,7 @@ feel intentional rather than merely functional.
 
 ## Worth doing
 
-- **Bot personas from the pantheon roster** — Replace Wei / Lan / Ming-style generic bots
-  with named mythic opponents, avatar portraits, difficulty tells, and light table-talk
-  flavor that never obscures game state. Effort: M.
+- **Bot personas from the pantheon roster (shipped: seat-keyed persona names).**
 - **zh / en full-UI language toggle** — Make the bilingual identity real by localizing all
   labels, errors, tutorial copy, and room flows; keep card symbols and rule terms
   consistent across languages. Effort: L.

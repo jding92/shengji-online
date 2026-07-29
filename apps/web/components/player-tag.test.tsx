@@ -6,7 +6,7 @@ import { PlayerTag } from "./player-tag";
 const seat: SeatView = {
   seat: 0,
   playerId: "player-0",
-  name: "Ming",
+  name: "Hades",
   connected: true,
   isBot: true,
   botDifficulty: "intermediate",

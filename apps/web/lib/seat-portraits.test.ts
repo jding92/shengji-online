@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { SEAT_PERSONA_NAMES } from "@shengji/protocol";
 import { artNumberRank, artSuitIcon } from "./art";
-import { portraitForSeat } from "./seat-portraits";
+import { SEAT_PORTRAIT_IDS, portraitForSeat } from "./seat-portraits";
 
 describe("v1 seat portraits", () => {
   it("uses a stable eight-seat roster for people and practice bots", () => {
@@ -22,6 +23,16 @@ describe("v1 seat portraits", () => {
       src2x: "/art/avatars/hades-king-yan@2x.webp",
     });
     expect(portraitForSeat(4).src).toBe("/art/avatars/thor-thunder-brawler.webp");
+  });
+
+  it("keeps persona names paired with their seat portraits", () => {
+    expect(SEAT_PERSONA_NAMES.length).toBe(SEAT_PORTRAIT_IDS.length);
+    expect(SEAT_PERSONA_NAMES[0]).toBe("Hades");
+    expect(SEAT_PORTRAIT_IDS[0]).toBe("hadesKingYan");
+    expect(SEAT_PERSONA_NAMES[4]).toBe("Thor");
+    expect(SEAT_PORTRAIT_IDS[4]).toBe("thorThunderBrawler");
+    expect(SEAT_PERSONA_NAMES[7]).toBe("Chang'e");
+    expect(SEAT_PORTRAIT_IDS[7]).toBe("changeMoonHuntress");
   });
 });
 

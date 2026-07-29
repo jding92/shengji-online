@@ -22,7 +22,7 @@ describe("bot player events", () => {
     const state = applyEvent(initialState(), {
       type: "PLAYER_JOINED",
       playerId: "bot-1",
-      name: "Ming",
+      name: "Hades",
       bot: { difficulty: "advanced" },
       at,
     });
@@ -75,7 +75,7 @@ describe("bot player events", () => {
       {
         type: "PLAYER_JOINED",
         playerId: "bot-1",
-        name: "Lan",
+        name: "Poseidon",
         bot: { difficulty: "beginner" },
         at,
       },

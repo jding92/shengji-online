@@ -52,7 +52,7 @@ describe("MomentLayer", () => {
         dismiss={() => undefined}
         view={
           {
-            seats: [{ seat: 2, name: "Lan", playerId: "p2" } as SeatView],
+            seats: [{ seat: 2, name: "Poseidon", playerId: "p2" } as SeatView],
           } as PrivateGameView
         }
       />,
@@ -60,6 +60,6 @@ describe("MomentLayer", () => {
 
     expect(isMomentLayerMoment(reveal)).toBe(true);
     expect(markup).toContain("FRIEND REVEALED · 找到朋友");
-    expect(markup).toContain("Lan joins the declarer");
+    expect(markup).toContain("Poseidon joins the declarer");
   });
 });
