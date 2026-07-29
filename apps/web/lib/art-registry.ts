@@ -18,7 +18,11 @@ export type ArtPortraitId =
   | "hades-king-yan"
   | "persephone-plum-blossom"
   | "poseidon-dragon-king"
-  | "athena-grand-strategist";
+  | "athena-grand-strategist"
+  | "thor-thunder-brawler"
+  | "freyja-valkyrie-queen"
+  | "anubis-jackal-judge"
+  | "change-moon-huntress";
 export type ArtGameplayUiId =
   | "attack-badge"
   | "defend-badge"
@@ -465,10 +469,38 @@ const playerBadgeIconRows = playerBadgeIconAssets.map((name) =>
 );
 
 const portraitAssets = [
-  ["hades-king-yan", "hades-king-yan"],
-  ["persephone-plum-blossom", "persephone-plum-blossom-empress"],
-  ["poseidon-dragon-king", "poseidon-dragon-king"],
-  ["athena-grand-strategist", "athena-grand-strategist"],
+  [
+    "hades-king-yan",
+    "07-avatars-greek-court/07-avatars-greek-court-hades-king-yan.png",
+  ],
+  [
+    "persephone-plum-blossom",
+    "07-avatars-greek-court/07-avatars-greek-court-persephone-plum-blossom-empress.png",
+  ],
+  [
+    "poseidon-dragon-king",
+    "07-avatars-greek-court/07-avatars-greek-court-poseidon-dragon-king.png",
+  ],
+  [
+    "athena-grand-strategist",
+    "07-avatars-greek-court/07-avatars-greek-court-athena-grand-strategist.png",
+  ],
+  [
+    "thor-thunder-brawler",
+    "08-avatars-cross-pantheon/08-avatars-cross-pantheon-thor-thunder-brawler.png",
+  ],
+  [
+    "freyja-valkyrie-queen",
+    "08-avatars-cross-pantheon/08-avatars-cross-pantheon-freyja-valkyrie-queen.png",
+  ],
+  [
+    "anubis-jackal-judge",
+    "08-avatars-cross-pantheon/08-avatars-cross-pantheon-anubis-jackal-judge.png",
+  ],
+  [
+    "change-moon-huntress",
+    "08-avatars-cross-pantheon/08-avatars-cross-pantheon-change-moon-huntress.png",
+  ],
 ] as const;
 
 const portraits = portraitAssets.map(([output, source]) =>
@@ -477,7 +509,7 @@ const portraits = portraitAssets.map(([output, source]) =>
     kind: "portrait",
     alpha: "ordinary-alpha",
     lifecycle: "primitive",
-    build: { source: `07-avatars-greek-court/07-avatars-greek-court-${source}.png` },
+    build: { source },
     outputPath: `avatars/${output}.webp`,
     width: 128,
     width2x: 256,

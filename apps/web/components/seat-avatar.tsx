@@ -8,9 +8,6 @@ export function SeatAvatar({ seat }: { seat: number }) {
       className="seat-portrait"
       data-portrait={portrait.id}
       data-art-asset={portrait.assetId}
-      {...(portrait.seatAccent === null
-        ? {}
-        : { "data-seat-accent": portrait.seatAccent })}
       aria-hidden="true"
     >
       <img src={portrait.src} srcSet={`${portrait.src2x} 2x`} alt="" />

@@ -75,17 +75,4 @@ describe("PlayerTag", () => {
       markup.indexOf('class="seat-timer-badge"'),
     );
   });
-
-  test("marks a reused portrait with its physical-seat accent", () => {
-    const markup = renderToStaticMarkup(
-      <PlayerTag
-        seat={{ ...seat, seat: 4 }}
-        isYou={false}
-        isLeader={false}
-        role={null}
-      />,
-    );
-
-    expect(markup).toContain('data-seat-accent="4"');
-  });
 });

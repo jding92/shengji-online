@@ -2193,26 +2193,6 @@ html[data-theme="mythic"] .team-score-pill.team-neutral {
   border-color: color-mix(in srgb, var(--muted) 60%, var(--panel-edge)) !important;
 }
 
-/* Seats 4–7 reuse the four approved portraits but get distinct rim colors. */
-html[data-theme="mythic"] .seat-portrait[data-seat-accent="4"],
-html[data-theme="mythic"] .chrome-portrait[data-seat-accent="4"] {
-  --portrait-rim-color: var(--house-clubs);
-}
-html[data-theme="mythic"] .seat-portrait[data-seat-accent="5"],
-html[data-theme="mythic"] .chrome-portrait[data-seat-accent="5"] {
-  --portrait-rim-color: var(--house-hearts);
-}
-html[data-theme="mythic"] .seat-portrait[data-seat-accent="6"],
-html[data-theme="mythic"] .chrome-portrait[data-seat-accent="6"] {
-  --portrait-rim-color: var(--house-spades);
-}
-html[data-theme="mythic"] .seat-portrait[data-seat-accent="7"],
-html[data-theme="mythic"] .chrome-portrait[data-seat-accent="7"] {
-  --portrait-rim-color: var(--house-diamonds);
-}
-html[data-theme="mythic"] .chrome-portrait[data-seat-accent] .chrome-portrait-frame {
-  filter: drop-shadow(0 0 3px var(--portrait-rim-color, var(--gold)));
-}
 html[data-theme="mythic"] .card-back-seal {
   visibility: hidden;
 }

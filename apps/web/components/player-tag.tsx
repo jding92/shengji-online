@@ -53,13 +53,7 @@ export function PlayerTag({
         aria-hidden="true"
         draggable={false}
       />
-      <ChromePortrait
-        className="player-tag-portrait"
-        data-player-tag-layer="portrait"
-        {...(portrait.seatAccent === null
-          ? {}
-          : { "data-seat-accent": portrait.seatAccent })}
-      >
+      <ChromePortrait className="player-tag-portrait" data-player-tag-layer="portrait">
         <SeatAvatar seat={seat.seat} />
       </ChromePortrait>
 
