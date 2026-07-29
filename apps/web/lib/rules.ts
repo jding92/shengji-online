@@ -2,6 +2,7 @@ import {
   DEFAULT_PRESET_ID,
   editableOptionKeySet,
   getPreset,
+  listPresets,
   OPTION_METADATA,
   RANKS,
   resolveRuleset,
@@ -15,6 +16,11 @@ import type { PrivateGameView } from "@shengji/protocol";
 type ViewRuleset = Omit<PrivateGameView["ruleset"], "options"> & {
   options?: GameOptions;
 };
+export type OptionsEditorValue = {
+  presetId: string;
+  options: GameOptions;
+};
+
 type PreviousRound = NonNullable<
   NonNullable<PrivateGameView["publicRound"]>["roundStats"]["previousRound"]
 >;
@@ -202,6 +208,7 @@ export type OptionFieldControl =
   | "pair";
 
 export type OptionFieldGroup = "TABLE" | "CLIMB" | "SCORING" | "BIDDING" | "TIMERS";
+export type OptionFieldTier = "primary" | "advanced";
 
 export type OptionField = {
   key: OptionFieldKey;
@@ -209,6 +216,7 @@ export type OptionField = {
   group: OptionFieldGroup;
   control: OptionFieldControl;
   metadataKey: OptionEditability["key"];
+  tier: OptionFieldTier;
 };
 
 export const OPTION_FIELDS: readonly OptionField[] = [
@@ -218,6 +226,7 @@ export const OPTION_FIELDS: readonly OptionField[] = [
     group: "TABLE",
     control: "segmented-number",
     metadataKey: "playerCount",
+    tier: "primary",
   },
   {
     key: "deckCount",
@@ -225,6 +234,7 @@ export const OPTION_FIELDS: readonly OptionField[] = [
     group: "TABLE",
     control: "segmented-number",
     metadataKey: "deckCount",
+    tier: "primary",
   },
   {
     key: "teamsMode",
@@ -232,6 +242,7 @@ export const OPTION_FIELDS: readonly OptionField[] = [
     group: "TABLE",
     control: "segmented-number",
     metadataKey: "teamsMode",
+    tier: "primary",
   },
   {
     key: "friendCallCount",
@@ -239,6 +250,7 @@ export const OPTION_FIELDS: readonly OptionField[] = [
     group: "TABLE",
     control: "number",
     metadataKey: "friendCallCount",
+    tier: "primary",
   },
   {
     key: "bottomSize",
@@ -246,6 +258,7 @@ export const OPTION_FIELDS: readonly OptionField[] = [
     group: "TABLE",
     control: "number",
     metadataKey: "bottomSize",
+    tier: "advanced",
   },
   {
     key: "startingRank",
@@ -253,6 +266,7 @@ export const OPTION_FIELDS: readonly OptionField[] = [
     group: "CLIMB",
     control: "rank",
     metadataKey: "startingRank",
+    tier: "advanced",
   },
   {
     key: "gameEndsOnSuccessfulDefenseAt",
@@ -260,6 +274,7 @@ export const OPTION_FIELDS: readonly OptionField[] = [
     group: "CLIMB",
     control: "rank",
     metadataKey: "gameEndsOnSuccessfulDefenseAt",
+    tier: "advanced",
   },
   {
     key: "mustDefendRanks",
@@ -267,6 +282,7 @@ export const OPTION_FIELDS: readonly OptionField[] = [
     group: "CLIMB",
     control: "rank-multi",
     metadataKey: "mustDefendRanks",
+    tier: "advanced",
   },
   {
     key: "scoring.bandSize",
@@ -274,6 +290,7 @@ export const OPTION_FIELDS: readonly OptionField[] = [
     group: "SCORING",
     control: "number",
     metadataKey: "scoring",
+    tier: "primary",
   },
   {
     key: "throwPenalty",
@@ -281,6 +298,7 @@ export const OPTION_FIELDS: readonly OptionField[] = [
     group: "SCORING",
     control: "pair",
     metadataKey: "throwPenalty",
+    tier: "advanced",
   },
   {
     key: "allowNoTrumpJokerBid",
@@ -288,6 +306,7 @@ export const OPTION_FIELDS: readonly OptionField[] = [
     group: "BIDDING",
     control: "toggle",
     metadataKey: "allowNoTrumpJokerBid",
+    tier: "advanced",
   },
   {
     key: "minimumJokerBidCount",
@@ -295,6 +314,7 @@ export const OPTION_FIELDS: readonly OptionField[] = [
     group: "BIDDING",
     control: "number",
     metadataKey: "minimumJokerBidCount",
+    tier: "advanced",
   },
   {
     key: "maxRedeals",
@@ -302,6 +322,7 @@ export const OPTION_FIELDS: readonly OptionField[] = [
     group: "BIDDING",
     control: "number",
     metadataKey: "maxRedeals",
+    tier: "advanced",
   },
   {
     key: "timers.playTimeoutSeconds",
@@ -309,6 +330,7 @@ export const OPTION_FIELDS: readonly OptionField[] = [
     group: "TIMERS",
     control: "number",
     metadataKey: "timers.playTimeoutSeconds",
+    tier: "primary",
   },
   {
     key: "timers.disconnectedTimeoutSeconds",
@@ -316,6 +338,7 @@ export const OPTION_FIELDS: readonly OptionField[] = [
     group: "TIMERS",
     control: "number",
     metadataKey: "timers.disconnectedTimeoutSeconds",
+    tier: "primary",
   },
   {
     key: "timers.postDealWindowSeconds",
@@ -323,6 +346,7 @@ export const OPTION_FIELDS: readonly OptionField[] = [
     group: "TIMERS",
     control: "number",
     metadataKey: "timers.postDealWindowSeconds",
+    tier: "primary",
   },
   {
     key: "timers.responseWindowSeconds",
@@ -330,6 +354,7 @@ export const OPTION_FIELDS: readonly OptionField[] = [
     group: "TIMERS",
     control: "number",
     metadataKey: "timers.responseWindowSeconds",
+    tier: "primary",
   },
 ];
 
@@ -506,6 +531,67 @@ export function clearOption(bag: GameOptions, key: OptionFieldKey): GameOptions 
   }
   delete (next as Partial<Record<OptionFieldKey, unknown>>)[key];
   return next;
+}
+
+export function adjustedPlayerCountForMode(
+  mode: "fixed" | "finding-friends",
+  players: number,
+  minimumPlayers: number,
+): number {
+  let adjusted = mode === "fixed" && players % 2 !== 0 ? players + 1 : players;
+  if (mode === "finding-friends" && adjusted < 5) adjusted = 5;
+  if (adjusted < minimumPlayers) adjusted = minimumPlayers;
+  if (mode === "fixed" && adjusted % 2 !== 0) adjusted += 1;
+  if (mode === "finding-friends" && adjusted < 5) adjusted = 5;
+  return Math.min(8, Math.max(4, adjusted));
+}
+
+export function snapToBestPreset(value: OptionsEditorValue): OptionsEditorValue {
+  const base = getPreset(value.presetId) ?? getPreset(DEFAULT_PRESET_ID);
+  if (base === undefined) return value;
+
+  const players = value.options.playerCount ?? base.ruleset.players.count;
+  const decks = value.options.deckCount ?? base.ruleset.decks.count;
+  const mode = value.options.teamsMode ?? base.ruleset.teams.mode;
+  const deckPinned = hasOptionOverride(value.options, "deckCount");
+  const candidates = listPresets().filter(
+    (entry) =>
+      entry.ruleset.teams.mode === mode && entry.ruleset.players.count === players,
+  );
+  if (candidates.length === 0) return value;
+
+  const firstCandidate = candidates[0];
+  if (firstCandidate === undefined) return value;
+  let chosen = firstCandidate;
+  for (const candidate of candidates.slice(1)) {
+    if (
+      Math.abs(candidate.ruleset.decks.count - decks) <
+      Math.abs(chosen.ruleset.decks.count - decks)
+    ) {
+      chosen = candidate;
+    }
+  }
+
+  let options = value.options;
+  options =
+    players === chosen.ruleset.players.count
+      ? clearOption(options, "playerCount")
+      : setOption(options, "playerCount", players);
+  options =
+    mode === chosen.ruleset.teams.mode
+      ? clearOption(options, "teamsMode")
+      : setOption(options, "teamsMode", mode);
+  if (deckPinned) {
+    options =
+      decks === chosen.ruleset.decks.count
+        ? clearOption(options, "deckCount")
+        : setOption(options, "deckCount", decks);
+  } else {
+    options = clearOption(options, "deckCount");
+  }
+  if (mode === "fixed") options = clearOption(options, "friendCallCount");
+
+  return { presetId: chosen.id, options };
 }
 
 export function effectiveValue(resolved: ShengJiRuleset, key: OptionFieldKey): unknown {

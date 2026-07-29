@@ -3,7 +3,6 @@
 import {
   RANKS,
   resolveRuleset,
-  type GameOptions,
   type GamePhase,
   type ShengJiRuleset,
 } from "@shengji/engine";
@@ -21,9 +20,12 @@ import {
   type IssueFieldKey,
   type OptionField,
   type OptionFieldKey,
+  type OptionsEditorValue,
 } from "../lib/rules";
 import type { PresetSummary } from "../lib/presets";
 import { ChromeButton } from "./ui-chrome";
+
+export type { OptionsEditorValue } from "../lib/rules";
 
 export type PresetPickerProps = {
   presets: readonly PresetSummary[];
@@ -90,11 +92,6 @@ function isIssueList(
 ): issues is readonly { path: string; message: string }[] {
   return issues !== undefined && !("error" in issues);
 }
-
-export type OptionsEditorValue = {
-  presetId: string;
-  options: GameOptions;
-};
 
 export type OptionsEditorProps = {
   presets: readonly PresetSummary[];
