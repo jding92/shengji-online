@@ -83,16 +83,17 @@ describe("art registry", () => {
   });
 
   test("registers the cross-pantheon Thor portrait source", () => {
-    expect(getArtAsset(ART_ASSET_IDS.portrait("thor-thunder-brawler"))).toMatchObject({
+    const thor = getArtAsset(ART_ASSET_IDS.portrait("thor-thunder-brawler"));
+    expect(thor).toMatchObject({
       id: "portrait.thor-thunder-brawler",
       build: {
         source:
           "08-avatars-cross-pantheon/08-avatars-cross-pantheon-thor-thunder-brawler.png",
       },
-      outputs: expect.arrayContaining([
-        expect.objectContaining({ path: "avatars/thor-thunder-brawler.webp" }),
-      ]),
     });
+    expect(thor.outputs.map((output) => output.path)).toContain(
+      "avatars/thor-thunder-brawler.webp",
+    );
   });
 
   test("marks fully generated aces, courts, and jokers for later decomposition", () => {
