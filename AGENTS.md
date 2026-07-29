@@ -248,9 +248,15 @@ for altering existing tables; implement an explicit forward migration.
 
 For UI changes, retain server authority. The web app may import pure engine
 format/sort helpers to preview a selection, but it must handle server rejection
-as normal. Four-seat rotation in `lib/cards.ts`, parity team labels, table CSS,
-and practice's four hooks all need redesign before exposing another player
-count.
+as normal. The table has two layout paths chosen by player count: the tuned
+legacy four-seat classes (`relativeSeatPosition` in `lib/cards.ts` plus
+`.seat-north/south/east/west` CSS), which must stay pixel-stable, and the radial
+system (`lib/table-layout.ts` `seatSlots()`) for 5–8 seats, which reserves a
+bottom arc so opponent plates clear the local south cluster. The radial
+`[data-players]` overrides in `globals.css` are higher-specificity ((0,2,0)+)
+than plain responsive rules; responsive rules that must affect radial tables
+either repeat the attribute selector or set only custom properties consumed at
+base specificity.
 
 ## Commands and test strategy
 
