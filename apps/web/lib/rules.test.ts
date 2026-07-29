@@ -4,6 +4,7 @@ import { describe, expect, test } from "vitest";
 import {
   canonicalStringify,
   clearOption,
+  adjustedPlayerCountForMode,
   describeRules,
   effectiveValue,
   mapIssuesToFields,
@@ -12,6 +13,7 @@ import {
   resolveViewRuleset,
   rulesetSignature,
   setOption,
+  snapToBestPreset,
   type OptionFieldKey,
 } from "./rules";
 
@@ -59,6 +61,117 @@ function view(
 }
 
 describe("rules helpers", () => {
+  test("assigns the primary and advanced tiers to every option field", () => {
+    const primary = [
+      "teamsMode",
+      "playerCount",
+      "deckCount",
+      "friendCallCount",
+      "scoring.bandSize",
+      "timers.playTimeoutSeconds",
+      "timers.disconnectedTimeoutSeconds",
+      "timers.postDealWindowSeconds",
+      "timers.responseWindowSeconds",
+    ];
+    const advanced = [
+      "bottomSize",
+      "startingRank",
+      "gameEndsOnSuccessfulDefenseAt",
+      "mustDefendRanks",
+      "throwPenalty",
+      "allowNoTrumpJokerBid",
+      "minimumJokerBidCount",
+      "maxRedeals",
+    ];
+
+    expect(OPTION_FIELDS).toHaveLength(17);
+    expect(OPTION_FIELDS.map((field) => [field.key, field.tier])).toEqual([
+      ["playerCount", "primary"],
+      ["deckCount", "primary"],
+      ["teamsMode", "primary"],
+      ["friendCallCount", "primary"],
+      ["bottomSize", "advanced"],
+      ["startingRank", "advanced"],
+      ["gameEndsOnSuccessfulDefenseAt", "advanced"],
+      ["mustDefendRanks", "advanced"],
+      ["scoring.bandSize", "primary"],
+      ["throwPenalty", "advanced"],
+      ["allowNoTrumpJokerBid", "advanced"],
+      ["minimumJokerBidCount", "advanced"],
+      ["maxRedeals", "advanced"],
+      ["timers.playTimeoutSeconds", "primary"],
+      ["timers.disconnectedTimeoutSeconds", "primary"],
+      ["timers.postDealWindowSeconds", "primary"],
+      ["timers.responseWindowSeconds", "primary"],
+    ]);
+    expect(
+      OPTION_FIELDS.filter((field) => field.tier === "primary")
+        .map((field) => field.key)
+        .sort(),
+    ).toEqual([...primary].sort());
+    expect(
+      OPTION_FIELDS.filter((field) => field.tier === "advanced")
+        .map((field) => field.key)
+        .sort(),
+    ).toEqual([...advanced].sort());
+  });
+
+  test("adjusts player counts to the selected team mode and occupancy", () => {
+    expect(adjustedPlayerCountForMode("fixed", 5, 0)).toBe(6);
+    expect(adjustedPlayerCountForMode("fixed", 7, 0)).toBe(8);
+    expect(adjustedPlayerCountForMode("finding-friends", 4, 0)).toBe(5);
+    expect(adjustedPlayerCountForMode("fixed", 5, 7)).toBe(8);
+    expect(adjustedPlayerCountForMode("finding-friends", 6, 0)).toBe(6);
+    expect(adjustedPlayerCountForMode("fixed", 4, 99)).toBe(8);
+  });
+
+  test("snaps identity options to the closest production preset", () => {
+    expect(
+      snapToBestPreset({ presetId: DEFAULT_PRESET_ID, options: { playerCount: 6 } }),
+    ).toEqual({ presetId: "shengji-6p-3d-fixed-v1", options: {} });
+    expect(
+      snapToBestPreset({
+        presetId: DEFAULT_PRESET_ID,
+        options: { teamsMode: "finding-friends", playerCount: 5 },
+      }),
+    ).toEqual({ presetId: "shengji-ff-5p-2d-v1", options: {} });
+    expect(
+      snapToBestPreset({ presetId: DEFAULT_PRESET_ID, options: { deckCount: 4 } }),
+    ).toEqual({
+      presetId: "shengji-4p-3d-fixed-v1",
+      options: { deckCount: 4 },
+    });
+    expect(
+      snapToBestPreset({
+        presetId: "shengji-6p-3d-fixed-v1",
+        options: { playerCount: 4 },
+      }),
+    ).toEqual({ presetId: "shengji-4p-3d-fixed-v1", options: {} });
+  });
+
+  test("removes fixed-mode friend calls and preserves non-identity overrides", () => {
+    const switched = snapToBestPreset({
+      presetId: "shengji-ff-6p-3d-v1",
+      options: { teamsMode: "fixed", friendCallCount: 2 },
+    });
+    expect(switched).toEqual({
+      presetId: "shengji-6p-3d-fixed-v1",
+      options: {},
+    });
+    expect(resolveRuleset(switched.presetId, switched.options).ok).toBe(true);
+
+    let options: GameOptions = { playerCount: 6 };
+    options = setOption(options, "scoring.bandSize", 25);
+    options = setOption(options, "timers.playTimeoutSeconds", 45);
+    expect(snapToBestPreset({ presetId: DEFAULT_PRESET_ID, options })).toEqual({
+      presetId: "shengji-6p-3d-fixed-v1",
+      options: {
+        scoring: { bandSize: 25 },
+        timers: { playTimeoutSeconds: 45 },
+      },
+    });
+  });
+
   test("canonicalizes key order and treats absent options like an empty bag", () => {
     expect(canonicalStringify({ b: 2, a: { d: 4, c: 3 } })).toBe(
       '{"a":{"c":3,"d":4},"b":2}',
