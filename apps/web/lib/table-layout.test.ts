@@ -43,6 +43,46 @@ describe("radial table layout", () => {
     }
   });
 
+  test("preserves uniform slot geometry for five and six players", () => {
+    for (const playerCount of [5, 6]) {
+      const slots = seatSlots(playerCount);
+
+      for (let relativeIndex = 0; relativeIndex < playerCount; relativeIndex += 1) {
+        const theta = ((-90 + relativeIndex * (360 / playerCount)) * Math.PI) / 180;
+        expect(slots[relativeIndex]!.xPct).toBeCloseTo(50 + 50 * Math.cos(theta));
+        expect(slots[relativeIndex]!.yPct).toBeCloseTo(50 - 48 * Math.sin(theta));
+      }
+    }
+  });
+
+  test("reserves the bottom arc and uses radial edge sectors", () => {
+    for (const playerCount of [7, 8]) {
+      const slots = seatSlots(playerCount);
+      for (const slot of slots.slice(1)) {
+        expect(slot.yPct).toBeLessThanOrEqual(74.5);
+      }
+    }
+
+    expect(seatSlots(8).map((slot) => slot.edge)).toEqual([
+      "bottom",
+      "right",
+      "right",
+      "top",
+      "top",
+      "top",
+      "left",
+      "left",
+    ]);
+  });
+
+  test("uses an 80-unit radial sweep for five through eight players", () => {
+    for (const playerCount of [5, 6, 7, 8]) {
+      for (const slot of seatSlots(playerCount)) {
+        expect(Math.hypot(slot.sweep.x, slot.sweep.y)).toBeCloseTo(80, 0);
+      }
+    }
+  });
+
   test("wraps absolute seats around every supported table size", () => {
     for (const playerCount of [4, 5, 6, 7, 8]) {
       for (let you = 0; you < playerCount; you += 1) {

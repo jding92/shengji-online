@@ -1556,6 +1556,9 @@ button:disabled:not(.playing-card) {
   --team-color: var(--muted);
 }
 
+/* Radial attribute rules have (0,2,0)+ specificity.
+   Responsive radial rules must repeat [data-players] or set custom properties.
+   This keeps them effective against later base-specificity declarations. */
 /* Radial tables have more nameplates around the same orbit. Keep their
    footprint compact without changing the tuned four-player dimensions. */
 .table-orbit[data-players="5"] {
@@ -1599,6 +1602,27 @@ button:disabled:not(.playing-card) {
 
   width: 132px;
 }
+/* Compact 7–8 player plates on narrow tables prevent corner collisions. */
+@container (max-width: 900px) {
+  .table-orbit[data-players="7"] .seat-radial .player-tag,
+  .table-orbit[data-players="8"] .seat-radial .player-tag {
+    --player-tag-portrait-size: 30px;
+    --player-tag-height: 44px;
+
+    width: 112px;
+    padding: 3px 6px 3px 3px;
+  }
+  .table-orbit[data-players="7"] .seat-radial .player-tag .player-tag-ornament,
+  .table-orbit[data-players="8"] .seat-radial .player-tag .player-tag-ornament,
+  .table-orbit[data-players="7"] .seat-radial .player-tag .player-type-asset,
+  .table-orbit[data-players="8"] .seat-radial .player-tag .player-type-asset {
+    display: none;
+  }
+  .table-orbit[data-players="7"] .seat-radial .player-tag.has-timer,
+  .table-orbit[data-players="8"] .seat-radial .player-tag.has-timer {
+    width: 140px;
+  }
+}
 .table-orbit[data-players="5"] .seat-radial .mini-hand,
 .table-orbit[data-players="6"] .seat-radial .mini-hand,
 .table-orbit[data-players="7"] .seat-radial .mini-hand,
@@ -1608,7 +1632,7 @@ button:disabled:not(.playing-card) {
   /* Two seats share each vertical edge on a crowded radial table, so the fan's
      footprint must stay bounded regardless of hand size (a 3-deck hand fans 25+
      backs). Cap the total spread to a compact pile so it does not swamp a
-     neighbour's nameplate; the exact hand size is shown numerically on the tag. */
+     neighbour's nameplate. */
   --mini-fan-step: min(13px, 52px / max(1, var(--fan-count) - 1));
 }
 /* Fan of card backs; the component computes size and per-card offsets. */
@@ -2364,7 +2388,7 @@ button:disabled:not(.playing-card) {
     --player-tag-portrait-size: 42px;
 
     width: 204px;
-    height: 60px;
+    --player-tag-height: 60px;
     padding: 5px 24px 5px 4px;
   }
   .table-orbit > .table-seat {
@@ -2544,7 +2568,7 @@ button:disabled:not(.playing-card) {
     --player-tag-portrait-size: 44px;
 
     width: 198px;
-    height: 62px;
+    --player-tag-height: 62px;
     gap: 4px;
     padding: 5px 23px 5px 4px;
   }
@@ -2616,7 +2640,7 @@ button:disabled:not(.playing-card) {
     --player-tag-portrait-size: 44px;
 
     width: 188px;
-    height: 62px;
+    --player-tag-height: 62px;
     gap: 4px;
     padding: 6px 22px 6px 5px;
   }

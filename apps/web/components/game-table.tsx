@@ -631,6 +631,7 @@ export function GameTable({
                 )}
                 <TrickCenter
                   view={view}
+                  playerCount={playerCount}
                   friendCallPanel={{
                     sendTrackedCommand,
                     trackedRejections,
