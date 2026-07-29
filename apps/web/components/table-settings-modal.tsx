@@ -140,7 +140,6 @@ export function TableSettingsModal({
         <section className="table-settings-section">
           <p className="eyebrow">TIMERS · 时限</p>
           <OptionsEditor
-            presets={[]}
             phase={view.phase}
             value={draft}
             onChange={(next) => {

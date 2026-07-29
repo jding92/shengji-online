@@ -4,23 +4,14 @@ import { DEFAULT_PRESET_ID, type GameOptions } from "@shengji/engine";
 import type { BotDifficulty } from "@shengji/protocol";
 import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type FormEvent,
-  type KeyboardEvent,
-} from "react";
+import { useState, type FormEvent, type KeyboardEvent } from "react";
 import {
   OptionsEditor,
   type OptionServerIssues,
   type OptionsEditorValue,
 } from "../components/options-editor";
-import { PresetPicker } from "../components/options-editor";
 import { ChromeButton, ChromeLink } from "../components/ui-chrome";
 import { ART, art2x } from "../lib/art";
-import { fetchPresets, type PresetSummary } from "../lib/presets";
 import { safeStorage } from "../lib/safe-storage";
 import { sessionKey } from "../lib/session";
 
@@ -47,40 +38,12 @@ export default function HomePage() {
   const [botDifficulty, setBotDifficulty] = useState<BotDifficulty>("intermediate");
   const [menuMode, setMenuMode] = useState<MenuMode>("create");
   const [error, setError] = useState<string | null>(null);
-  const [presets, setPresets] = useState<PresetSummary[]>([]);
-  const [presetsLoading, setPresetsLoading] = useState(false);
-  const [presetsError, setPresetsError] = useState<string | null>(null);
   const [createRules, setCreateRules] = useState<OptionsEditorValue>({
     presetId: DEFAULT_PRESET_ID,
     options: {},
   });
   const [houseRulesOpen, setHouseRulesOpen] = useState(false);
   const [serverIssues, setServerIssues] = useState<OptionServerIssues | undefined>();
-  const presetsAttempted = useRef(false);
-
-  const loadPresets = useCallback(
-    async (retry = false) => {
-      if ((!retry && presetsAttempted.current) || presetsLoading) return;
-      presetsAttempted.current = true;
-      setPresetsLoading(true);
-      setPresetsError(null);
-      try {
-        const response = await fetchPresets();
-        setPresets(response.presets);
-      } catch (cause) {
-        setPresetsError(
-          cause instanceof Error ? cause.message : "Could not load game presets",
-        );
-      } finally {
-        setPresetsLoading(false);
-      }
-    },
-    [presetsLoading],
-  );
-
-  useEffect(() => {
-    if (menuMode === "create" || menuMode === "practice") void loadPresets();
-  }, [loadPresets, menuMode]);
 
   async function createRoom(practice = false) {
     setCreating(true);
@@ -260,30 +223,6 @@ export default function HomePage() {
                 <p className="menu-panel-copy">
                   Open an invite-only room and bring your crew to the table.
                 </p>
-                <div className="home-preset-picker">
-                  {presets.length > 0 && (
-                    <PresetPicker
-                      presets={presets}
-                      selectedPresetId={createRules.presetId}
-                      disabled={creating}
-                      onChange={(presetId) => setCreateRules({ presetId, options: {} })}
-                    />
-                  )}
-                  {presetsLoading && <small>Loading presets…</small>}
-                  {presetsError && (
-                    <p className="inline-error preset-load-error" role="alert">
-                      {presetsError}{" "}
-                      <ChromeButton
-                        className="preset-retry"
-                        variant="neutral"
-                        disabled={presetsLoading}
-                        onClick={() => void loadPresets(true)}
-                      >
-                        Retry
-                      </ChromeButton>
-                    </p>
-                  )}
-                </div>
                 <div className="house-rules">
                   <ChromeButton
                     className="house-rules-toggle"
@@ -295,7 +234,6 @@ export default function HomePage() {
                   </ChromeButton>
                   {houseRulesOpen && (
                     <OptionsEditor
-                      presets={presets}
                       phase="lobby"
                       value={createRules}
                       onChange={setCreateRules}
@@ -351,30 +289,6 @@ export default function HomePage() {
               <>
                 <p className="menu-panel-kicker">Solo training</p>
                 <h2>Choose your rivals</h2>
-                <div className="home-preset-picker">
-                  {presets.length > 0 && (
-                    <PresetPicker
-                      presets={presets}
-                      selectedPresetId={createRules.presetId}
-                      disabled={creating}
-                      onChange={(presetId) => setCreateRules({ presetId, options: {} })}
-                    />
-                  )}
-                  {presetsLoading && <small>Loading presets…</small>}
-                  {presetsError && (
-                    <p className="inline-error preset-load-error" role="alert">
-                      {presetsError}{" "}
-                      <ChromeButton
-                        className="preset-retry"
-                        variant="neutral"
-                        disabled={presetsLoading}
-                        onClick={() => void loadPresets(true)}
-                      >
-                        Retry
-                      </ChromeButton>
-                    </p>
-                  )}
-                </div>
                 <fieldset className="difficulty-picker" disabled={creating}>
                   <legend>Practice difficulty</legend>
                   <div className="difficulty-options">
