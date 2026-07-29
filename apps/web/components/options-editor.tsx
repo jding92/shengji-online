@@ -480,7 +480,7 @@ export function OptionsEditor({
           {primaryTableFields.length > 0 && (
             <section className="options-group">
               <p className="eyebrow">TABLE · 牌桌</p>
-              <div className="options-primary-grid">
+              <div className="options-primary-grid options-table-grid">
                 {primaryTableFields.map((field) =>
                   field.key === "teamsMode"
                     ? renderFieldRow(field, "option-row-wide")

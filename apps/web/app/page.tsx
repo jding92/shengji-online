@@ -5,27 +5,20 @@ import type { BotDifficulty } from "@shengji/protocol";
 import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent, type KeyboardEvent } from "react";
+import type { OptionServerIssues } from "../components/options-editor";
 import {
-  OptionsEditor,
-  type OptionServerIssues,
-  type OptionsEditorValue,
-} from "../components/options-editor";
+  StartGamePanel,
+  type StartGameOpponents,
+} from "../components/start-game-panel";
 import { ChromeButton, ChromeLink } from "../components/ui-chrome";
 import { ART, art2x } from "../lib/art";
+import type { OptionsEditorValue } from "../lib/rules";
 import { safeStorage } from "../lib/safe-storage";
 import { sessionKey } from "../lib/session";
 
-const DIFFICULTIES = [
-  "beginner",
-  "intermediate",
-  "advanced",
-  "expert",
-] as const satisfies readonly BotDifficulty[];
-
 const MENU_MODES = [
-  { id: "create", label: "Create table" },
+  { id: "start", label: "Start game" },
   { id: "join", label: "Join table" },
-  { id: "practice", label: "Practice" },
   { id: "guide", label: "How to play" },
 ] as const;
 
@@ -36,13 +29,13 @@ export default function HomePage() {
   const [roomCode, setRoomCode] = useState("");
   const [creating, setCreating] = useState(false);
   const [botDifficulty, setBotDifficulty] = useState<BotDifficulty>("intermediate");
-  const [menuMode, setMenuMode] = useState<MenuMode>("create");
+  const [menuMode, setMenuMode] = useState<MenuMode>("start");
+  const [opponents, setOpponents] = useState<StartGameOpponents>("friends");
   const [error, setError] = useState<string | null>(null);
-  const [createRules, setCreateRules] = useState<OptionsEditorValue>({
+  const [rules, setRules] = useState<OptionsEditorValue>({
     presetId: DEFAULT_PRESET_ID,
     options: {},
   });
-  const [houseRulesOpen, setHouseRulesOpen] = useState(false);
   const [serverIssues, setServerIssues] = useState<OptionServerIssues | undefined>();
 
   async function createRoom(practice = false) {
@@ -55,11 +48,11 @@ export default function HomePage() {
       presetId?: string;
       options?: GameOptions;
     } = practice ? { practice: true, botDifficulty } : {};
-    if (createRules.presetId !== DEFAULT_PRESET_ID) {
-      requestBody.presetId = createRules.presetId;
+    if (rules.presetId !== DEFAULT_PRESET_ID) {
+      requestBody.presetId = rules.presetId;
     }
-    if (Object.keys(createRules.options).length > 0) {
-      requestBody.options = createRules.options;
+    if (Object.keys(rules.options).length > 0) {
+      requestBody.options = rules.options;
     }
     try {
       const response = await fetch("/api/rooms", {
@@ -79,7 +72,6 @@ export default function HomePage() {
             (body.error === undefined ? undefined : { error: body.error });
           if (issues !== undefined) {
             setServerIssues(issues);
-            setHouseRulesOpen(true);
           }
         }
         throw new Error(body.error ?? "Could not create a table");
@@ -181,7 +173,7 @@ export default function HomePage() {
           <div
             className="menu-mode-list"
             role="tablist"
-            aria-label="Game modes"
+            aria-label="Main menu"
             aria-orientation="vertical"
             onKeyDown={handleMenuKeyDown}
           >
@@ -216,42 +208,21 @@ export default function HomePage() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.16, ease: "easeOut" }}
           >
-            {menuMode === "create" && (
+            {menuMode === "start" && (
               <>
-                <p className="menu-panel-kicker">Private match</p>
-                <h2>Create a table</h2>
-                <p className="menu-panel-copy">
-                  Open an invite-only room and bring your crew to the table.
-                </p>
-                <div className="house-rules">
-                  <ChromeButton
-                    className="house-rules-toggle"
-                    variant={houseRulesOpen ? "gold" : "neutral"}
-                    aria-expanded={houseRulesOpen}
-                    onClick={() => setHouseRulesOpen((open) => !open)}
-                  >
-                    HOUSE RULES · 自定义
-                  </ChromeButton>
-                  {houseRulesOpen && (
-                    <OptionsEditor
-                      phase="lobby"
-                      value={createRules}
-                      onChange={setCreateRules}
-                      occupiedSeats={[]}
-                      joinedPlayerCount={0}
-                      {...(serverIssues === undefined ? {} : { serverIssues })}
-                    />
-                  )}
-                </div>
-                <ChromeButton
-                  className="arcade-action"
-                  variant="primary"
-                  disabled={creating}
-                  onClick={() => void createRoom()}
-                >
-                  <span>{creating ? "Preparing table…" : "Create table"}</span>
-                  <b aria-hidden="true">→</b>
-                </ChromeButton>
+                <p className="menu-panel-kicker">Set the table</p>
+                <h2 className="start-heading">Start a game</h2>
+                <StartGamePanel
+                  rules={rules}
+                  onRulesChange={setRules}
+                  opponents={opponents}
+                  onOpponentsChange={setOpponents}
+                  botDifficulty={botDifficulty}
+                  onBotDifficultyChange={setBotDifficulty}
+                  creating={creating}
+                  {...(serverIssues === undefined ? {} : { serverIssues })}
+                  onStart={() => void createRoom(opponents === "bots")}
+                />
               </>
             )}
 
@@ -283,38 +254,6 @@ export default function HomePage() {
                   <b aria-hidden="true">→</b>
                 </ChromeButton>
               </form>
-            )}
-
-            {menuMode === "practice" && (
-              <>
-                <p className="menu-panel-kicker">Solo training</p>
-                <h2>Choose your rivals</h2>
-                <fieldset className="difficulty-picker" disabled={creating}>
-                  <legend>Practice difficulty</legend>
-                  <div className="difficulty-options">
-                    {DIFFICULTIES.map((difficulty) => (
-                      <ChromeButton
-                        key={difficulty}
-                        className="difficulty-option"
-                        variant={botDifficulty === difficulty ? "gold" : "neutral"}
-                        aria-pressed={botDifficulty === difficulty}
-                        onClick={() => setBotDifficulty(difficulty)}
-                      >
-                        {difficulty[0]!.toUpperCase() + difficulty.slice(1)}
-                      </ChromeButton>
-                    ))}
-                  </div>
-                </fieldset>
-                <ChromeButton
-                  className="arcade-action"
-                  variant="primary"
-                  disabled={creating}
-                  onClick={() => void createRoom(true)}
-                >
-                  <span>{creating ? "Preparing match…" : "Start practice"}</span>
-                  <b aria-hidden="true">→</b>
-                </ChromeButton>
-              </>
             )}
 
             {menuMode === "guide" && (

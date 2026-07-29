@@ -210,7 +210,7 @@ button:disabled:not(.playing-card) {
   place-items: center;
   overflow-x: hidden;
   overflow-y: auto;
-  padding: clamp(18px, 4vh, 38px) 24px;
+  padding: clamp(10px, 1.5vh, 20px) 24px;
 }
 .menu-hero {
   position: absolute;
@@ -229,12 +229,12 @@ button:disabled:not(.playing-card) {
   position: relative;
   z-index: 1;
   display: grid;
-  width: min(100%, 780px);
-  gap: clamp(12px, 2vh, 20px);
+  width: min(100%, 980px);
+  gap: clamp(8px, 1.2vh, 14px);
 }
 .menu-brand {
   display: grid;
-  width: min(100%, 520px);
+  width: min(100%, 180px);
   margin: 0 auto;
   justify-items: center;
 }
@@ -248,7 +248,7 @@ button:disabled:not(.playing-card) {
 }
 .menu-console {
   display: grid;
-  grid-template-columns: minmax(220px, 0.82fr) minmax(360px, 1.18fr);
+  grid-template-columns: minmax(200px, 0.55fr) minmax(430px, 1.45fr);
   gap: 16px;
   align-items: stretch;
 }
@@ -281,7 +281,7 @@ button:disabled:not(.playing-card) {
 }
 .menu-mode-panel {
   min-height: 286px;
-  padding: 30px 34px 32px;
+  padding: 16px 24px 18px;
 }
 .menu-panel-form {
   height: 100%;
@@ -336,6 +336,9 @@ button:disabled:not(.playing-card) {
 .difficulty-picker legend {
   padding: 0;
 }
+.start-opponents legend {
+  padding: 0;
+}
 .difficulty-options {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -347,6 +350,56 @@ button:disabled:not(.playing-card) {
   min-height: 44px;
   padding: 0 8px;
   cursor: pointer;
+}
+.start-game-panel {
+  display: grid;
+  min-width: 0;
+  gap: 7px;
+}
+.start-game-panel .options-editor {
+  gap: 10px;
+}
+/* The panel grid already spaces the action; .arcade-action's own margin would double it. */
+.start-game-panel .arcade-action {
+  min-height: 46px;
+  margin-top: 0;
+}
+.start-game-panel .options-advanced-toggle {
+  min-height: 30px;
+}
+.start-heading {
+  margin-bottom: 4px;
+}
+.start-opponents {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+}
+/* Difficulty sits beside the opponents choice so picking bots costs no extra row. */
+.start-opponents-row {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px 18px;
+}
+.start-opponents-row .difficulty-picker {
+  margin: 0;
+}
+.start-opponents-row .difficulty-options {
+  grid-template-columns: repeat(4, auto);
+  margin-top: 5px;
+}
+.start-opponents-row .difficulty-option {
+  min-height: 30px;
+}
+.start-opponents-hint {
+  margin: 0;
+}
+/* Outruns the later .rules-ribbon margin; the start panel needs a tighter ribbon. */
+.start-game-panel .start-summary {
+  flex-wrap: wrap;
+  margin: 2px 0 0;
 }
 .home-preset-picker {
   display: grid;
@@ -388,21 +441,48 @@ button:disabled:not(.playing-card) {
 .options-primary {
   display: grid;
   min-width: 0;
-  gap: 14px;
+  gap: 10px;
 }
 .options-primary-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  gap: 7px;
+}
+/* Three columns keep the table block at two rows in both team modes: teams spans
+   two so its long labels fit, and the finding-friends call count costs no new row. */
+.options-primary .options-table-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.options-primary .options-table-grid .option-row-wide {
+  grid-column: span 2;
 }
 .option-row-wide {
   grid-column: 1 / -1;
 }
+/* The start screen must fit one viewport, so the always-visible rows run tighter
+   than the same rows inside the lobby and in-game modals. */
 .options-primary .option-row {
-  padding: 9px 11px;
+  gap: 5px;
+  padding: 6px 9px;
 }
+.options-primary .options-group {
+  gap: 6px;
+}
+/* Narrow enough that all five player counts stay on one line in a grid column. */
 .options-primary .option-segment {
-  min-height: 34px;
+  min-width: 30px;
+  min-height: 30px;
+}
+.options-primary .arcade-field {
+  min-height: 30px;
+  padding-block: 3px;
+}
+.options-primary .option-hint {
+  margin: 0;
+}
+/* Four timers across one row rather than a 2x2 block. */
+.options-timer-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 .options-advanced {
   display: grid;
@@ -2639,8 +2719,13 @@ button:disabled:not(.playing-card) {
   .difficulty-options {
     grid-template-columns: repeat(2, 1fr);
   }
-  .options-primary-grid {
+  /* Repeats the .options-primary prefix so it outranks the base three-column rule. */
+  .options-primary-grid,
+  .options-primary .options-table-grid {
     grid-template-columns: 1fr;
+  }
+  .options-primary .options-table-grid .option-row-wide {
+    grid-column: auto;
   }
 }
 
