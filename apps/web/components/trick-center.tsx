@@ -4,6 +4,7 @@ import type { PrivateGameView } from "@shengji/protocol";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ComponentProps,
@@ -208,9 +209,11 @@ function phaseMessage(
 
 export function TrickCenter({
   view,
+  playerCount,
   friendCallPanel,
 }: {
   view: PrivateGameView;
+  playerCount: number;
   friendCallPanel?: FriendCallPanelControls;
 }) {
   const round = view.publicRound;
@@ -221,8 +224,7 @@ export function TrickCenter({
   );
   const sweep = useTrickSweep(view);
   const reducedMotion = useReducedMotion() ?? false;
-  const playerCount = view.ruleset.players;
-  const slots = seatSlots(playerCount);
+  const slots = useMemo(() => seatSlots(playerCount), [playerCount]);
   const slotForSeat = (seat: number): SeatSlot =>
     slots[relativeSeatIndex(seat, view.you.seat ?? 0, playerCount)]!;
   const sweepVector =
@@ -273,7 +275,13 @@ export function TrickCenter({
           className={`trick-plays ${sweep === null ? "" : "trick-sweep"}`}
           initial={false}
           animate={
-            sweep === null ? { x: 0, y: 0, scale: 1 } : { ...sweepVector, scale: 0.45 }
+            sweep === null
+              ? { x: 0, y: 0, scale: 1 }
+              : {
+                  x: playerCount === 4 ? sweepVector.x : `${sweepVector.x}%`,
+                  y: playerCount === 4 ? sweepVector.y : `${sweepVector.y}%`,
+                  scale: 0.45,
+                }
           }
           transition={
             sweep === null
