@@ -5,12 +5,12 @@ test("landing mode select supports keyboard navigation and normalized room codes
 }) => {
   await page.goto("/");
 
-  const createTab = page.getByRole("tab", { name: "Create table" });
+  const startTab = page.getByRole("tab", { name: "Start game" });
   const joinTab = page.getByRole("tab", { name: "Join table" });
 
-  await expect(createTab).toHaveAttribute("aria-selected", "true");
-  await createTab.focus();
-  await createTab.press("ArrowDown");
+  await expect(startTab).toHaveAttribute("aria-selected", "true");
+  await startTab.focus();
+  await startTab.press("ArrowDown");
   await expect(joinTab).toBeFocused();
   await expect(joinTab).toHaveAttribute("aria-selected", "true");
 

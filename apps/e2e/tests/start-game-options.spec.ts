@@ -1,16 +1,31 @@
 import { expect, test } from "@playwright/test";
 import { closePlayers, type Player } from "./helpers";
 
-test("create a six-player preset and edit lobby rules as host", async ({ browser }) => {
+test("configure a six-player table from the start screen and edit lobby rules as host", async ({
+  browser,
+}) => {
   const players: Player[] = [];
   try {
     const creatorContext = await browser.newContext();
     const page = await creatorContext.newPage();
     players.push({ context: creatorContext, page });
     await page.goto("/");
-    await page.getByRole("tab", { name: "Create table" }).click();
-    await expect(page.locator(".preset-card")).toHaveCount(8);
-    await page.getByRole("button", { name: /Sheng Ji 6P Fixed Teams/ }).click();
+    await page.getByRole("tab", { name: "Start game" }).click();
+    await page
+      .getByRole("group", { name: "PLAYERS · 玩家数" })
+      .getByRole("button", { name: "6", exact: true })
+      .click();
+    // Snapping re-bases onto the stock six-player preset, which is three decks,
+    // so a stock table stays stock rather than reading as customized.
+    await expect(
+      page
+        .getByRole("group", { name: "DECKS · 牌副数" })
+        .getByRole("button", { name: "3", exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
+    const summary = page.locator(".start-summary");
+    await expect(summary).toContainText("6 PLAYERS");
+    await expect(summary).toContainText("3 DECKS");
+    await expect(summary).not.toContainText("CUSTOM · 自定义");
     await page.getByRole("button", { name: /^Create table$/ }).click();
     await expect(page).toHaveURL(/\/room\/[A-Z0-9]+$/);
 

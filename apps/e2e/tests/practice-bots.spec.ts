@@ -4,7 +4,7 @@ test("practice drops the human straight into a game against three bots", async (
   page,
 }) => {
   await page.goto("/");
-  await expect(page.getByRole("tab", { name: "Create table" })).toHaveAttribute(
+  await expect(page.getByRole("tab", { name: "Start game" })).toHaveAttribute(
     "data-chrome-button-surface",
     "ui.button.primary",
   );
@@ -12,16 +12,16 @@ test("practice drops the human straight into a game against three bots", async (
     "data-chrome-button-surface",
     "ui.button.neutral",
   );
-  await page.getByRole("tab", { name: "Practice" }).click();
-  await expect(page.getByRole("tab", { name: "Practice" })).toHaveAttribute(
-    "data-chrome-button-surface",
-    "ui.button.primary",
-  );
+  // Practice is no longer its own destination: it is the bots option on the one start screen.
   await page
-    .getByRole("group", { name: "Practice difficulty" })
-    .getByRole("button", { name: "Advanced" })
+    .getByRole("group", { name: "OPPONENTS · 对手" })
+    .getByRole("button", { name: /BOTS/ })
     .click();
-  await expect(page.getByRole("button", { name: "Advanced" })).toHaveAttribute(
+  // Scoped to the group: the options editor's own "ADVANCED · 高级" fold toggle
+  // would otherwise also match a bare "Advanced" name.
+  const difficulty = page.getByRole("group", { name: "BOT DIFFICULTY · 机器人难度" });
+  await difficulty.getByRole("button", { name: "Advanced" }).click();
+  await expect(difficulty.getByRole("button", { name: "Advanced" })).toHaveAttribute(
     "data-chrome-button-surface",
     "ui.button.gold",
   );
@@ -45,7 +45,10 @@ test("table orbit and HUD stay usable at supported desktop viewports", async ({
 }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
-  await page.getByRole("tab", { name: "Practice" }).click();
+  await page
+    .getByRole("group", { name: "OPPONENTS · 对手" })
+    .getByRole("button", { name: /BOTS/ })
+    .click();
   await page.getByRole("button", { name: "Start practice" }).click();
   await expect(page.locator(".hand-scroll .playing-card")).toHaveCount(25, {
     timeout: 15_000,
