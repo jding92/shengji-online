@@ -11,11 +11,22 @@ fixed teams and finding-friends tables. Room creation accepts `presetId` and
 `options`; hosts alone edit the full ruleset in the lobby and timer options
 in-game. Player count is capped at 8, and joined-player shrink is rejected.
 
-Practice mode is not a separate engine mode. It creates a normal room and fills
-the remaining N−1 seats with server-side bots for any preset, then the web
-client auto-sits and readies the human. The web table renders 4–8 seats
-radially while preserving the tuned four-player layout, and finding-friends
-calling, dashboard, and round UI are complete.
+Presets are the backend vocabulary, not a user-facing choice. The start screen
+has no preset list: the player sets teams mode, players, decks, scoring band,
+and timers directly, and `snapToBestPreset` in `apps/web/lib/rules.ts` re-bases
+those choices onto the closest registry preset. Players and mode are honored
+exactly; deck count follows the chosen preset unless explicitly pinned. The
+point is that a stock table resolves to a stock preset with an _empty_ override
+bag, so the `CUSTOM · 自定义` ribbon means "differs from stock" rather than
+"was configured". Anything that writes `{presetId, options}` from UI intent
+should go through that helper instead of assembling overrides by hand.
+
+Practice mode is not a separate engine mode, and it is not a separate
+destination in the UI either. It is the bots choice on the one start screen. It
+creates a normal room and fills the remaining N−1 seats with server-side bots
+for any preset, then the web client auto-sits and readies the human. The web
+table renders 4–8 seats radially while preserving the tuned four-player layout,
+and finding-friends calling, dashboard, and round UI are complete.
 
 There is no player-removal command. “Leave” closes the socket and forgets the
 local resume token; it does not free the joined player or seat. New joins are
@@ -258,6 +269,36 @@ than plain responsive rules; responsive rules that must affect radial tables
 either repeat the attribute selector or set only custom properties consumed at
 base specificity.
 
+The same specificity trap bites the start screen, in two directions, and both
+failures are silent — the page still renders, just with the wrong values:
+
+- A single-class landing rule cannot override a single-class rule defined later
+  in the file. `.rules-ribbon` lives in the lobby block, well below the landing
+  block, so `.start-summary` alone loses to it on source order. Scope to
+  `.start-game-panel .start-summary` rather than reordering the file.
+- Conversely, a two-class rule such as `.options-primary .options-table-grid`
+  outranks a media query that only says `.options-primary-grid`, so the
+  responsive collapse never applies. Repeat the prefix inside the query.
+
+When touching the start screen, verify in a browser, not just in unit tests.
+The acceptance criterion is that the whole panel plus the start button fits one
+1280×800 viewport with the Advanced fold collapsed, in _every_ state: friends
+and bots, fixed and finding-friends. Unit tests assert markup, so none of them
+can see a 460px overflow. Two structural facts keep the budget: bot difficulty
+renders inline beside the opponents segments so choosing bots adds no row, and
+the table block is a three-column grid with teams spanning two, which holds it
+to two rows in both team modes because finding-friends' `FRIEND CALLS` fills the
+cell that is empty under fixed teams. Adding a primary option, or restoring the
+full-width teams row, will break the fit.
+
+`OPTION_FIELDS` carries a `tier` that splits always-visible controls from the
+`ADVANCED · 高级` fold, and its array order is locked by a `rules.test.ts`
+assertion. Display order for the primary block lives in `PRIMARY_TABLE_ORDER` in
+`options-editor.tsx`; teams leads because teams mode decides which player counts
+are legal. On a mode switch, `adjustedPlayerCountForMode` must run _before_
+`snapToBestPreset` — 5 players with fixed teams matches no preset, so snapping
+first hits the empty-candidate path and silently returns the value unchanged.
+
 ## Commands and test strategy
 
 Use Node 24 and pnpm 11.7.0.
@@ -275,6 +316,32 @@ pnpm art:build
 typechecking, Vitest tests, and production builds. Playwright is separate.
 `pnpm art:build` regenerates committed `apps/web/public/art` WebPs from the
 `/assets` masters; run it after adding source art.
+
+`playwright.config.ts` sets `reuseExistingServer` only when `PW_REUSE_SERVER=1`,
+so a plain `pnpm test:e2e` while `pnpm dev` holds 3000/3001 will stall or fail
+on its own web servers. Run the suite on its own ports instead of killing a dev
+server someone else may be using:
+
+```bash
+PLAYWRIGHT_WEB_PORT=3100 PLAYWRIGHT_SERVER_PORT=3101 pnpm test:e2e
+```
+
+Setting `PLAYWRIGHT_WEB_PORT` also redirects the build to
+`.next-playwright-<port>`, so it will not clobber `.next`. It does rewrite the
+import in generated `apps/web/next-env.d.ts` to that directory, though, so check
+`git status` afterwards: committing it points everyone else's typecheck at a
+dist directory that only exists during a run on that port.
+
+Read Playwright's own summary line for the result. Piping the command through
+`tail` or `head` makes `$?` report the pager's status, so a run that says
+`1 failed` can still leave a zero exit code behind.
+
+Prefer group-scoped locators over bare accessible names on the start screen.
+`getByRole` matches names case-insensitively **by substring**, so a plain
+`{ name: "Advanced" }` matches both the bot-difficulty `Advanced` button and the
+`ADVANCED · 高级` fold toggle. Also give a control exactly one accessible name:
+a `fieldset` whose `legend` and inner `div` both carry the same label produces
+two matching groups and trips strict mode.
 
 Useful focused commands:
 
@@ -314,7 +381,9 @@ Test coverage is split deliberately:
 - Add named regression tests for rule fixes. Do not replace exact boundary
   fixtures with broad happy-path assertions.
 - Preserve unrelated working-tree changes and do not commit SQLite databases,
-  build output, Playwright artifacts, or environment files.
+  build output, Playwright artifacts, or environment files. `next dev` and
+  `next build` rewrite the import path in generated `apps/web/next-env.d.ts`;
+  that churn is not a real change, so restore the file rather than staging it.
 
 Process environment defaults come from code, not `.env.example`. In particular,
 the server's code default for `DEAL_INTERVAL_MS` is 600 ms; the example file
