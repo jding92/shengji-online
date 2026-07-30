@@ -401,38 +401,13 @@ button:disabled:not(.playing-card) {
   flex-wrap: wrap;
   margin: 2px 0 0;
 }
-.home-preset-picker {
-  display: grid;
-  min-width: 0;
-  gap: 8px;
-  margin: 16px 0 4px;
-}
-.house-rules {
-  display: grid;
-  min-width: 0;
-  gap: 14px;
-  margin-top: 16px;
-}
-.house-rules-toggle {
-  justify-self: start;
-}
-.preset-load-error {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-}
-.preset-retry {
-  min-height: 30px;
-  padding: 3px 9px;
-}
 .menu-error {
   margin: -4px 0 0;
   padding: 9px 13px;
   text-align: center;
 }
 
-/* Rules editor and preset picker: layout only; skin treatments live in mythic.css. */
+/* Rules editor: layout only; skin treatments live in mythic.css. */
 .options-editor {
   display: grid;
   min-width: 0;
@@ -496,35 +471,6 @@ button:disabled:not(.playing-card) {
   display: grid;
   min-width: 0;
   gap: 18px;
-}
-.preset-picker {
-  display: grid;
-  min-width: 0;
-  gap: 8px;
-}
-.preset-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 9px;
-}
-.preset-card {
-  display: grid;
-  min-width: 0;
-  min-height: 126px;
-  gap: 10px;
-  padding: 16px;
-  text-align: left;
-  white-space: normal;
-}
-.preset-card-heading {
-  display: grid;
-  min-width: 0;
-  gap: 9px;
-}
-.preset-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
 }
 .options-group {
   display: grid;
